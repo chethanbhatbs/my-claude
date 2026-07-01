@@ -124,6 +124,19 @@
   .card4 .ic{width:34px;height:34px;font-size:15px;margin-bottom:12px}
   .card4 h3{font-size:1rem} .card4 p{font-size:13px}
 
+  /* ---------- gallery ---------- */
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
+  .gcard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);transition:.16s}
+  .gcard:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));box-shadow:0 24px 50px -22px rgba(0,0,0,.65)}
+  .gbar{display:flex;align-items:center;gap:6px;padding:10px 13px;background:#1a1916;border-bottom:1px solid var(--line)}
+  .gbar i{width:9px;height:9px;border-radius:50%}
+  .gbar .u{margin-left:8px;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--faint)}
+  .gcard .gimg{display:block;width:100%;height:auto;border-bottom:1px solid var(--line)}
+  .gcap{padding:15px 18px}
+  .gcap b{display:block;font-size:15px;font-weight:700;margin-bottom:3px}
+  .gcap span{color:var(--dim);font-size:13.5px}
+  @media(max-width:900px){.gallery{grid-template-columns:1fr}}
+
   /* ---------- steps ---------- */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
   .step{border:1px solid var(--line);border-radius:14px;padding:24px;background:var(--surface)}
@@ -255,6 +268,35 @@
     <div class="card card4"><div class="ic">⇌</div><h3>MCP &amp; Plugins</h3><p>Every connector, global and per-project, with one-click live health checks.</p></div>
     <div class="card card4"><div class="ic">❡</div><h3>History</h3><p>Full-text search, per-conversation cost, resume in Claude, export to Markdown.</p></div>
     <div class="card card4"><div class="ic">⚙</div><h3>System</h3><p>Permissions, hooks, CLAUDE.md, and the memory Claude carries between sessions.</p></div>
+  </div>
+</section></div>
+
+<!-- GALLERY -->
+<div class="wrap"><section id="inside">
+  <div class="kick">A look inside</div>
+  <h2>Not a chart wall — the actual views.</h2>
+  <p class="muted">Every screen is designed to be read. Here are a few, from the interactive demo.</p>
+  <div class="gallery">
+    <div class="gcard">
+      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">Skills · View</span></div>
+      <img class="gimg" src="assets/skill-view.png" alt="Skill view — SKILL.md rendered as readable markdown" loading="lazy">
+      <div class="gcap"><b>Skill view</b><span>Open any skill and read its SKILL.md rendered as clean markdown — with syntax highlighting and one-click Finder / Copy / Push.</span></div>
+    </div>
+    <div class="gcard">
+      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">System</span></div>
+      <img class="gimg" src="assets/system.png" alt="System view — permissions, hooks, CLAUDE.md and memory" loading="lazy">
+      <div class="gcap"><b>System</b><span>Your permission rules, hook events, CLAUDE.md, and the memory Claude carries between sessions — all in one place.</span></div>
+    </div>
+    <div class="gcard">
+      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">History</span></div>
+      <img class="gimg" src="assets/history.png" alt="History view — conversation browser with per-conversation cost" loading="lazy">
+      <div class="gcap"><b>History</b><span>Search every conversation, see per-chat cost, read the transcript in a two-pane viewer, resume or export it.</span></div>
+    </div>
+    <div class="gcard">
+      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">MCP &amp; Plugins</span></div>
+      <img class="gimg" src="assets/mcp.png" alt="MCP view — connectors with live health checks" loading="lazy">
+      <div class="gcap"><b>MCP &amp; Plugins</b><span>Every connector, global and per-project, with one-click live health checks and auto-redacted config.</span></div>
+    </div>
   </div>
 </section></div>
 
