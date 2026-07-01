@@ -84,10 +84,10 @@
   .ucap{font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
   .bars{display:flex;align-items:flex-end;gap:4px;height:132px}
   .bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
-  .bars .col .o{background:var(--opus);border-radius:2px 2px 0 0}
-  .bars .col .s{background:var(--sonnet);border-radius:2px 2px 0 0}
+  .bars .col .o{background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:3px 3px 0 0}
+  .bars .col .s{background:var(--sand);border-radius:3px 3px 0 0}
   .donutwrap{display:flex;align-items:center;gap:16px}
-  .donut{width:104px;height:104px;border-radius:50%;flex:none;position:relative;background:conic-gradient(var(--opus) 0 68%,var(--sonnet) 68% 90%,var(--haiku) 90% 100%)}
+  .donut{width:104px;height:104px;border-radius:50%;flex:none;position:relative;background:conic-gradient(var(--accent) 0 68%,var(--sand) 68% 90%,var(--haiku) 90% 100%)}
   .donut::after{content:"";position:absolute;inset:26px;border-radius:50%;background:var(--surface)}
   .leg{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:9px}
   .leg div{display:flex;align-items:center;gap:8px} .leg i{width:9px;height:9px;border-radius:2px;display:inline-block}
@@ -117,8 +117,7 @@
   .card.big{padding-bottom:18px}
   .viz{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
   .vbars{display:flex;align-items:flex-end;gap:5px;height:60px}
-  .vbars i{flex:1;background:var(--opus);border-radius:2px 2px 0 0;opacity:.9}
-  .vbars i:nth-child(3n){background:var(--sonnet)}
+  .vbars i{flex:1;background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:2px 2px 0 0}
   .vheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(5,8px);grid-auto-columns:8px;gap:3px}
   .vheat i{width:8px;height:8px;border-radius:2px;background:var(--surface2)}
   .card4 .ic{width:34px;height:34px;font-size:15px;margin-bottom:12px}
@@ -223,8 +222,8 @@
             <div class="donutwrap">
               <div class="donut"></div>
               <div class="leg">
-                <div><i style="background:var(--opus)"></i>opus <b>68%</b></div>
-                <div><i style="background:var(--sonnet)"></i>sonnet <b>22%</b></div>
+                <div><i style="background:var(--accent)"></i>opus <b>68%</b></div>
+                <div><i style="background:var(--sand)"></i>sonnet <b>22%</b></div>
                 <div><i style="background:var(--haiku)"></i>haiku <b>10%</b></div>
               </div>
             </div>
@@ -350,11 +349,12 @@
   // main mock bar chart (fake, representative)
   (function(){ const el=document.getElementById('bars'); if(!el){return;}
     const seed=[.2,.35,.15,.5,.3,.62,.28,.8,.45,.7,.38,.95,.55,.42,.68,.3,.85,.5,.72,.4,.6,.33,.9,.48,.65,.52];
-    el.innerHTML=seed.map(h=>{ const total=Math.round(h*118); const son=Math.random()<.28?Math.round(total*0.3):0; const op=total-son;
-      return '<div class="col"><div class="s" style="height:'+son+'px"></div><div class="o" style="height:'+op+'px"></div></div>'; }).join(''); })();
+    el.innerHTML=seed.map(h=>{ const total=Math.round(20+h*112);
+      return '<div class="col"><div class="o" style="height:'+total+'px"></div></div>'; }).join(''); })();
   // feature mini viz
-  (function(){ const v=document.getElementById('vbars'); if(v){ let h=''; for(let i=0;i<16;i++){h+='<i style="height:'+(14+Math.round(Math.random()*44))+'px"></i>';} v.innerHTML=h; }
-    const g=document.getElementById('vheat'); if(g){ let h=''; for(let i=0;i<70;i++){ const on=Math.random()<.42; const o=on?(0.3+Math.random()*0.7).toFixed(2):0; h+='<i'+(o?' style="background:var(--accent);opacity:'+o+'"':'')+'></i>'; } g.innerHTML=h; } })();
+  (function(){ const v=document.getElementById('vbars'); if(v){ const H=[18,26,34,22,30,20,28,40,24,36,30,44,32,38,28,42]; v.innerHTML=H.map(x=>'<i style="height:'+x+'px"></i>').join(''); }
+    const g=document.getElementById('vheat'); if(g){ const col=[0,.15,0,.35,.25,.5,.35,.65,.45,.75,.55,.85,.7,1]; const rf=[.5,.8,1,.8,.5]; let h='';
+      for(let i=0;i<70;i++){ const c=Math.floor(i/5), r=i%5; const o=(col[c]*rf[r]); h+='<i'+(o>0.05?' style="background:var(--accent);opacity:'+o.toFixed(2)+'"':'')+'></i>'; } g.innerHTML=h; } })();
 </script>
 </body>
 </html>

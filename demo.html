@@ -83,10 +83,10 @@
   /* charts */
   .bars{display:flex;align-items:flex-end;gap:4px;height:150px;padding:6px 0}
   .bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;cursor:pointer}
-  .bars .col .o{background:var(--opus);border-radius:2px 2px 0 0}.bars .col .s{background:var(--sonnet);border-radius:2px 2px 0 0}
+  .bars .col .o{background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:3px 3px 0 0}.bars .col .s{background:var(--sand);border-radius:3px 3px 0 0}
   .bars .col:hover{opacity:.75}
   .donutwrap{display:flex;align-items:center;gap:18px;padding:8px 0}
-  .donut{width:120px;height:120px;border-radius:50%;position:relative;background:conic-gradient(var(--opus) 0 68%,var(--sonnet) 68% 90%,var(--haiku) 90% 100%)}
+  .donut{width:120px;height:120px;border-radius:50%;position:relative;background:conic-gradient(var(--accent) 0 68%,var(--sand) 68% 90%,var(--haiku) 90% 100%)}
   .donut::after{content:"";position:absolute;inset:30px;border-radius:50%;background:var(--surface)}
   .leg{font-size:13px;color:var(--dim);display:flex;flex-direction:column;gap:10px}.leg div{display:flex;align-items:center;gap:9px}.leg i{width:10px;height:10px;border-radius:2px}.leg b{color:var(--text);margin-left:auto}
   .heatmap{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);grid-auto-columns:13px;gap:3px;overflow-x:auto}
@@ -192,7 +192,7 @@ const D={
 const $=(s,r=document)=>r.querySelector(s);
 function esc(s){return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function heat(cells,weeks){let h='';for(let i=0;i<weeks*7;i++){const w=Math.floor(i/7);const r=Math.max(0,(w-Math.floor(weeks*.4))/(weeks*.6));const v=Math.random()<(r*.95)?Math.random():0;const o=v?(0.28+0.72*v).toFixed(2):0;const d=new Date();d.setDate(d.getDate()-((weeks*7)-i));const key=d.toISOString().slice(0,10);const val=Math.round(v*900);h+='<i data-d="'+key+'" data-v="'+val+'"'+(o?' style="background:var(--accent);opacity:'+o+'"':'')+'></i>'}return h}
-function barsHTML(scale){return D.bars.map(h=>{const total=Math.round(h*130*scale);const son=Math.random()<.28?Math.round(total*.3):0;const op=total-son;return '<div class="col"><div class="s" style="height:'+son+'px"></div><div class="o" style="height:'+op+'px"></div></div>'}).join('')}
+function barsHTML(scale){return D.bars.map(h=>{const total=Math.round(h*130*scale);const son=Math.random()<.28?Math.round(total*.3):0;const op=total-son;return '<div class="col"><div class="o" style="height:'+total+'px"></div></div>'}).join('')}
 
 const V={
   overview(){return `
@@ -238,7 +238,7 @@ const V={
     <div class="grid2" style="grid-template-columns:1.6fr 1fr">
       <div class="panel" style="padding:14px 16px"><div class="eye" style="margin-bottom:12px">Billable tokens per day</div><div class="bars" id="bars">${barsHTML(1)}</div></div>
       <div class="panel" style="padding:14px 16px"><div class="eye" style="margin-bottom:12px">Cost by model</div>
-        <div class="donutwrap"><div class="donut"></div><div class="leg"><div><i style="background:var(--opus)"></i>opus<b>68%</b></div><div><i style="background:var(--sonnet)"></i>sonnet<b>22%</b></div><div><i style="background:var(--haiku)"></i>haiku<b>10%</b></div></div></div>
+        <div class="donutwrap"><div class="donut"></div><div class="leg"><div><i style="background:var(--accent)"></i>opus<b>68%</b></div><div><i style="background:var(--sand)"></i>sonnet<b>22%</b></div><div><i style="background:var(--haiku)"></i>haiku<b>10%</b></div></div></div>
       </div>
     </div>
     <h2 class="sub">Top projects by cost</h2>
