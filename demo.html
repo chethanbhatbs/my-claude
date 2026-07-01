@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Claude — live demo</title>
+<meta name="description" content="An interactive demo of My Claude, a private local dashboard for Claude Code. Sample data — the real thing runs on your machine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1a1a19;--surface:#232322;--surface2:#2c2c2a;--line:#383836;--text:#ecebe8;--dim:#a2a29c;--faint:#6d6d67;
+    --accent:#d97757;--accent2:#e0a878;--sand:#c89968;--accent-soft:rgba(217,119,87,.14);
+    --opus:#b79bd6;--sonnet:#d97757;--haiku:#6dae9e;--ok:#7fbf92;--err:#db6a63;--info:#86a9d8;--r:8px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  a{color:var(--accent);text-decoration:none}
+  ::selection{background:var(--accent-soft)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .demobar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;background:#141311;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+  .demobar .tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);padding:3px 9px;border-radius:999px}
+  .demobar .msg{color:var(--dim)} .demobar .msg b{color:var(--text)}
+  .demobar code{font-family:ui-monospace,Menlo,monospace;background:#0e0d0c;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:11.5px;color:var(--text)}
+  .demobar .home{color:var(--dim)}
+
+  .layout{display:flex;min-height:calc(100vh - 42px)}
+  .sidebar{width:230px;flex:none;background:var(--surface);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+  .mark{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#1a1a19;display:grid;place-items:center;font-weight:800}
+  .bsub{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--faint);margin:8px 4px 12px;word-break:break-all}
+  .chip-gh{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);background:var(--surface2);color:var(--dim);font-size:12px;font-weight:600;margin-bottom:14px}
+  .chip-gh .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .nav a{display:block;padding:8px 12px;border-radius:var(--r);color:var(--dim);font-size:13.5px;font-weight:500;cursor:pointer;transition:.14s}
+  .nav a:hover{background:var(--surface2);color:var(--text)}
+  .nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .spacer{flex:1}
+  .foot{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--faint);margin-top:12px}
+
+  .main{flex:1;min-width:0;padding:28px 34px 60px;max-width:1080px}
+  .eye{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  h1.pt{font-size:1.7rem;font-weight:800;letter-spacing:-.5px;margin:0 0 4px}
+  .cap{color:var(--dim);font-size:13.5px;margin:4px 0 20px;max-width:70ch}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+  .metric{padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+  a.metric{display:block;color:inherit;cursor:pointer;transition:.14s}
+  a.metric:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .metric .l{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .metric .v{font-size:1.7rem;font-weight:800;letter-spacing:-.6px;line-height:1;font-variant-numeric:tabular-nums}
+  .metric .s{font-size:12px;color:var(--sand);margin-top:8px}
+  h2.sub{font-size:1.15rem;font-weight:700;margin:24px 0 12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .panel{border:1px solid var(--line);background:var(--surface);border-radius:10px;overflow:hidden}
+  .phead{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:13px}
+  .lrow{display:block;padding:11px 16px;border-bottom:1px solid var(--line);color:inherit;cursor:pointer;transition:.14s}
+  .lrow:last-child{border-bottom:0}.lrow:hover{background:var(--surface2)}
+  .lrow .t{font-size:13px;font-weight:500}.lrow .m{font-size:11px;color:var(--faint);margin-top:3px}
+  .card{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:16px 18px;margin-bottom:10px;transition:.14s}
+  .card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .chead{display:flex;justify-content:space-between;gap:10px}
+  .ctitle{font-weight:600;font-size:14px}.csize{color:var(--faint);font-size:11.5px}
+  .cdesc{color:var(--dim);font-size:13px;margin:6px 0 0}
+  .cmeta{display:flex;gap:9px;font-size:11px;color:var(--faint);margin-top:8px;flex-wrap:wrap}
+  .cbtns{display:flex;gap:8px;margin-top:12px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:.14s}
+  .btn:hover{background:var(--surface2)} .btn.view:hover{color:var(--info)} .btn.push:hover{color:var(--ok)} .btn.share:hover{color:var(--sand)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#1a1a19;font-weight:600}
+  .tag2{font-size:9.5px;padding:2px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;background:var(--surface2);color:var(--dim);margin-left:8px}
+  .tag2.user{color:var(--info)}.tag2.recent{color:var(--accent)}.tag2.unused{color:var(--faint)}
+  input.inp,select.inp{width:100%;padding:9px 13px;font-size:13.5px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--text);font-family:inherit}
+  input.inp:focus,select.inp:focus{border-color:var(--accent);outline:none}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+  .chip{font-size:12px;padding:5px 11px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--dim);cursor:pointer;transition:.14s}
+  .chip:hover{background:var(--surface2)} .chip.on{background:var(--accent-soft);color:var(--accent)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .seg a{padding:6px 14px;font-size:12.5px;color:var(--dim);cursor:pointer;font-family:ui-monospace,Menlo,monospace}
+  .seg a:hover{background:var(--surface2)} .seg a.on{background:var(--accent);color:#1a1a19}
+  .alert{padding:12px 15px;border-radius:var(--r);font-size:13px;margin:12px 0;background:var(--warn-bg,rgba(217,164,65,.13));color:#d9a441}
+  /* charts */
+  .bars{display:flex;align-items:flex-end;gap:4px;height:150px;padding:6px 0}
+  .bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;cursor:pointer}
+  .bars .col .o{background:var(--opus);border-radius:2px 2px 0 0}.bars .col .s{background:var(--sonnet);border-radius:2px 2px 0 0}
+  .bars .col:hover{opacity:.75}
+  .donutwrap{display:flex;align-items:center;gap:18px;padding:8px 0}
+  .donut{width:120px;height:120px;border-radius:50%;position:relative;background:conic-gradient(var(--opus) 0 68%,var(--sonnet) 68% 90%,var(--haiku) 90% 100%)}
+  .donut::after{content:"";position:absolute;inset:30px;border-radius:50%;background:var(--surface)}
+  .leg{font-size:13px;color:var(--dim);display:flex;flex-direction:column;gap:10px}.leg div{display:flex;align-items:center;gap:9px}.leg i{width:10px;height:10px;border-radius:2px}.leg b{color:var(--text);margin-left:auto}
+  .heatmap{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);grid-auto-columns:13px;gap:3px;overflow-x:auto}
+  .heatmap i{width:13px;height:13px;border-radius:2px;background:var(--surface2);transition:transform .1s}
+  .heatmap i:hover{transform:scale(1.5);outline:1px solid var(--text)}
+  /* conv two-pane */
+  .conv{display:grid;grid-template-columns:320px 1fr;gap:12px;height:520px}
+  .clist{border:1px solid var(--line);border-radius:10px;overflow-y:auto;background:var(--surface)}
+  .citem{padding:12px 15px;border-bottom:1px solid var(--line);cursor:pointer;transition:.14s}
+  .citem:hover{background:var(--surface2);padding-left:19px}.citem.on{background:var(--accent-soft)}.citem.on .ct{color:var(--accent)}
+  .ct{font-size:13px;font-weight:500;line-height:1.4}.cm{font-size:11px;color:var(--faint);margin-top:4px}
+  .cdetail{border:1px solid var(--line);border-radius:10px;overflow-y:auto;padding:18px 20px;background:var(--surface)}
+  .msg{padding:12px 15px;margin-bottom:8px;border-radius:var(--r);background:var(--surface2)}
+  .mrole{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);margin-bottom:5px}.msg.user .mrole{color:var(--accent)}
+  .mtext{white-space:pre-wrap;font-size:13px}
+  table.data{width:100%;border-collapse:collapse;font-size:13px}
+  table.data th{text-align:left;color:var(--faint);font-weight:500;padding:9px 10px;border-bottom:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
+  table.data td{padding:9px 10px;border-bottom:1px solid var(--line)}
+  .mcp-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--faint);margin-right:8px}
+  .mcp-dot.ok{background:var(--ok)}.mcp-dot.fail{background:var(--err)}
+  details.exp{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface);overflow:hidden}
+  details.exp>summary{list-style:none;cursor:pointer;padding:13px 16px;font-size:13.5px;display:flex;justify-content:space-between}
+  details.exp>summary::-webkit-details-marker{display:none}
+  details.exp .eb{padding:2px 16px 16px} pre{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;overflow-x:auto;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+  /* modal */
+  .mback{position:fixed;inset:0;background:rgba(10,8,5,.6);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:52px 16px;z-index:50;overflow-y:auto}
+  .mback.on{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-width:760px;width:100%;padding:24px 26px;max-height:86vh;display:flex;flex-direction:column;position:relative}
+  .modal .x{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--faint);font-size:22px;cursor:pointer}
+  .md-scroll{overflow-y:auto;margin-top:8px} .md-scroll h1{font-size:1.3rem;margin:14px 0 8px} .md-scroll h2{font-size:1.05rem;border-bottom:1px solid var(--line);padding-bottom:5px;margin:16px 0 8px}
+  .md-scroll p{margin:9px 0;font-size:13.5px;line-height:1.7} .md-scroll code{background:var(--surface2);color:var(--sand);padding:1px 6px;border-radius:4px;font-size:.86em}
+  .htip{position:fixed;background:var(--text);color:var(--bg);padding:5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;pointer-events:none;opacity:0;transform:translate(-50%,-100%);transition:opacity .1s;z-index:60}
+  .htip.on{opacity:1}
+  @media(max-width:820px){.sidebar{display:none}.main{padding:20px 16px}.metrics,.grid2{grid-template-columns:1fr 1fr}.conv{grid-template-columns:1fr;height:auto}}
+</style>
+</head>
+<body>
+<div class="demobar">
+  <div class="row"><span class="tag">Live demo</span><span class="msg"><b>Sample data.</b> Click the tabs, search, hover the charts — the real thing runs on your machine.</span></div>
+  <div class="row"><code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code><a class="home" href="./">← back</a></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">C</span> My Claude</div>
+    <div class="bsub">~/.claude</div>
+    <div class="chip-gh"><span class="dot"></span>chethanbhatbs</div>
+    <nav class="nav" id="nav">
+      <a data-v="overview" class="on">Overview</a>
+      <a data-v="skills">Skills</a>
+      <a data-v="mcp">MCP &amp; Plugins</a>
+      <a data-v="usage">Usage</a>
+      <a data-v="history">History</a>
+      <a data-v="system">System</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="foot">● demo · sample data</div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="mback" id="mback" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
+<div class="htip" id="htip"></div>
+
+<script>
+const D={
+  skills:[
+    {n:"a11y-ally",cat:"Frontend & UI",src:"user",uses:0,last:"never",kb:"75.0 KB",desc:"Comprehensive WCAG accessibility audits with axe-core + pa11y + Lighthouse, context-aware remediation."},
+    {n:"emergent-eval-kit",cat:"Evals & Emergent",src:"user",uses:11,last:"2026-06-30",kb:"1.8 MB",desc:"Evaluate emergent.sh agent jobs — deep analysis, model/template A-Bs, cost & latency forensics."},
+    {n:"job-deep-analysis",cat:"Evals & Emergent",src:"user",uses:9,last:"2026-06-30",kb:"127 KB",desc:"Deep analysis of any agent job. Interactive HTML report with 10 charts and a cost curve."},
+    {n:"playwright-e2e",cat:"Testing & QA",src:"plugin",uses:6,last:"2026-06-24",kb:"44 KB",desc:"End-to-end browser tests with Playwright: fixtures, network mocking, visual assertions."},
+    {n:"postgres-pro",cat:"Database & Data",src:"plugin",uses:4,last:"2026-06-20",kb:"38 KB",desc:"PostgreSQL query design, indexing, EXPLAIN analysis, and migration safety."},
+    {n:"security-review",cat:"Security",src:"user",uses:3,last:"2026-06-18",kb:"52 KB",desc:"Review a diff for injection, authz gaps, secret leaks; produce a severity-ranked report."},
+    {n:"frontend-design",cat:"Frontend & UI",src:"plugin",uses:5,last:"2026-06-28",kb:"29 KB",desc:"Opinionated visual identity: palette, type pairing, layout, and a signature element."},
+    {n:"eos",cat:"Productivity & Process",src:"user",uses:5,last:"2026-06-29",kb:"12 KB",desc:"End-of-session summary saved to disk so the next session can resume where you left off."},
+    {n:"kubernetes-specialist",cat:"DevOps & Infra",src:"plugin",uses:1,last:"2026-05-30",kb:"61 KB",desc:"Kubernetes manifests, operators, and cluster debugging."},
+    {n:"marp-slides",cat:"Docs & Reports",src:"user",uses:0,last:"never",kb:"18 KB",desc:"Build MARP decks with SVG charts, dashboard components, and dark/light themes."}
+  ],
+  convs:[
+    {t:"Refactor the auth flow to use short-lived tokens",p:"my-app",n:42,cost:"$3.10",when:"2026-06-30 17:19",
+     msgs:[["user","Refactor the auth flow to use short-lived tokens.\n\nWe currently store a long-lived session token in localStorage — I want access + refresh tokens with rotation."],["assistant","Good call. Here's the plan:\n\n1. Issue a short-lived access token (15 min) + an httpOnly refresh cookie.\n2. Rotate the refresh token on every use and detect reuse.\n\nLet me start by mapping the current auth module."],["user","Sounds right. Also make sure logout revokes the refresh token server-side."],["assistant","Done — added a token blocklist keyed by the refresh jti, checked on every refresh. Logout now writes to it."]]},
+    {t:"Debug websocket drops under load",p:"gateway",n:18,cost:"$1.20",when:"2026-06-30 13:04",
+     msgs:[["user","Our websockets drop after ~60s under load. Any ideas?"],["assistant","Classic idle-timeout or proxy buffering. Let me check: are you behind nginx? The default proxy_read_timeout is 60s — that matches your symptom exactly."],["user","Yeah we're behind nginx."],["assistant","Set `proxy_read_timeout 3600s;` and add a heartbeat ping every 30s from the server. That'll keep the connection warm and survive the proxy timeout."]]},
+    {t:"Ship the release notes for v2.4",p:"docs",n:9,cost:"$0.40",when:"2026-06-29 20:11",
+     msgs:[["user","Draft release notes for v2.4 from the merged PRs."],["assistant","Here's a draft grouped by Added / Fixed / Changed, with the breaking change on token storage called out at the top."]]},
+    {t:"Why is my heatmap not rendering?",p:"my-claude",n:24,cost:"$1.80",when:"2026-06-28 11:02",
+     msgs:[["user","The activity heatmap shows nothing when I filter to 7 days."],["assistant","The check for truncation ran before layout settled. Deferring it with requestAnimationFrame fixes it — the cells have zero height until the fonts load."]]}
+  ],
+  mcp:[
+    {n:"doit",scope:"global · 5 projects",status:"fail",detail:"HTTP 401 Unauthorized",cfg:'{\n  "type": "http",\n  "url": "https://doit.internal.example/api/mcp",\n  "headers": { "X-API-Key": "<redacted>" }\n}'},
+    {n:"deployer",scope:"global",status:"ok",detail:"HTTP 200",cfg:'{\n  "type": "http",\n  "url": "https://deployer.internal.example/mcp"\n}'},
+    {n:"redash",scope:"3 projects",status:"ok",detail:"command found: npx",cfg:'{\n  "command": "npx",\n  "args": ["-y", "redash-mcp"]\n}'},
+    {n:"taskmanager",scope:"1 project",status:"fail",detail:"HTTP 502 Bad Gateway",cfg:'{\n  "type": "http",\n  "url": "https://tasks.internal.example/mcp"\n}'}
+  ],
+  memory:[
+    {t:"chethanbhatbs · index",tag:"index",body:"# Memory Index\n\n- **Testing discipline** — see it before you say it.\n- **Report design** — dark, single accent, no colour-colour dashboards.\n- **My-Claude dashboard** — the local FastAPI app; warm-dark + clay."},
+    {t:"Core testing discipline",body:"# Core testing discipline\n\nNever mark PASS/FAIL without visual or evidence confirmation. Verify per-item, control confounds, no guessing."},
+    {t:"Report design preferences",body:"# Report design\n\nMonochrome scanner aesthetic: dark background + one accent. No colored edges. Minimal corners."}
+  ],
+  bars:[.2,.35,.15,.5,.3,.62,.28,.8,.45,.7,.38,.95,.55,.42,.68,.3,.85,.5,.72,.4,.6,.33,.9,.48,.65,.52]
+};
+
+const $=(s,r=document)=>r.querySelector(s);
+function esc(s){return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function heat(cells,weeks){let h='';for(let i=0;i<weeks*7;i++){const w=Math.floor(i/7);const r=Math.max(0,(w-Math.floor(weeks*.4))/(weeks*.6));const v=Math.random()<(r*.95)?Math.random():0;const o=v?(0.28+0.72*v).toFixed(2):0;const d=new Date();d.setDate(d.getDate()-((weeks*7)-i));const key=d.toISOString().slice(0,10);const val=Math.round(v*900);h+='<i data-d="'+key+'" data-v="'+val+'"'+(o?' style="background:var(--accent);opacity:'+o+'"':'')+'></i>'}return h}
+function barsHTML(scale){return D.bars.map(h=>{const total=Math.round(h*130*scale);const son=Math.random()<.28?Math.round(total*.3):0;const op=total-son;return '<div class="col"><div class="s" style="height:'+son+'px"></div><div class="o" style="height:'+op+'px"></div></div>'}).join('')}
+
+const V={
+  overview(){return `
+    <div class="eye">~/.claude</div><h1 class="pt">My Claude</h1>
+    <div class="cap">Everything Claude keeps on this machine, at a glance. All local, nothing shared.</div>
+    <div class="metrics">
+      <a class="metric" onclick="go('skills')"><div class="l">Skills</div><div class="v">214</div><div class="s">↑ 118 MB · 26 mine</div></a>
+      <a class="metric" onclick="go('history')"><div class="l">Conversations</div><div class="v">96</div><div class="s">11.2k messages</div></a>
+      <a class="metric" onclick="go('usage')"><div class="l">Tokens · 30d</div><div class="v">48.2M</div><div class="s">$312 · 30d</div></a>
+      <a class="metric" onclick="go('mcp')"><div class="l">On disk</div><div class="v">1.1 GB</div><div class="s">4 MCP · 5 plugins</div></a>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="l">Spend · 7d</div><div class="v">$84</div><div class="s">+12% vs prev 7d</div></div>
+      <div class="metric"><div class="l">Cache saved</div><div class="v">$2.1k</div><div class="s">vs uncached input</div></div>
+      <div class="metric"><div class="l">Busiest project</div><div class="v" style="font-size:1.1rem">my-app</div><div class="s">2,140 messages</div></div>
+      <div class="metric"><div class="l">Priciest day</div><div class="v" style="font-size:1.35rem">$41</div><div class="s">2026-06-15</div></div>
+    </div>
+    <h2 class="sub">Activity · last 22 weeks</h2>
+    <div class="heatmap" id="heat">${heat(0,22)}</div>
+    <h2 class="sub">Recent</h2>
+    <div class="grid2">
+      <div class="panel"><div class="phead">Recent conversations <a onclick="go('history')">All →</a></div>
+        ${D.convs.map((c,i)=>`<a class="lrow" onclick="go('history');setTimeout(()=>openConv(${i}),40)"><div class="t">${esc(c.t)}</div><div class="m">${c.p} · ${c.n} msg · ${c.cost} · ${c.when.split(' ')[0]}</div></a>`).join('')}
+      </div>
+      <div class="panel"><div class="phead">Recently updated skills <a onclick="go('skills')">All →</a></div>
+        ${D.skills.slice(1,6).map(s=>`<a class="lrow" onclick="go('skills')"><div class="t">${s.n}</div><div class="m">${s.cat} · ${s.kb}</div></a>`).join('')}
+      </div>
+    </div>`;},
+
+  usage(){return `
+    <div class="eye">~/.claude/projects · usage</div><h1 class="pt">Token Usage</h1>
+    <div class="cap">Billable = what you pay for; context = what the model saw. Cost uses public pricing.</div>
+    <div class="row" style="margin-bottom:14px">
+      <div class="seg" id="uwin"><a class="on" data-s="1">All time</a><a data-s="0.55">30 days</a><a data-s="0.18">7 days</a></div>
+      <div class="seg" id="ufam"><a class="on">All</a><a>opus</a><a>sonnet</a><a>haiku</a></div>
+    </div>
+    <div class="metrics" id="umet">
+      <div class="metric"><div class="l">Billable tokens</div><div class="v">9.14B</div></div>
+      <div class="metric"><div class="l">Context tokens</div><div class="v">8.91B</div></div>
+      <div class="metric"><div class="l">Output</div><div class="v">41.5M</div></div>
+      <div class="metric"><div class="l">Est. cost</div><div class="v">$312</div></div>
+    </div>
+    <div class="grid2" style="grid-template-columns:1.6fr 1fr">
+      <div class="panel" style="padding:14px 16px"><div class="eye" style="margin-bottom:12px">Billable tokens per day</div><div class="bars" id="bars">${barsHTML(1)}</div></div>
+      <div class="panel" style="padding:14px 16px"><div class="eye" style="margin-bottom:12px">Cost by model</div>
+        <div class="donutwrap"><div class="donut"></div><div class="leg"><div><i style="background:var(--opus)"></i>opus<b>68%</b></div><div><i style="background:var(--sonnet)"></i>sonnet<b>22%</b></div><div><i style="background:var(--haiku)"></i>haiku<b>10%</b></div></div></div>
+      </div>
+    </div>
+    <h2 class="sub">Top projects by cost</h2>
+    <table class="data"><thead><tr><th>project</th><th>tokens</th><th>est cost</th><th>turns</th></tr></thead><tbody>
+      <tr><td>my-app</td><td>7.15B</td><td>$182.40</td><td>2140</td></tr>
+      <tr><td>gateway</td><td>1.02B</td><td>$61.20</td><td>640</td></tr>
+      <tr><td>docs</td><td>0.62B</td><td>$38.10</td><td>310</td></tr>
+      <tr><td>my-claude</td><td>0.35B</td><td>$30.30</td><td>420</td></tr>
+    </tbody></table>`;},
+
+  skills(){return `
+    <div class="eye">~/.claude/skills</div><h1 class="pt">Skills</h1>
+    <div class="cap">Capabilities loaded into Claude. Usage counts come from your transcripts.</div>
+    <input class="inp" id="sksearch" placeholder="Search by name or description…" oninput="renderSkills()" style="margin-bottom:12px">
+    <div class="chips" id="skchips"></div>
+    <div class="cap" id="skcount" style="margin:0 0 14px"></div>
+    <div id="skgrid"></div>`;},
+
+  mcp(){return `
+    <div class="eye">settings.json · ~/.claude.json</div><h1 class="pt">MCP &amp; Plugins</h1>
+    <div class="cap">External tool servers via the Model Context Protocol. Secrets auto-redacted.</div>
+    <div class="row" style="margin-bottom:14px"><div class="seg"><a class="on">MCP · 4</a><a>Plugins · 5</a></div><button class="btn" onclick="checkHealth()" id="hbtn">Check health</button></div>
+    <div id="mcplist">${D.mcp.map((m,i)=>`
+      <details class="exp"><summary><span><span class="mcp-dot" id="dot${i}"></span>${m.n} <span class="tag2">${m.scope}</span><span id="st${i}" style="font-size:11.5px;color:var(--dim);margin-left:8px"></span></span><span style="color:var(--faint)">+</span></summary>
+      <div class="eb"><pre>${esc(m.cfg)}</pre></div></details>`).join('')}</div>`;},
+
+  history(){return `
+    <div class="eye">~/.claude/projects · transcripts</div><h1 class="pt">History</h1>
+    <div class="alert">Sensitive: conversation transcripts are stored in plaintext. Don't share this screen without redacting.</div>
+    <div class="row" style="margin-bottom:12px"><input class="inp" placeholder="Search full text, or filter by project" style="flex:1"><div class="seg"><a class="on">All time</a><a>30 days</a><a>7 days</a></div></div>
+    <div class="cap" style="margin:0 0 12px"><b style="color:var(--text)">${D.convs.length}</b> conversations · sample</div>
+    <div class="conv">
+      <div class="clist" id="clist">${D.convs.map((c,i)=>`<div class="citem${i===0?' on':''}" onclick="openConv(${i})"><div class="ct">${esc(c.t)}</div><div class="cm">${c.p} · ${c.n} msg · ${c.cost} · ${c.when.split(' ')[0]}</div></div>`).join('')}</div>
+      <div class="cdetail" id="cdetail"></div>
+    </div>`;},
+
+  system(){return `
+    <div class="eye">~/.claude · config + memory</div><h1 class="pt">System</h1>
+    <div class="cap">The configuration and memory that shape how Claude behaves on this machine.</div>
+    <div class="seg" id="systab" style="margin-bottom:16px"><a class="on" data-t="config">Config</a><a data-t="memory">Memory · ${D.memory.length}</a></div>
+    <div id="sysbody"></div>`;}
+};
+
+function go(v){
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  $('#main').innerHTML=V[v](); window.scrollTo(0,0);
+  if(v==='skills'){renderChips();renderSkills();}
+  if(v==='usage')bindUsage();
+  if(v==='mcp'){/* dots start neutral */}
+  if(v==='history')openConv(0);
+  if(v==='system')bindSys();
+  if(v==='overview')bindHeat();
+}
+document.getElementById('nav').addEventListener('click',e=>{const a=e.target.closest('a');if(a)go(a.dataset.v)});
+
+/* skills */
+let skCat='All';
+function renderChips(){const cats=['All',...new Set(D.skills.map(s=>s.cat))];$('#skchips').innerHTML=cats.map(c=>`<span class="chip${c===skCat?' on':''}" onclick="skCat='${c}';renderChips();renderSkills()">${c}</span>`).join('')}
+function renderSkills(){const q=($('#sksearch')?.value||'').toLowerCase();let f=D.skills.filter(s=>(skCat==='All'||s.cat===skCat)&&(!q||s.n.toLowerCase().includes(q)||s.desc.toLowerCase().includes(q)));
+  $('#skcount').innerHTML=`<b style="color:var(--text)">${f.length}</b> of ${D.skills.length} skills · sample`;
+  $('#skgrid').innerHTML=f.map(s=>`<div class="card"><div class="chead"><div class="ctitle">${s.n}${s.uses===0?'<span class="tag2 unused">unused</span>':''}${s.last!=='never'&&s.uses>4?'<span class="tag2 recent">recent</span>':''}</div><div class="csize">${s.kb}</div></div>
+    <div class="cdesc">${esc(s.desc)}</div><div class="cmeta"><span>${s.cat}</span><span>·</span><span>${s.uses} uses</span><span>·</span><span>used ${s.last}</span></div>
+    <div class="cbtns"><button class="btn view" onclick="viewSkill('${s.n}')">View</button><button class="btn push">Push</button><button class="btn share">Share</button><span class="tag2 ${s.src==='user'?'user':''}" style="margin-left:auto">${s.src}</span></div></div>`).join('')||'<div class="alert">No skills match.</div>'}
+function viewSkill(n){const s=D.skills.find(x=>x.n===n);const body=`# ${s.n}\n\n${s.desc}\n\n## When to use\nInvoke when the task matches this skill's description. Claude searches skill descriptions to decide which tools to use.\n\n## Notes\n- Category: **${s.cat}**\n- Source: ${s.src}\n- Detected invocations: ${s.uses}`;
+  const html=body.replace(/^# (.*)$/m,'<h1>$1</h1>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n\n').map(p=>p.startsWith('<h')?p:'<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
+  openModal(`<button class="x" onclick="closeModal()">×</button><h1 class="pt" style="font-size:1.3rem">${s.n}</h1><div class="cap mono" style="margin:4px 0 12px">~/.claude/skills/${s.n}</div>
+    <div class="cbtns" style="margin-bottom:8px"><button class="btn primary">Open in Finder</button><button class="btn">Copy path</button></div>
+    <div style="font-weight:600;border-top:1px solid var(--line);padding-top:14px">SKILL.md</div><div class="md-scroll">${html}</div>`);}
+
+/* usage interactions */
+function bindUsage(){
+  $('#uwin').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#uwin').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+    const sc=+a.dataset.s;$('#bars').innerHTML=barsHTML(sc);
+    const mult=sc, met=[['Billable tokens',(9.14*mult).toFixed(2)+'B'],['Context tokens',(8.91*mult).toFixed(2)+'B'],['Output',(41.5*mult).toFixed(1)+'M'],['Est. cost','$'+Math.round(312*mult)]];
+    $('#umet').innerHTML=met.map(m=>`<div class="metric"><div class="l">${m[0]}</div><div class="v">${m[1]}</div></div>`).join('');});
+  $('#ufam').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#ufam').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');$('#bars').innerHTML=barsHTML(a.textContent==='All'?1:.5);});
+}
+/* mcp health */
+function checkHealth(){const b=$('#hbtn');b.textContent='Checking…';setTimeout(()=>{D.mcp.forEach((m,i)=>{$('#dot'+i).className='mcp-dot '+m.status;$('#st'+i).textContent=m.status+' · '+m.detail;});b.textContent='Re-check health';},600);}
+/* history */
+function openConv(i){const c=D.convs[i];document.querySelectorAll('.citem').forEach((e,j)=>e.classList.toggle('on',j===i));
+  $('#cdetail').innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px"><div style="font-weight:600">${esc(c.t)}</div><div class="cbtns" style="margin:0"><button class="btn primary">Resume</button><button class="btn">Export .md</button></div></div>
+    <div class="cap" style="margin:0 0 12px">${c.n} messages · <b style="color:var(--text)">${c.cost}</b> · ${c.p}</div>
+    ${c.msgs.map(m=>`<div class="msg ${m[0]}"><div class="mrole">${m[0]}</div><div class="mtext">${esc(m[1])}</div></div>`).join('')}`;}
+/* system */
+function bindSys(){$('#systab').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#systab').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');renderSys(a.dataset.t)});renderSys('config')}
+function renderSys(t){if(t==='memory'){$('#sysbody').innerHTML=D.memory.map(m=>{const html=m.body.replace(/^# (.*)$/m,'<h1>$1</h1>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^- (.*)$/gm,'• $1').split('\n').map(l=>l.startsWith('<h')?l:l?'<div>'+l+'</div>':'').join('');
+    return `<details class="exp"><summary><span>${m.t}${m.tag?' <span class="tag2">'+m.tag+'</span>':''}</span><span style="color:var(--faint)">+</span></summary><div class="eb md-scroll">${html}</div></details>`}).join('');}
+  else{$('#sysbody').innerHTML=`<div class="grid2"><div class="panel"><div class="phead">Permissions</div><div style="padding:14px 16px">
+    <div class="cmeta" style="margin:0 0 12px"><span><b style="color:var(--text)">88</b> allow</span><span>·</span><span><b style="color:var(--text)">0</b> ask</span><span>·</span><span><b style="color:var(--text)">2</b> deny</span></div>
+    <div class="mono" style="font-size:11.5px;color:var(--dim);line-height:1.9">Bash(git:*)<br>Bash(ls:*)<br>Bash(grep:*)<br>Read(*)<br>Edit(*)<br>WebFetch(*)</div></div></div>
+    <div class="panel"><div class="phead">Hooks &amp; settings</div><div style="padding:14px 16px"><div class="chips" style="margin:0">${['SessionStart','PreToolUse','PostToolUse','Stop','UserPromptSubmit'].map(h=>'<span class="chip" style="cursor:default">'+h+'</span>').join('')}</div></div></div></div>
+    <h2 class="sub">CLAUDE.md</h2><div class="card"><div class="md-scroll"><h1>Global rules</h1><p>Be concise. Read before writing. Prefer editing over rewriting. Test before declaring done.</p></div></div>`;}}
+
+/* modal + heatmap tooltip */
+function openModal(h){$('#modal').innerHTML=h;$('#mback').classList.add('on')}
+function closeModal(){$('#mback').classList.remove('on')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+function bindHeat(){const el=$('#heat');if(!el)return;const tip=$('#htip');
+  el.addEventListener('mousemove',e=>{const c=e.target.closest('i');if(!c||!c.dataset.d){tip.classList.remove('on');return;}const v=+c.dataset.v;tip.textContent=(v?v+' turns':'No activity')+' · '+c.dataset.d;const r=c.getBoundingClientRect();tip.style.left=(r.left+r.width/2)+'px';tip.style.top=(r.top-6)+'px';tip.classList.add('on')});
+  el.addEventListener('mouseleave',()=>tip.classList.remove('on'));}
+
+go('overview');
+</script>
+</body>
+</html>
