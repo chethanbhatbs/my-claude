@@ -155,8 +155,8 @@
 const D={
   skills:[
     {n:"a11y-ally",cat:"Frontend & UI",src:"user",uses:0,last:"never",kb:"75.0 KB",desc:"Comprehensive WCAG accessibility audits with axe-core + pa11y + Lighthouse, context-aware remediation."},
-    {n:"emergent-eval-kit",cat:"Evals & Emergent",src:"user",uses:11,last:"2026-06-30",kb:"1.8 MB",desc:"Evaluate emergent.sh agent jobs — deep analysis, model/template A-Bs, cost & latency forensics."},
-    {n:"job-deep-analysis",cat:"Evals & Emergent",src:"user",uses:9,last:"2026-06-30",kb:"127 KB",desc:"Deep analysis of any agent job. Interactive HTML report with 10 charts and a cost curve."},
+    {n:"api-tester",cat:"Testing & QA",src:"user",uses:11,last:"2026-06-30",kb:"1.8 MB",desc:"Generate and run REST API test suites: happy paths, edge cases, auth, and schema validation."},
+    {n:"report-builder",cat:"Docs & Reports",src:"user",uses:9,last:"2026-06-30",kb:"127 KB",desc:"Turn a dataset into an interactive HTML report with charts, filters, and a summary."},
     {n:"playwright-e2e",cat:"Testing & QA",src:"plugin",uses:6,last:"2026-06-24",kb:"44 KB",desc:"End-to-end browser tests with Playwright: fixtures, network mocking, visual assertions."},
     {n:"postgres-pro",cat:"Database & Data",src:"plugin",uses:4,last:"2026-06-20",kb:"38 KB",desc:"PostgreSQL query design, indexing, EXPLAIN analysis, and migration safety."},
     {n:"security-review",cat:"Security",src:"user",uses:3,last:"2026-06-18",kb:"52 KB",desc:"Review a diff for injection, authz gaps, secret leaks; produce a severity-ranked report."},
@@ -172,19 +172,19 @@ const D={
      msgs:[["user","Our websockets drop after ~60s under load. Any ideas?"],["assistant","Classic idle-timeout or proxy buffering. Let me check: are you behind nginx? The default proxy_read_timeout is 60s — that matches your symptom exactly."],["user","Yeah we're behind nginx."],["assistant","Set `proxy_read_timeout 3600s;` and add a heartbeat ping every 30s from the server. That'll keep the connection warm and survive the proxy timeout."]]},
     {t:"Ship the release notes for v2.4",p:"docs",n:9,cost:"$0.40",when:"2026-06-29 20:11",
      msgs:[["user","Draft release notes for v2.4 from the merged PRs."],["assistant","Here's a draft grouped by Added / Fixed / Changed, with the breaking change on token storage called out at the top."]]},
-    {t:"Why is my heatmap not rendering?",p:"my-claude",n:24,cost:"$1.80",when:"2026-06-28 11:02",
+    {t:"Why is my heatmap not rendering?",p:"dashboard",n:24,cost:"$1.80",when:"2026-06-28 11:02",
      msgs:[["user","The activity heatmap shows nothing when I filter to 7 days."],["assistant","The check for truncation ran before layout settled. Deferring it with requestAnimationFrame fixes it — the cells have zero height until the fonts load."]]}
   ],
   mcp:[
-    {n:"doit",scope:"global · 5 projects",status:"fail",detail:"HTTP 401 Unauthorized",cfg:'{\n  "type": "http",\n  "url": "https://doit.internal.example/api/mcp",\n  "headers": { "X-API-Key": "<redacted>" }\n}'},
-    {n:"deployer",scope:"global",status:"ok",detail:"HTTP 200",cfg:'{\n  "type": "http",\n  "url": "https://deployer.internal.example/mcp"\n}'},
-    {n:"redash",scope:"3 projects",status:"ok",detail:"command found: npx",cfg:'{\n  "command": "npx",\n  "args": ["-y", "redash-mcp"]\n}'},
-    {n:"taskmanager",scope:"1 project",status:"fail",detail:"HTTP 502 Bad Gateway",cfg:'{\n  "type": "http",\n  "url": "https://tasks.internal.example/mcp"\n}'}
+    {n:"github",scope:"global",status:"ok",detail:"command found: npx",cfg:'{\n  "command": "npx",\n  "args": ["-y", "@modelcontextprotocol/server-github"],\n  "env": { "GITHUB_TOKEN": "<redacted>" }\n}'},
+    {n:"filesystem",scope:"global · 3 projects",status:"ok",detail:"command found: npx",cfg:'{\n  "command": "npx",\n  "args": ["-y", "@modelcontextprotocol/server-filesystem", "~/projects"]\n}'},
+    {n:"postgres",scope:"2 projects",status:"fail",detail:"command not found: pg-mcp",cfg:'{\n  "command": "pg-mcp",\n  "args": ["--dsn", "<redacted>"]\n}'},
+    {n:"notion",scope:"1 project",status:"ok",detail:"HTTP 200",cfg:'{\n  "type": "http",\n  "url": "https://mcp.notion.com/mcp",\n  "headers": { "Authorization": "<redacted>" }\n}'}
   ],
   memory:[
-    {t:"chethanbhatbs · index",tag:"index",body:"# Memory Index\n\n- **Testing discipline** — see it before you say it.\n- **Report design** — dark, single accent, no colour-colour dashboards.\n- **My-Claude dashboard** — the local FastAPI app; warm-dark + clay."},
-    {t:"Core testing discipline",body:"# Core testing discipline\n\nNever mark PASS/FAIL without visual or evidence confirmation. Verify per-item, control confounds, no guessing."},
-    {t:"Report design preferences",body:"# Report design\n\nMonochrome scanner aesthetic: dark background + one accent. No colored edges. Minimal corners."}
+    {t:"Memory · index",tag:"index",body:"# Memory Index\n\n- **Testing discipline** — try it before you claim it works.\n- **Design preferences** — dark, single accent, minimal corners.\n- **Commit style** — small, focused commits with a clear subject line."},
+    {t:"Testing discipline",body:"# Testing discipline\n\nNever mark something done without running it. Verify each change against the real output before claiming it works."},
+    {t:"Design preferences",body:"# Design preferences\n\nDark background, one accent colour, minimal corner radius, no colored edges. Keep it uncluttered."}
   ],
   bars:[.2,.35,.15,.5,.3,.62,.28,.8,.45,.7,.38,.95,.55,.42,.68,.3,.85,.5,.72,.4,.6,.33,.9,.48,.65,.52]
 };
@@ -246,7 +246,7 @@ const V={
       <tr><td>my-app</td><td>7.15B</td><td>$182.40</td><td>2140</td></tr>
       <tr><td>gateway</td><td>1.02B</td><td>$61.20</td><td>640</td></tr>
       <tr><td>docs</td><td>0.62B</td><td>$38.10</td><td>310</td></tr>
-      <tr><td>my-claude</td><td>0.35B</td><td>$30.30</td><td>420</td></tr>
+      <tr><td>dashboard</td><td>0.35B</td><td>$30.30</td><td>420</td></tr>
     </tbody></table>`;},
 
   skills(){return `
