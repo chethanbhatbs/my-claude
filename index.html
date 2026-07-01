@@ -159,6 +159,7 @@
 <header><div class="wrap"><nav>
   <div class="brand"><span class="mark">C</span> My <b>Claude</b></div>
   <div class="nlinks">
+    <a href="demo.html">Live demo</a>
     <a href="#features">Features</a>
     <a href="#how">How it works</a>
     <a href="#privacy">Privacy</a>
@@ -176,12 +177,17 @@
     <code id="cmd">curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
     <button class="copy" onclick="copyCmd()">Copy</button>
   </div>
+  <div style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a class="btn solid" href="demo.html">▶ Try the live demo</a>
+    <a class="btn" href="#how">How it works</a>
+  </div>
   <div class="cta-note">Python 3.9+ · macOS or Linux · opens in your browser · nothing uploaded</div>
 </div></div></div>
 
 <!-- BIG PRODUCT SHOWCASE: the Usage / analytics view -->
 <div class="showcase"><div class="wrap rise" style="animation-delay:.08s">
-  <div class="shot">
+  <div style="text-align:center;margin-bottom:14px"><a href="demo.html" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--accent)">● Live demo — click to explore every view →</a></div>
+  <div class="shot" onclick="location.href='demo.html'" style="cursor:pointer">
     <div class="bar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="url">127.0.0.1:8766/p/usage</span></div>
     <div class="umock">
       <div class="urail">
