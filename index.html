@@ -9,328 +9,225 @@
 <meta property="og:description" content="Skills, MCP, token cost, conversation history. One command. Fully local.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#141311; --surface:#1c1b18; --surface2:#242219; --raise:#26241f; --line:#33312c;
-    --text:#f1f0ec; --dim:#a8a69f; --faint:#726f68;
-    --accent:#d97757; --accent2:#e0a878; --sand:#c89968; --accent-soft:rgba(217,119,87,.13);
-    --opus:#b79bd6; --sonnet:#d97757; --haiku:#6dae9e; --ok:#7fbf92;
-    --shadow-lg:0 50px 100px -24px rgba(0,0,0,.72), 0 16px 40px -12px rgba(0,0,0,.55);
-    --r:12px;
+    --bg:#ffffff; --bg2:#faf8f5; --ink:#191410; --dim:#5f594f; --faint:#9a938a;
+    --line:#eae5dd; --line2:#e0dace;
+    --accent:#c15a38; --accent-ink:#a4472a; --accent-soft:rgba(193,90,56,.07);
+    --shot:0 30px 70px -28px rgba(30,20,10,.28), 0 8px 20px -12px rgba(30,20,10,.12);
   }
   *,*::before,*::after{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:-.04px;overflow-x:hidden}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:-.011em;overflow-x:hidden}
   .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
-  a{color:var(--accent);text-decoration:none}
-  .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
-  ::selection{background:var(--accent-soft)}
+  a{color:var(--accent-ink);text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+  ::selection{background:rgba(193,90,56,.16)}
   :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:600;font-size:14.5px;cursor:pointer;font-family:inherit;transition:.16s}
-  .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
-  .btn.solid{background:var(--accent);border-color:var(--accent);color:#141311}
-  .btn.solid:hover{filter:brightness(1.08)}
+  img{max-width:100%;display:block}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--accent-ink)}
 
-  header{position:sticky;top:0;z-index:30;background:rgba(20,19,17,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-  nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px}
-  .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#141311;display:grid;place-items:center;font-weight:800}
-  .brand b{color:var(--accent);font-weight:800}
-  .nlinks{display:flex;gap:28px;align-items:center;font-size:14px}
-  .nlinks a{color:var(--dim)} .nlinks a:hover{color:var(--text)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-weight:600;font-size:14.5px;font-family:inherit;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--ink);transform:translateY(-1px)}
+  .btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn.solid:hover{background:#000}
 
-  /* ---------- hero: centered ---------- */
-  .hero{position:relative;text-align:center;padding:78px 0 34px}
-  .glow{position:absolute;left:50%;top:-40px;transform:translateX(-50%);width:900px;height:460px;background:radial-gradient(closest-side,rgba(217,119,87,.18),transparent 70%);filter:blur(30px);pointer-events:none;z-index:0}
-  .hero .inner{position:relative;z-index:1;max-width:820px;margin:0 auto}
-  .pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;font-family:"JetBrains Mono",monospace;letter-spacing:.5px;color:var(--accent);background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);padding:6px 13px;border-radius:999px;margin-bottom:24px}
-  .pill .d{width:6px;height:6px;border-radius:50%;background:var(--accent)}
-  h1{font-size:clamp(36px,5.2vw,58px);line-height:1.04;letter-spacing:-.028em;font-weight:800;margin:0 0 20px}
-  h1 .grad{background:linear-gradient(115deg,var(--accent),var(--accent2) 55%,var(--sand));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .lead{font-size:1.18rem;color:var(--dim);max-width:52ch;margin:0 auto 30px}
-  .cmd{display:flex;align-items:center;gap:12px;background:#0e0d0c;border:1px solid var(--line);border-radius:11px;padding:13px 13px 13px 17px;max-width:560px;margin:0 auto}
-  .cmd code{flex:1;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--text);overflow-x:auto;white-space:nowrap;text-align:left}
+  header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:70px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:17px}
+  .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800}
+  .nlinks{display:flex;gap:30px;align-items:center;font-size:14.5px}
+  .nlinks a{color:var(--dim)} .nlinks a:hover{color:var(--ink)}
+
+  .hero{text-align:center;padding:92px 0 44px}
+  .hero .eyebrow{margin-bottom:22px}
+  h1{font-size:clamp(40px,6vw,74px);line-height:1.0;letter-spacing:-.04em;font-weight:800;margin:0 auto 22px;max-width:15ch}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lead{font-size:1.25rem;color:var(--dim);max-width:56ch;margin:0 auto 34px;line-height:1.55}
+  .cmd{display:inline-flex;align-items:center;gap:14px;background:#f7f4ef;border:1px solid var(--line2);border-radius:12px;padding:13px 13px 13px 18px;max-width:100%}
+  .cmd code{font-family:"JetBrains Mono",monospace;font-size:13.5px;color:var(--ink);overflow-x:auto;white-space:nowrap}
   .cmd .dollar{color:var(--faint)}
-  .copy{flex:none;padding:8px 13px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
-  .copy:hover{border-color:var(--accent)}
-  .cta-note{margin-top:16px;font-size:13px;color:var(--faint)}
+  .copy{flex:none;padding:9px 15px;border-radius:8px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .copy:hover{border-color:var(--ink)}
+  .cta{margin-top:22px;display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap}
+  .cta .note{color:var(--faint);font-size:13.5px}
 
-  /* ---------- big full-width product shot ---------- */
-  .showcase{position:relative;padding:14px 0 8px}
-  .shot{max-width:1040px;margin:0 auto;border-radius:16px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow-lg);overflow:hidden}
-  .shot .bar{display:flex;align-items:center;gap:7px;padding:12px 15px;background:#1a1916;border-bottom:1px solid var(--line)}
-  .shot .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
-  .tl1{background:#e0736a}.tl2{background:#e0b24f}.tl3{background:#7fbf92}
-  .shot .url{margin-left:12px;flex:1;height:24px;border-radius:7px;background:#242219;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--faint);display:flex;align-items:center;padding:0 12px}
-  .umock{display:grid;grid-template-columns:172px 1fr}
-  .urail{border-right:1px solid var(--line);background:#1a1916;padding:18px 12px;display:flex;flex-direction:column;gap:5px}
-  .urail .ub{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;margin-bottom:10px}
-  .urail .ub i{width:21px;height:21px;border-radius:6px;background:var(--accent);color:#141311;display:grid;place-items:center;font-size:11px;font-weight:800}
-  .urail a{font-size:12.5px;color:var(--faint);padding:7px 10px;border-radius:7px}
-  .urail a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
-  .umain{padding:20px 24px 24px;min-width:0}
-  .ueye{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
-  .utitle{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
-  .useg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0 8px 14px 0;vertical-align:top}
-  .useg span{font-family:"JetBrains Mono",monospace;font-size:10px;padding:5px 11px;color:var(--faint)}
-  .useg span.on{background:var(--accent);color:#141311;font-weight:600}
-  .umet{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-  .umet .c{border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:var(--surface)}
-  .umet .l{font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
-  .umet .v{font-size:1.45rem;font-weight:800;letter-spacing:-.6px;line-height:1}
-  .ucharts{display:grid;grid-template-columns:1.65fr 1fr;gap:16px}
-  .ucard{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:14px 15px}
-  .ucap{font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
-  .bars{display:flex;align-items:flex-end;gap:4px;height:132px}
-  .bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
-  .bars .col .o{background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:3px 3px 0 0}
-  .bars .col .s{background:var(--sand);border-radius:3px 3px 0 0}
-  .donutwrap{display:flex;align-items:center;gap:16px}
-  .donut{width:104px;height:104px;border-radius:50%;flex:none;position:relative;background:conic-gradient(var(--accent) 0 68%,var(--sand) 68% 90%,var(--haiku) 90% 100%)}
-  .donut::after{content:"";position:absolute;inset:26px;border-radius:50%;background:var(--surface)}
-  .leg{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:9px}
-  .leg div{display:flex;align-items:center;gap:8px} .leg i{width:9px;height:9px;border-radius:2px;display:inline-block}
-  .leg b{color:var(--text);font-weight:600;margin-left:auto}
+  .heroshot{margin-top:60px}
+  .frame{border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:var(--shot);background:#1a1a19}
+  .frame.hero-f{max-width:1000px;margin:0 auto}
 
-  /* ---------- stat strip ---------- */
-  .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface);margin-top:40px}
-  .strip .wrap{display:flex;justify-content:space-around;gap:20px;padding:24px;flex-wrap:wrap}
-  .stat{text-align:center}
-  .stat .v{font-size:1.6rem;font-weight:800;letter-spacing:-.5px}
-  .stat .v b{background:linear-gradient(115deg,var(--accent),var(--sand));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .stat .l{font-size:12.5px;color:var(--dim)}
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:70px;background:var(--bg2)}
+  .trust .wrap{display:flex;justify-content:center;gap:44px;padding:26px;flex-wrap:wrap;font-size:14px;color:var(--dim)}
+  .trust b{color:var(--ink);font-weight:700}
 
-  section{padding:66px 0}
-  .kick{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
-  h2{font-size:2.15rem;font-weight:800;letter-spacing:-.9px;margin:0 0 12px;line-height:1.1}
-  .muted{color:var(--dim);max-width:60ch;font-size:1.02rem}
+  section{padding:96px 0}
+  .rowhead{max-width:640px;margin:0 auto 0}
+  .frow{display:grid;grid-template-columns:1fr 1.15fr;gap:64px;align-items:center;padding:72px 0;border-top:1px solid var(--line)}
+  .frow.rev .txt{order:2} .frow.rev .pic{order:1}
+  .frow .eyebrow{margin-bottom:16px}
+  .frow h2{font-size:2.1rem;font-weight:800;letter-spacing:-.03em;line-height:1.08;margin:0 0 14px}
+  .frow p{font-size:1.06rem;color:var(--dim);margin:0 0 20px;max-width:44ch}
+  .frow ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+  .frow li{display:flex;gap:10px;font-size:14.5px;color:var(--dim)}
+  .frow li b{color:var(--ink);font-weight:600}
+  .frow li .tick{color:var(--accent);flex:none;font-weight:700}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 
-  /* ---------- bento features ---------- */
-  .bento{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
-  .bento4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
-  .card{border:1px solid var(--line);border-radius:16px;padding:24px;background:linear-gradient(180deg,var(--surface),#191815);transition:.16s}
-  .card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 42%,var(--line));box-shadow:0 22px 44px -20px rgba(0,0,0,.65)}
-  .card .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:17px;margin-bottom:14px;background:var(--accent-soft);color:var(--accent)}
-  .card h3{margin:0 0 7px;font-size:1.12rem;font-weight:700}
-  .card p{margin:0;color:var(--dim);font-size:14px}
-  .card.big{padding-bottom:18px}
-  .viz{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
-  .vbars{display:flex;align-items:flex-end;gap:5px;height:60px}
-  .vbars i{flex:1;background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:2px 2px 0 0}
-  .vheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(5,8px);grid-auto-columns:8px;gap:3px}
-  .vheat i{width:8px;height:8px;border-radius:2px;background:var(--surface2)}
-  .card4 .ic{width:34px;height:34px;font-size:15px;margin-bottom:12px}
-  .card4 h3{font-size:1rem} .card4 p{font-size:13px}
+  h2.big{font-size:2.5rem;font-weight:800;letter-spacing:-.03em;margin:0 0 14px;line-height:1.06}
+  .sub-lead{font-size:1.1rem;color:var(--dim);max-width:56ch}
 
-  /* ---------- gallery ---------- */
-  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
-  .gcard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);transition:.16s}
-  .gcard:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));box-shadow:0 24px 50px -22px rgba(0,0,0,.65)}
-  .gbar{display:flex;align-items:center;gap:6px;padding:10px 13px;background:#1a1916;border-bottom:1px solid var(--line)}
-  .gbar i{width:9px;height:9px;border-radius:50%}
-  .gbar .u{margin-left:8px;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--faint)}
-  .gcard .gimg{display:block;width:100%;height:auto;border-bottom:1px solid var(--line)}
-  .gcap{padding:15px 18px}
-  .gcap b{display:block;font-size:15px;font-weight:700;margin-bottom:3px}
-  .gcap span{color:var(--dim);font-size:13.5px}
-  @media(max-width:900px){.gallery{grid-template-columns:1fr}}
+  .install{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:44px}
+  .step .n{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-ink);margin-bottom:12px;letter-spacing:1px}
+  .step h3{margin:0 0 7px;font-size:1.1rem;font-weight:700}
+  .step p{margin:0;color:var(--dim);font-size:14.5px}
+  .step code{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#efeae2;padding:2px 7px;border-radius:5px;color:var(--accent-ink)}
 
-  /* ---------- steps ---------- */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
-  .step{border:1px solid var(--line);border-radius:14px;padding:24px;background:var(--surface)}
-  .step .n{font-family:"JetBrains Mono",monospace;font-size:26px;color:color-mix(in srgb,var(--accent) 60%,var(--line));margin-bottom:12px}
-  .step h3{margin:0 0 7px;font-size:1.08rem}
-  .step p{margin:0;color:var(--dim);font-size:14px}
-  .step code{font-family:"JetBrains Mono",monospace;font-size:12px;background:var(--surface2);padding:1px 6px;border-radius:5px;color:var(--sand)}
+  .privacy ul{margin:26px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .privacy li{display:flex;gap:12px;font-size:15px;color:var(--dim)}
+  .privacy li b{color:var(--ink);font-weight:600}
+  .privacy .dot{color:var(--accent);flex:none;font-size:11px;margin-top:6px}
+  .req{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+  .qpill{font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:8px 13px;border:1px solid var(--line2);border-radius:8px;color:var(--dim)}
 
-  .privacy{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--surface),#191815);padding:38px}
-  .privacy ul{margin:20px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .privacy li{display:flex;gap:11px;font-size:14.5px;color:var(--dim)}
-  .privacy li b{color:var(--text);font-weight:600} .privacy .dot{color:var(--ok);flex:none}
-  .req{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
-  .qpill{font-family:"JetBrains Mono",monospace;font-size:12px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;color:var(--dim)}
+  .cta-final{text-align:center;padding:104px 0}
+  .cta-final h2{font-size:2.8rem}
+  .cta-final .cmd{margin-top:30px}
 
-  .cta{text-align:center;padding:78px 0}
-  .cta h2{font-size:2.4rem}
-  .cta .cmd{margin:28px auto 0}
-  footer{border-top:1px solid var(--line);padding:28px 0;color:var(--faint);font-size:13.5px}
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--faint);font-size:13.5px}
   footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
-  @media(prefers-reduced-motion:no-preference){.rise{opacity:0;transform:translateY(12px);animation:r .6s cubic-bezier(.2,.7,.3,1) forwards}@keyframes r{to{opacity:1;transform:none}}}
-  @media(max-width:900px){
-    h1{font-size:38px}.bento,.bento4,.steps,.privacy ul,.ucharts{grid-template-columns:1fr}
-    .umock{grid-template-columns:1fr}.urail{display:none}.umet{grid-template-columns:repeat(2,1fr)}
-    .nlinks a:not(.gh){display:none}.glow{width:520px}
+  @media(prefers-reduced-motion:no-preference){.rise{opacity:0;transform:translateY(14px);animation:r .7s cubic-bezier(.2,.7,.3,1) forwards}@keyframes r{to{opacity:1;transform:none}}}
+  @media(max-width:860px){
+    h1{font-size:42px}.frow{grid-template-columns:1fr;gap:32px;padding:52px 0}
+    .frow.rev .txt{order:1}.frow.rev .pic{order:2}
+    .steps,.privacy ul,.pair{grid-template-columns:1fr}.trust .wrap{gap:22px}
+    .nlinks a:not(.gh){display:none}
   }
-  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:99}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:99}
   #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 <header><div class="wrap"><nav>
-  <div class="brand"><span class="mark">C</span> My <b>Claude</b></div>
+  <div class="brand"><span class="mark">C</span> My Claude</div>
   <div class="nlinks">
-    <a href="demo.html">Live demo</a>
     <a href="#features">Features</a>
-    <a href="#how">How it works</a>
+    <a href="demo.html">Live demo</a>
+    <a href="#install">Install</a>
     <a href="#privacy">Privacy</a>
-    <a class="gh btn solid" href="https://github.com/chethanbhatbs/my-claude" style="padding:8px 15px">GitHub ↗</a>
+    <a class="gh btn solid" href="https://github.com/chethanbhatbs/my-claude" style="padding:9px 16px">GitHub</a>
   </div>
 </nav></div></header>
 
-<!-- HERO (centered) -->
-<div class="hero"><div class="glow"></div><div class="wrap"><div class="inner rise">
-  <div class="pill"><span class="d"></span>Local · Private · One command</div>
-  <h1>Everything Claude Code keeps on your machine, <span class="grad">in one view.</span></h1>
-  <p class="lead">Skills, MCP connectors, token spend, and your full conversation history — a private dashboard that runs entirely on your laptop.</p>
+<div class="hero"><div class="wrap rise">
+  <div class="eyebrow">Private · Local · One command</div>
+  <h1>See <em>everything</em> Claude Code keeps on your machine.</h1>
+  <p class="lead">Skills, MCP connectors, token spend, and your full conversation history — one private dashboard you run with a single command. Nothing leaves your laptop.</p>
   <div class="cmd">
     <span class="dollar mono">$</span>
-    <code id="cmd">curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
+    <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
     <button class="copy" onclick="copyCmd()">Copy</button>
   </div>
-  <div style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-    <a class="btn solid" href="demo.html">▶ Try the live demo</a>
-    <a class="btn" href="#how">How it works</a>
+  <div class="cta">
+    <a class="btn solid" href="demo.html">Try the live demo →</a>
+    <span class="note">Python 3.9+ · macOS or Linux · opens in your browser</span>
   </div>
-  <div class="cta-note">Python 3.9+ · macOS or Linux · opens in your browser · nothing uploaded</div>
-</div></div></div>
-
-<!-- BIG PRODUCT SHOWCASE: the Usage / analytics view -->
-<div class="showcase"><div class="wrap rise" style="animation-delay:.08s">
-  <div style="text-align:center;margin-bottom:14px"><a href="demo.html" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--accent)">● Live demo — click to explore every view →</a></div>
-  <div class="shot" onclick="location.href='demo.html'" style="cursor:pointer">
-    <div class="bar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="url">127.0.0.1:8766/p/usage</span></div>
-    <div class="umock">
-      <div class="urail">
-        <div class="ub"><i>C</i>My Claude</div>
-        <a>Overview</a><a>Skills</a><a>MCP &amp; Plugins</a><a class="on">Usage</a><a>History</a><a>System</a>
-      </div>
-      <div class="umain">
-        <div class="ueye">~/.claude/projects · usage</div>
-        <div class="utitle">Token Usage</div>
-        <div><span class="useg"><span class="on">All time</span><span>30 days</span><span>7 days</span></span><span class="useg"><span class="on">All</span><span>opus</span><span>sonnet</span><span>haiku</span></span></div>
-        <div class="umet">
-          <div class="c"><div class="l">Billable tokens</div><div class="v">9.14B</div></div>
-          <div class="c"><div class="l">Context tokens</div><div class="v">8.91B</div></div>
-          <div class="c"><div class="l">Output</div><div class="v">41.5M</div></div>
-          <div class="c"><div class="l">Est. cost</div><div class="v">$312</div></div>
-        </div>
-        <div class="ucharts">
-          <div class="ucard"><div class="ucap">Billable tokens per day</div><div class="bars" id="bars"></div></div>
-          <div class="ucard"><div class="ucap">Cost by model</div>
-            <div class="donutwrap">
-              <div class="donut"></div>
-              <div class="leg">
-                <div><i style="background:var(--accent)"></i>opus <b>68%</b></div>
-                <div><i style="background:var(--sand)"></i>sonnet <b>22%</b></div>
-                <div><i style="background:var(--haiku)"></i>haiku <b>10%</b></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="heroshot"><div class="frame hero-f"><img src="assets/overview.png" alt="My Claude — Overview dashboard" loading="eager"></div></div>
 </div></div>
 
-<!-- STAT STRIP -->
-<div class="strip"><div class="wrap">
-  <div class="stat"><div class="v"><b>1</b></div><div class="l">command to run</div></div>
-  <div class="stat"><div class="v"><b>100%</b></div><div class="l">local, on your machine</div></div>
-  <div class="stat"><div class="v"><b>0</b></div><div class="l">external calls</div></div>
-  <div class="stat"><div class="v"><b>6</b></div><div class="l">views, one dashboard</div></div>
+<div class="trust"><div class="wrap">
+  <span><b>100%</b> local</span><span><b>0</b> external calls</span><span><b>6</b> views, one dashboard</span><span><b>1</b> command to run</span>
 </div></div>
 
-<!-- FEATURES: bento -->
-<div class="wrap"><section id="features">
-  <div class="kick">What you get</div>
-  <h2>Your Claude Code footprint,<br>finally legible.</h2>
-  <p class="muted">Everything Claude quietly keeps on disk, organized into six views you can actually read.</p>
-
-  <div class="bento">
-    <div class="card big">
-      <div class="ic">▤</div>
-      <h3>Usage &amp; cost</h3>
-      <p>Billable vs context tokens, estimated cost, cache hit rate, and per-model / per-project breakdowns — with a projected monthly.</p>
-      <div class="viz"><div class="vbars" id="vbars"></div></div>
-    </div>
-    <div class="card big">
-      <div class="ic">◆</div>
-      <h3>Overview</h3>
-      <p>KPIs, weekly spend trend, cache savings, busiest project, and an activity heatmap — the one screen you live on.</p>
-      <div class="viz"><div class="vheat" id="vheat"></div></div>
-    </div>
+<div class="wrap"><section id="features" style="padding-bottom:0">
+  <div class="rowhead" style="text-align:center;margin-bottom:8px">
+    <div class="eyebrow" style="margin-bottom:12px">What you get</div>
+    <h2 class="big">Your Claude Code footprint,<br>finally legible.</h2>
+    <p class="sub-lead" style="margin:0 auto">Six views, each designed to be read — not a wall of raw JSON.</p>
   </div>
-  <div class="bento4">
-    <div class="card card4"><div class="ic">✦</div><h3>Skills</h3><p>Usage counts per skill, categories, unused-skill flags, and a readable SKILL.md viewer.</p></div>
-    <div class="card card4"><div class="ic">⇌</div><h3>MCP &amp; Plugins</h3><p>Every connector, global and per-project, with one-click live health checks.</p></div>
-    <div class="card card4"><div class="ic">❡</div><h3>History</h3><p>Full-text search, per-conversation cost, resume in Claude, export to Markdown.</p></div>
-    <div class="card card4"><div class="ic">⚙</div><h3>System</h3><p>Permissions, hooks, CLAUDE.md, and the memory Claude carries between sessions.</p></div>
+
+  <div class="frow">
+    <div class="txt">
+      <div class="eyebrow">Usage &amp; cost</div>
+      <h2>Know exactly what you spend.</h2>
+      <p>Billable vs context tokens, estimated cost, and cache hit rate — with per-model and per-project breakdowns and a projected monthly.</p>
+      <ul>
+        <li><span class="tick">→</span><span>Filter by <b>window or model</b> and every chart follows.</span></li>
+        <li><span class="tick">→</span><span>See <b>which projects</b> cost the most.</span></li>
+      </ul>
+    </div>
+    <div class="pic"><div class="frame"><img src="assets/usage.png" alt="Token usage and cost analytics" loading="lazy"></div></div>
+  </div>
+
+  <div class="frow rev">
+    <div class="txt">
+      <div class="eyebrow">Skills</div>
+      <h2>Tame hundreds of skills.</h2>
+      <p>Every skill by category, how often you actually invoke each one, and which ones you never touch. Open any skill and read its SKILL.md as clean markdown.</p>
+      <ul>
+        <li><span class="tick">→</span><span>Search, filter, and spot <b>unused skills</b>.</span></li>
+        <li><span class="tick">→</span><span>View, push to GitHub, or share as a <b>.zip</b>.</span></li>
+      </ul>
+    </div>
+    <div class="pic"><div class="frame"><img src="assets/skill-view.png" alt="Skill view — SKILL.md rendered as markdown" loading="lazy"></div></div>
+  </div>
+
+  <div class="frow">
+    <div class="txt">
+      <div class="eyebrow">History</div>
+      <h2>Find any past conversation.</h2>
+      <p>Full-text search across every transcript, per-conversation cost, and a two-pane reader. Pick up where you left off, or export it.</p>
+      <ul>
+        <li><span class="tick">→</span><span><b>Resume in Claude</b> from any conversation.</span></li>
+        <li><span class="tick">→</span><span><b>Export to Markdown</b> in one click.</span></li>
+      </ul>
+    </div>
+    <div class="pic"><div class="frame"><img src="assets/history.png" alt="Conversation history browser" loading="lazy"></div></div>
+  </div>
+
+  <div class="frow rev">
+    <div class="txt">
+      <div class="eyebrow">MCP &amp; System</div>
+      <h2>The rest of your setup, in the open.</h2>
+      <p>Every MCP connector with a one-click health check, plus your permissions, hooks, CLAUDE.md, and the memory Claude carries between sessions.</p>
+      <ul>
+        <li><span class="tick">→</span><span>Connectors, <b>global and per-project</b>, with live status.</span></li>
+        <li><span class="tick">→</span><span>Secrets are <b>auto-redacted</b> before you ever see them.</span></li>
+      </ul>
+    </div>
+    <div class="pic"><div class="pair"><div class="frame"><img src="assets/mcp.png" alt="MCP connectors with health checks" loading="lazy"></div><div class="frame"><img src="assets/system.png" alt="System — config and memory" loading="lazy"></div></div></div>
   </div>
 </section></div>
 
-<!-- GALLERY -->
-<div class="wrap"><section id="inside">
-  <div class="kick">A look inside</div>
-  <h2>Not a chart wall — the actual views.</h2>
-  <p class="muted">Every screen is designed to be read. Here are a few, from the interactive demo.</p>
-  <div class="gallery">
-    <div class="gcard">
-      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">Skills · View</span></div>
-      <img class="gimg" src="assets/skill-view.png" alt="Skill view — SKILL.md rendered as readable markdown" loading="lazy">
-      <div class="gcap"><b>Skill view</b><span>Open any skill and read its SKILL.md rendered as clean markdown — with syntax highlighting and one-click Finder / Copy / Push.</span></div>
-    </div>
-    <div class="gcard">
-      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">System</span></div>
-      <img class="gimg" src="assets/system.png" alt="System view — permissions, hooks, CLAUDE.md and memory" loading="lazy">
-      <div class="gcap"><b>System</b><span>Your permission rules, hook events, CLAUDE.md, and the memory Claude carries between sessions — all in one place.</span></div>
-    </div>
-    <div class="gcard">
-      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">History</span></div>
-      <img class="gimg" src="assets/history.png" alt="History view — conversation browser with per-conversation cost" loading="lazy">
-      <div class="gcap"><b>History</b><span>Search every conversation, see per-chat cost, read the transcript in a two-pane viewer, resume or export it.</span></div>
-    </div>
-    <div class="gcard">
-      <div class="gbar"><i class="tl1"></i><i class="tl2"></i><i class="tl3"></i><span class="u">MCP &amp; Plugins</span></div>
-      <img class="gimg" src="assets/mcp.png" alt="MCP view — connectors with live health checks" loading="lazy">
-      <div class="gcap"><b>MCP &amp; Plugins</b><span>Every connector, global and per-project, with one-click live health checks and auto-redacted config.</span></div>
-    </div>
-  </div>
-</section></div>
-
-<!-- HOW -->
-<div class="wrap"><section id="how">
-  <div class="kick">Install in under a minute</div>
-  <h2>Run one command.<br>It does the rest.</h2>
-  <p class="muted">No accounts, no config, no cloud. The installer sets up an isolated Python environment and opens the dashboard.</p>
+<div class="install"><div class="wrap"><section id="install">
+  <div class="eyebrow" style="margin-bottom:12px">Install in under a minute</div>
+  <h2 class="big">One command. It does the rest.</h2>
+  <p class="sub-lead">No accounts, no config, no cloud. The installer sets up an isolated Python environment and opens the dashboard in your browser.</p>
   <div class="steps">
     <div class="step"><div class="n">01</div><h3>Paste one command</h3><p>Run the install line in your terminal. It downloads a small self-contained app to <code>~/.my-claude</code>.</p></div>
-    <div class="step"><div class="n">02</div><h3>It sets up locally</h3><p>A one-time ~20s setup creates an isolated venv. No global installs, no admin rights.</p></div>
+    <div class="step"><div class="n">02</div><h3>It sets up locally</h3><p>A one-time ~20-second setup creates an isolated venv. No global installs, no admin rights.</p></div>
     <div class="step"><div class="n">03</div><h3>Opens in your browser</h3><p>Launches at <code>127.0.0.1:8766</code>, reading your own <code>~/.claude</code>. Re-run <code>run.sh</code> anytime.</p></div>
   </div>
+</section></div></div>
+
+<div class="wrap"><section id="privacy" class="privacy">
+  <div class="eyebrow" style="margin-bottom:12px">Private by design</div>
+  <h2 class="big">Your data never leaves your computer.</h2>
+  <p class="sub-lead">Your conversation transcripts are sensitive. This tool treats them that way.</p>
+  <ul>
+    <li><span class="dot">●</span><span>Binds to <b>127.0.0.1</b> only — nobody else on your network can reach it.</span></li>
+    <li><span class="dot">●</span><span><b>Zero external calls.</b> No telemetry, no analytics, no upload.</span></li>
+    <li><span class="dot">●</span><span>Reads <b>~/.claude</b> on the machine it runs on. Nothing else.</span></li>
+    <li><span class="dot">●</span><span>Share the <b>tool</b>, not the data — each person sees only their own.</span></li>
+  </ul>
+  <div class="req"><span class="qpill">python3 ≥ 3.9</span><span class="qpill">macOS / Linux</span><span class="qpill">open source</span><span class="qpill">gh CLI optional</span></div>
 </section></div>
 
-<!-- PRIVACY -->
-<div class="wrap"><section id="privacy">
-  <div class="privacy">
-    <div class="kick">Private by design</div>
-    <h2 style="margin-bottom:6px">Your data never leaves your computer.</h2>
-    <p class="muted">Your conversation transcripts are sensitive. This tool treats them that way.</p>
-    <ul>
-      <li><span class="dot">●</span><span>Binds to <b>127.0.0.1</b> only — nobody else on your network can reach it.</span></li>
-      <li><span class="dot">●</span><span><b>Zero external calls.</b> No telemetry, no analytics, no upload.</span></li>
-      <li><span class="dot">●</span><span>Reads <b>~/.claude</b> on the machine it runs on. Nothing else.</span></li>
-      <li><span class="dot">●</span><span>Share the <b>tool</b>, not the data — each person sees only their own.</span></li>
-    </ul>
-    <div class="req"><span class="qpill">python3 ≥ 3.9</span><span class="qpill">macOS / Linux</span><span class="qpill">open source</span><span class="qpill">gh CLI optional</span></div>
-  </div>
-</section></div>
-
-<!-- CTA -->
-<div class="wrap"><section class="cta">
-  <div class="kick" style="text-align:center">Try it now</div>
-  <h2>One command, and you're<br>looking at your Claude.</h2>
+<div class="wrap"><section class="cta-final">
+  <div class="eyebrow" style="margin-bottom:12px">Try it now</div>
+  <h2 class="big">One command, and you're<br>looking at your Claude.</h2>
   <div class="cmd">
     <span class="dollar mono">$</span>
     <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
@@ -346,15 +243,6 @@
 <div id="toast">Copied to clipboard</div>
 <script>
   function copyCmd(){ navigator.clipboard.writeText('curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash').then(()=>{ const t=document.getElementById('toast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1800); }); }
-  // main mock bar chart (fake, representative)
-  (function(){ const el=document.getElementById('bars'); if(!el){return;}
-    const seed=[.2,.35,.15,.5,.3,.62,.28,.8,.45,.7,.38,.95,.55,.42,.68,.3,.85,.5,.72,.4,.6,.33,.9,.48,.65,.52];
-    el.innerHTML=seed.map(h=>{ const total=Math.round(20+h*112);
-      return '<div class="col"><div class="o" style="height:'+total+'px"></div></div>'; }).join(''); })();
-  // feature mini viz
-  (function(){ const v=document.getElementById('vbars'); if(v){ const H=[18,26,34,22,30,20,28,40,24,36,30,44,32,38,28,42]; v.innerHTML=H.map(x=>'<i style="height:'+x+'px"></i>').join(''); }
-    const g=document.getElementById('vheat'); if(g){ const col=[0,.15,0,.35,.25,.5,.35,.65,.45,.75,.55,.85,.7,1]; const rf=[.5,.8,1,.8,.5]; let h='';
-      for(let i=0;i<70;i++){ const c=Math.floor(i/5), r=i%5; const o=(col[c]*rf[r]); h+='<i'+(o>0.05?' style="background:var(--accent);opacity:'+o.toFixed(2)+'"':'')+'></i>'; } g.innerHTML=h; } })();
 </script>
 </body>
 </html>
