@@ -297,13 +297,6 @@ const V={
       <div class="metric"><div class="l">Busiest project</div><div class="v" style="font-size:1.1rem">my-app</div><div class="s">2,140 messages</div></div>
       <div class="metric"><div class="l">Priciest day</div><div class="v" style="font-size:1.35rem">$41</div><div class="s">2026-06-15</div></div>
     </div>
-    <h2 class="sub">Activity · last year</h2>
-    <div class="heatmap" id="heat">${heat(0,53)}</div>
-    <div class="heat-legend">less
-      <span class="cell" style="background:var(--accent);opacity:.28"></span>
-      <span class="cell" style="background:var(--accent);opacity:.48"></span>
-      <span class="cell" style="background:var(--accent);opacity:.72"></span>
-      <span class="cell" style="background:var(--accent);opacity:1"></span>more · turns per day</div>
     <h2 class="sub">Recent</h2>
     <div class="grid2">
       <div class="panel"><div class="phead">Recent conversations <a onclick="go('history')">All →</a></div>
@@ -315,6 +308,13 @@ const V={
     </div>
     <h2 class="sub">Storage</h2>
     <div class="panel" style="padding:14px 16px"><div id="storage" class="chart" style="height:300px"></div></div>
+    <h2 class="sub">Activity · last year</h2>
+    <div class="heatmap" id="heat">${heat(0,53)}</div>
+    <div class="heat-legend">less
+      <span class="cell" style="background:var(--accent);opacity:.28"></span>
+      <span class="cell" style="background:var(--accent);opacity:.48"></span>
+      <span class="cell" style="background:var(--accent);opacity:.72"></span>
+      <span class="cell" style="background:var(--accent);opacity:1"></span>more · turns per day</div>
     <div class="alert" style="margin-top:16px">Conversation transcripts under ~/.claude/projects/ are stored in plaintext. Don't share this screen without redacting.</div>`;},
 
   usage(){return `
