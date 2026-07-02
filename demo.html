@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Claude — live demo</title>
-<meta name="description" content="An interactive demo of My Claude, a private local dashboard for Claude Code. Sample data — the real thing runs on your machine.">
+<title>My Claude: live demo</title>
+<meta name="description" content="An interactive demo of My Claude, a private local dashboard for Claude Code. Sample data. The real thing runs on your machine.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
 <style>
   :root{
     --bg:#1a1a19;--surface:#232322;--surface2:#2c2c2a;--line:#383836;--text:#ecebe8;--dim:#a2a29c;--faint:#6d6d67;
@@ -81,17 +84,15 @@
   .seg a:hover{background:var(--surface2)} .seg a.on{background:var(--accent);color:#1a1a19}
   .alert{padding:12px 15px;border-radius:var(--r);font-size:13px;margin:12px 0;background:var(--warn-bg,rgba(217,164,65,.13));color:#d9a441}
   /* charts */
-  .bars{display:flex;align-items:flex-end;gap:4px;height:150px;padding:6px 0}
-  .bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;cursor:pointer}
-  .bars .col .o{background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:3px 3px 0 0}.bars .col .s{background:var(--sand);border-radius:3px 3px 0 0}
-  .bars .col:hover{opacity:.75}
-  .donutwrap{display:flex;align-items:center;gap:18px;padding:8px 0}
-  .donut{width:120px;height:120px;border-radius:50%;position:relative;background:conic-gradient(var(--accent) 0 68%,var(--sand) 68% 90%,var(--haiku) 90% 100%)}
-  .donut::after{content:"";position:absolute;inset:30px;border-radius:50%;background:var(--surface)}
-  .leg{font-size:13px;color:var(--dim);display:flex;flex-direction:column;gap:10px}.leg div{display:flex;align-items:center;gap:9px}.leg i{width:10px;height:10px;border-radius:2px}.leg b{color:var(--text);margin-left:auto}
+  .chart{width:100%}
+  .cal{display:inline-flex;flex-direction:column;gap:5px;overflow-x:auto;padding:4px 0;max-width:100%}
+  .cal-months{display:grid;grid-auto-flow:column;grid-auto-columns:16px;font-size:10px;color:var(--faint);height:12px}
+  .cal-months span{white-space:nowrap}
   .heatmap{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);grid-auto-columns:13px;gap:3px;overflow-x:auto}
-  .heatmap i{width:13px;height:13px;border-radius:2px;background:var(--surface2);transition:transform .1s}
-  .heatmap i:hover{transform:scale(1.5);outline:1px solid var(--text)}
+  .heatmap i,.heatmap .cell{width:13px;height:13px;border-radius:2px;background:var(--surface2);transition:transform .1s ease,outline-color .1s ease;outline:1px solid transparent}
+  .heatmap i:hover,.heatmap .cell:hover{transform:scale(1.5);outline-color:var(--text);position:relative;z-index:2}
+  .heat-legend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--faint);margin-top:10px}
+  .heat-legend .cell{width:13px;height:13px;border-radius:2px;background:var(--surface2)}
   /* conv two-pane */
   .conv{display:grid;grid-template-columns:320px 1fr;gap:12px;height:520px}
   .clist{border:1px solid var(--line);border-radius:10px;overflow-y:auto;background:var(--surface)}
@@ -116,8 +117,34 @@
   .mback.on{display:flex}
   .modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-width:760px;width:100%;padding:24px 26px;max-height:86vh;display:flex;flex-direction:column;position:relative}
   .modal .x{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--faint);font-size:22px;cursor:pointer}
-  .md-scroll{overflow-y:auto;margin-top:8px} .md-scroll h1{font-size:1.3rem;margin:14px 0 8px} .md-scroll h2{font-size:1.05rem;border-bottom:1px solid var(--line);padding-bottom:5px;margin:16px 0 8px}
-  .md-scroll p{margin:9px 0;font-size:13.5px;line-height:1.7} .md-scroll code{background:var(--surface2);color:var(--sand);padding:1px 6px;border-radius:4px;font-size:.86em}
+  .md-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:6px}
+  /* shared markdown doc styling, matches the app's SKILL.md / CLAUDE.md render */
+  .md-doc{font-size:13.5px;line-height:1.7;color:var(--text)}
+  .md-doc>*:first-child{margin-top:0}
+  .md-doc h1{font-size:1.35rem;font-weight:700;margin:20px 0 10px;letter-spacing:-.3px}
+  .md-doc h2{font-size:1.12rem;font-weight:700;margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+  .md-doc h3{font-size:1rem;font-weight:600;margin:16px 0 6px}
+  .md-doc p{margin:10px 0}
+  .md-doc ul,.md-doc ol{margin:10px 0;padding-left:22px}.md-doc li{margin:4px 0}
+  .md-doc a{color:var(--accent)}
+  .md-doc code{background:var(--surface2);color:var(--sand);padding:1.5px 6px;border-radius:4px;font-size:.86em}
+  .md-doc pre{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;overflow-x:auto;margin:12px 0}
+  .md-doc pre code{background:none;color:var(--text);padding:0}
+  .md-doc blockquote{margin:12px 0;padding:6px 14px;background:var(--surface2);border-radius:var(--r);color:var(--dim)}
+  .md-doc table{border-collapse:collapse;width:100%;margin:12px 0;font-size:12.5px}
+  .md-doc th,.md-doc td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  .md-doc th{background:var(--surface2);font-weight:600}
+  .md-doc hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+  /* highlight.js token colours, mapped to the warm palette */
+  .hljs-keyword,.hljs-selector-tag,.hljs-built_in,.hljs-meta{color:var(--info)}
+  .hljs-string,.hljs-attr,.hljs-addition{color:var(--ok)}
+  .hljs-number,.hljs-literal,.hljs-type{color:var(--sand)}
+  .hljs-comment,.hljs-quote{color:var(--faint);font-style:italic}
+  .hljs-title,.hljs-section,.hljs-name,.hljs-selector-id{color:var(--accent)}
+  .hljs-attribute,.hljs-variable,.hljs-template-variable{color:var(--text)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+  ::-webkit-scrollbar-track{background:transparent}
   .htip{position:fixed;background:var(--text);color:var(--bg);padding:5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;pointer-events:none;opacity:0;transform:translate(-50%,-100%);transition:opacity .1s;z-index:60}
   .htip.on{opacity:1}
   @media(max-width:820px){.sidebar{display:none}.main{padding:20px 16px}.metrics,.grid2{grid-template-columns:1fr 1fr}.conv{grid-template-columns:1fr;height:auto}}
@@ -125,7 +152,7 @@
 </head>
 <body>
 <div class="demobar">
-  <div class="row"><span class="tag">Live demo</span><span class="msg"><b>Sample data.</b> Click the tabs, search, hover the charts — the real thing runs on your machine.</span></div>
+  <div class="row"><span class="tag">Live demo</span><span class="msg"><b>Sample data.</b> Click the tabs, search, hover the charts, the real thing runs on your machine.</span></div>
   <div class="row"><code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code><a class="home" href="./">← back</a></div>
 </div>
 
@@ -154,7 +181,7 @@
 <script>
 const D={
   skills:[
-    {n:"a11y-ally",cat:"Frontend & UI",src:"user",uses:0,last:"never",kb:"75.0 KB",desc:"Comprehensive WCAG accessibility audits with axe-core + pa11y + Lighthouse, context-aware remediation."},
+    {n:"accessibility-audit",cat:"Frontend & UI",src:"user",uses:0,last:"never",kb:"75.0 KB",desc:"Comprehensive WCAG accessibility audits with axe-core + pa11y + Lighthouse, context-aware remediation."},
     {n:"api-tester",cat:"Testing & QA",src:"user",uses:11,last:"2026-06-30",kb:"1.8 MB",desc:"Generate and run REST API test suites: happy paths, edge cases, auth, and schema validation."},
     {n:"report-builder",cat:"Docs & Reports",src:"user",uses:9,last:"2026-06-30",kb:"127 KB",desc:"Turn a dataset into an interactive HTML report with charts, filters, and a summary."},
     {n:"playwright-e2e",cat:"Testing & QA",src:"plugin",uses:6,last:"2026-06-24",kb:"44 KB",desc:"End-to-end browser tests with Playwright: fixtures, network mocking, visual assertions."},
@@ -167,13 +194,13 @@ const D={
   ],
   convs:[
     {t:"Refactor the auth flow to use short-lived tokens",p:"my-app",n:42,cost:"$3.10",when:"2026-06-30 17:19",
-     msgs:[["user","Refactor the auth flow to use short-lived tokens.\n\nWe currently store a long-lived session token in localStorage — I want access + refresh tokens with rotation."],["assistant","Good call. Here's the plan:\n\n1. Issue a short-lived access token (15 min) + an httpOnly refresh cookie.\n2. Rotate the refresh token on every use and detect reuse.\n\nLet me start by mapping the current auth module."],["user","Sounds right. Also make sure logout revokes the refresh token server-side."],["assistant","Done — added a token blocklist keyed by the refresh jti, checked on every refresh. Logout now writes to it."]]},
+     msgs:[["user","Refactor the auth flow to use short-lived tokens.\n\nWe currently store a long-lived session token in localStorage, I want access + refresh tokens with rotation."],["assistant","Good call. Here's the plan:\n\n1. Issue a short-lived access token (15 min) + an httpOnly refresh cookie.\n2. Rotate the refresh token on every use and detect reuse.\n\nLet me start by mapping the current auth module."],["user","Sounds right. Also make sure logout revokes the refresh token server-side."],["assistant","Done, added a token blocklist keyed by the refresh jti, checked on every refresh. Logout now writes to it."]]},
     {t:"Debug websocket drops under load",p:"gateway",n:18,cost:"$1.20",when:"2026-06-30 13:04",
-     msgs:[["user","Our websockets drop after ~60s under load. Any ideas?"],["assistant","Classic idle-timeout or proxy buffering. Let me check: are you behind nginx? The default proxy_read_timeout is 60s — that matches your symptom exactly."],["user","Yeah we're behind nginx."],["assistant","Set `proxy_read_timeout 3600s;` and add a heartbeat ping every 30s from the server. That'll keep the connection warm and survive the proxy timeout."]]},
+     msgs:[["user","Our websockets drop after ~60s under load. Any ideas?"],["assistant","Classic idle-timeout or proxy buffering. Let me check: are you behind nginx? The default proxy_read_timeout is 60s, that matches your symptom exactly."],["user","Yeah we're behind nginx."],["assistant","Set `proxy_read_timeout 3600s;` and add a heartbeat ping every 30s from the server. That'll keep the connection warm and survive the proxy timeout."]]},
     {t:"Ship the release notes for v2.4",p:"docs",n:9,cost:"$0.40",when:"2026-06-29 20:11",
      msgs:[["user","Draft release notes for v2.4 from the merged PRs."],["assistant","Here's a draft grouped by Added / Fixed / Changed, with the breaking change on token storage called out at the top."]]},
     {t:"Why is my heatmap not rendering?",p:"dashboard",n:24,cost:"$1.80",when:"2026-06-28 11:02",
-     msgs:[["user","The activity heatmap shows nothing when I filter to 7 days."],["assistant","The check for truncation ran before layout settled. Deferring it with requestAnimationFrame fixes it — the cells have zero height until the fonts load."]]}
+     msgs:[["user","The activity heatmap shows nothing when I filter to 7 days."],["assistant","The check for truncation ran before layout settled. Deferring it with requestAnimationFrame fixes it, the cells have zero height until the fonts load."]]}
   ],
   mcp:[
     {n:"github",scope:"global",status:"ok",detail:"command found: npx",cfg:'{\n  "command": "npx",\n  "args": ["-y", "@modelcontextprotocol/server-github"],\n  "env": { "GITHUB_TOKEN": "<redacted>" }\n}'},
@@ -182,7 +209,7 @@ const D={
     {n:"notion",scope:"1 project",status:"ok",detail:"HTTP 200",cfg:'{\n  "type": "http",\n  "url": "https://mcp.notion.com/mcp",\n  "headers": { "Authorization": "<redacted>" }\n}'}
   ],
   memory:[
-    {t:"Memory · index",tag:"index",body:"# Memory Index\n\n- **Testing discipline** — try it before you claim it works.\n- **Design preferences** — dark, single accent, minimal corners.\n- **Commit style** — small, focused commits with a clear subject line."},
+    {t:"Memory · index",tag:"index",body:"# Memory Index\n\n- **Testing discipline**, try it before you claim it works.\n- **Design preferences**, dark, single accent, minimal corners.\n- **Commit style**, small, focused commits with a clear subject line."},
     {t:"Testing discipline",body:"# Testing discipline\n\nNever mark something done without running it. Verify each change against the real output before claiming it works."},
     {t:"Design preferences",body:"# Design preferences\n\nDark background, one accent colour, minimal corner radius, no colored edges. Keep it uncluttered."}
   ],
@@ -192,7 +219,24 @@ const D={
 const $=(s,r=document)=>r.querySelector(s);
 function esc(s){return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function heat(cells,weeks){let h='';for(let i=0;i<weeks*7;i++){const w=Math.floor(i/7);const r=Math.max(0,(w-Math.floor(weeks*.4))/(weeks*.6));const v=Math.random()<(r*.95)?Math.random():0;const o=v?(0.28+0.72*v).toFixed(2):0;const d=new Date();d.setDate(d.getDate()-((weeks*7)-i));const key=d.toISOString().slice(0,10);const val=Math.round(v*900);h+='<i data-d="'+key+'" data-v="'+val+'"'+(o?' style="background:var(--accent);opacity:'+o+'"':'')+'></i>'}return h}
-function barsHTML(scale){return D.bars.map(h=>{const total=Math.round(h*130*scale);const son=Math.random()<.28?Math.round(total*.3):0;const op=total-son;return '<div class="col"><div class="o" style="height:'+total+'px"></div></div>'}).join('')}
+/* shared markdown renderer with syntax highlighting, mirrors the app's renderMarkdown */
+function renderMarkdown(el,src){
+  try{ if(window.marked){marked.setOptions({breaks:true,gfm:true});el.innerHTML=marked.parse(src||'');} else {el.textContent=src||'';} }
+  catch(_){ el.textContent=src||''; }
+  if(window.hljs) el.querySelectorAll('pre code').forEach(b=>{try{hljs.highlightElement(b);}catch(_){}});
+}
+/* usage analytics, Plotly stacked bars + donut, matching the real Usage page */
+const FAM_COLOR={opus:'#A98DD0',sonnet:'#D97757',haiku:'#6DAEA0'};
+const FAM_SHARE={opus:.60,sonnet:.28,haiku:.12};
+function usageDates(n){const out=[],d=new Date();for(let i=n-1;i>=0;i--){const x=new Date(d);x.setDate(d.getDate()-i);out.push(x.toISOString().slice(0,10));}return out;}
+function renderCharts(scale,family){
+  const fg='#A69B8C',grid='#2E2822',fam={family:'Inter, sans-serif',size:12,color:fg};
+  const x=usageDates(D.bars.length);
+  const fams=(family&&family!=='All')?[family]:['opus','sonnet','haiku'];
+  const traces=fams.map(f=>({type:'bar',name:f,x,y:D.bars.map(h=>Math.round(h*130*scale*FAM_SHARE[f])),marker:{color:FAM_COLOR[f]}}));
+  Plotly.newPlot('dayChart',traces,{height:320,margin:{l:50,r:16,t:8,b:34},barmode:'stack',paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:fam,legend:{font:fam,orientation:'h'},xaxis:{gridcolor:grid,zerolinecolor:grid},yaxis:{gridcolor:grid,zerolinecolor:grid}},{displayModeBar:false,responsive:true});
+  Plotly.newPlot('pie',[{type:'pie',hole:0.5,labels:['opus','sonnet','haiku'],values:[68,22,10],marker:{colors:[FAM_COLOR.opus,FAM_COLOR.sonnet,FAM_COLOR.haiku],line:{color:'#16130F',width:2}},textinfo:'label+percent',textfont:fam}],{height:300,margin:{l:10,r:10,t:10,b:10},paper_bgcolor:'rgba(0,0,0,0)',font:fam,legend:{font:fam}},{displayModeBar:false,responsive:true});
+}
 
 const V={
   overview(){return `
@@ -235,19 +279,17 @@ const V={
       <div class="metric"><div class="l">Output</div><div class="v">41.5M</div></div>
       <div class="metric"><div class="l">Est. cost</div><div class="v">$312</div></div>
     </div>
-    <div class="grid2" style="grid-template-columns:1.6fr 1fr">
-      <div class="panel" style="padding:14px 16px"><div class="eye" style="margin-bottom:12px">Billable tokens per day</div><div class="bars" id="bars">${barsHTML(1)}</div></div>
-      <div class="panel" style="padding:14px 16px"><div class="eye" style="margin-bottom:12px">Cost by model</div>
-        <div class="donutwrap"><div class="donut"></div><div class="leg"><div><i style="background:var(--accent)"></i>opus<b>68%</b></div><div><i style="background:var(--sand)"></i>sonnet<b>22%</b></div><div><i style="background:var(--haiku)"></i>haiku<b>10%</b></div></div></div>
-      </div>
-    </div>
+    <h2 class="sub">Billable tokens per day</h2>
+    <div class="panel" style="padding:14px 16px"><div id="dayChart" class="chart" style="height:320px"></div></div>
     <h2 class="sub">Top projects by cost</h2>
     <table class="data"><thead><tr><th>project</th><th>tokens</th><th>est cost</th><th>turns</th></tr></thead><tbody>
       <tr><td>my-app</td><td>7.15B</td><td>$182.40</td><td>2140</td></tr>
       <tr><td>gateway</td><td>1.02B</td><td>$61.20</td><td>640</td></tr>
       <tr><td>docs</td><td>0.62B</td><td>$38.10</td><td>310</td></tr>
       <tr><td>dashboard</td><td>0.35B</td><td>$30.30</td><td>420</td></tr>
-    </tbody></table>`;},
+    </tbody></table>
+    <h2 class="sub">Cost by model</h2>
+    <div class="panel" style="padding:8px 12px"><div id="pie" class="chart" style="height:300px"></div></div>`;},
 
   skills(){return `
     <div class="eye">~/.claude/skills</div><h1 class="pt">Skills</h1>
@@ -302,19 +344,59 @@ function renderSkills(){const q=($('#sksearch')?.value||'').toLowerCase();let f=
   $('#skgrid').innerHTML=f.map(s=>`<div class="card"><div class="chead"><div class="ctitle">${s.n}${s.uses===0?'<span class="tag2 unused">unused</span>':''}${s.last!=='never'&&s.uses>4?'<span class="tag2 recent">recent</span>':''}</div><div class="csize">${s.kb}</div></div>
     <div class="cdesc">${esc(s.desc)}</div><div class="cmeta"><span>${s.cat}</span><span>·</span><span>${s.uses} uses</span><span>·</span><span>used ${s.last}</span></div>
     <div class="cbtns"><button class="btn view" onclick="viewSkill('${s.n}')">View</button><button class="btn push">Push</button><button class="btn share">Share</button><span class="tag2 ${s.src==='user'?'user':''}" style="margin-left:auto">${s.src}</span></div></div>`).join('')||'<div class="alert">No skills match.</div>'}
-function viewSkill(n){const s=D.skills.find(x=>x.n===n);const body=`# ${s.n}\n\n${s.desc}\n\n## When to use\nInvoke when the task matches this skill's description. Claude searches skill descriptions to decide which tools to use.\n\n## Notes\n- Category: **${s.cat}**\n- Source: ${s.src}\n- Detected invocations: ${s.uses}`;
-  const html=body.replace(/^# (.*)$/m,'<h1>$1</h1>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n\n').map(p=>p.startsWith('<h')?p:'<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
-  openModal(`<button class="x" onclick="closeModal()">×</button><h1 class="pt" style="font-size:1.3rem">${s.n}</h1><div class="cap mono" style="margin:4px 0 12px">~/.claude/skills/${s.n}</div>
-    <div class="cbtns" style="margin-bottom:8px"><button class="btn primary">Open in Finder</button><button class="btn">Copy path</button></div>
-    <div style="font-weight:600;border-top:1px solid var(--line);padding-top:14px">SKILL.md</div><div class="md-scroll">${html}</div>`);}
+function skillBody(s){
+  const slug=s.n, cmd=`python3 ~/.claude/skills/${slug}/run.py --target ./src --report out.html`;
+  return `# ${s.n}
+
+${s.desc}
+
+## When to use
+
+- The task matches this skill's description; Claude searches skill descriptions to decide what to load.
+- You want a repeatable workflow instead of re-explaining the steps each time.
+
+## How it works
+
+1. Reads the target you point it at and builds a plan.
+2. Runs the relevant tools, then writes a report you can open locally.
+3. Nothing leaves your machine.
+
+## How to run
+
+\`\`\`bash
+# invoke from the project you want to analyse
+${cmd}
+\`\`\`
+
+| field | value |
+|-------|-------|
+| category | ${s.cat} |
+| source | ${s.src} |
+| detected invocations | ${s.uses} |`;
+}
+function viewSkill(n){const s=D.skills.find(x=>x.n===n);const src=skillBody(s);
+  openModal(`<button class="x" onclick="closeModal()">×</button><h1 class="pt" style="font-size:1.3rem">${s.n}</h1><div class="cap mono" style="margin:4px 0 10px">~/.claude/skills/${s.n}</div>
+    <div class="alert" style="background:rgba(134,169,216,.13);color:var(--info)">${esc(s.desc)}</div>
+    <div class="cbtns"><button class="btn primary">Open in Finder</button><button class="btn">Open in Terminal</button><button class="btn">Copy path</button></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-weight:600">SKILL.md</div>
+      <div class="cbtns" style="margin:0"><button class="btn" id="mdToggle" onclick="toggleMd()">View raw</button><button class="btn">Copy markdown</button></div></div>
+    <div class="md-scroll"><div class="md-doc" id="mdRendered"></div><pre id="mdRaw" style="display:none;white-space:pre-wrap"></pre></div>`);
+  document.getElementById('mdRaw').textContent=src;
+  renderMarkdown(document.getElementById('mdRendered'),src);
+}
+function toggleMd(){const r=document.getElementById('mdRendered'),raw=document.getElementById('mdRaw'),b=document.getElementById('mdToggle');
+  const rawVisible=raw.style.display!=='none';raw.style.display=rawVisible?'none':'block';r.style.display=rawVisible?'block':'none';b.textContent=rawVisible?'View raw':'View rendered';}
 
 /* usage interactions */
+let uScale=1, uFam='All';
 function bindUsage(){
+  uScale=1; uFam='All'; renderCharts(uScale,uFam);
   $('#uwin').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#uwin').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
-    const sc=+a.dataset.s;$('#bars').innerHTML=barsHTML(sc);
-    const mult=sc, met=[['Billable tokens',(9.14*mult).toFixed(2)+'B'],['Context tokens',(8.91*mult).toFixed(2)+'B'],['Output',(41.5*mult).toFixed(1)+'M'],['Est. cost','$'+Math.round(312*mult)]];
+    uScale=+a.dataset.s; renderCharts(uScale,uFam);
+    const met=[['Billable tokens',(9.14*uScale).toFixed(2)+'B'],['Context tokens',(8.91*uScale).toFixed(2)+'B'],['Output',(41.5*uScale).toFixed(1)+'M'],['Est. cost','$'+Math.round(312*uScale)]];
     $('#umet').innerHTML=met.map(m=>`<div class="metric"><div class="l">${m[0]}</div><div class="v">${m[1]}</div></div>`).join('');});
-  $('#ufam').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#ufam').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');$('#bars').innerHTML=barsHTML(a.textContent==='All'?1:.5);});
+  $('#ufam').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#ufam').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');uFam=a.textContent;renderCharts(uScale,uFam);});
 }
 /* mcp health */
 function checkHealth(){const b=$('#hbtn');b.textContent='Checking…';setTimeout(()=>{D.mcp.forEach((m,i)=>{$('#dot'+i).className='mcp-dot '+m.status;$('#st'+i).textContent=m.status+' · '+m.detail;});b.textContent='Re-check health';},600);}
@@ -325,13 +407,15 @@ function openConv(i){const c=D.convs[i];document.querySelectorAll('.citem').forE
     ${c.msgs.map(m=>`<div class="msg ${m[0]}"><div class="mrole">${m[0]}</div><div class="mtext">${esc(m[1])}</div></div>`).join('')}`;}
 /* system */
 function bindSys(){$('#systab').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;$('#systab').querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');renderSys(a.dataset.t)});renderSys('config')}
-function renderSys(t){if(t==='memory'){$('#sysbody').innerHTML=D.memory.map(m=>{const html=m.body.replace(/^# (.*)$/m,'<h1>$1</h1>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^- (.*)$/gm,'• $1').split('\n').map(l=>l.startsWith('<h')?l:l?'<div>'+l+'</div>':'').join('');
-    return `<details class="exp"><summary><span>${m.t}${m.tag?' <span class="tag2">'+m.tag+'</span>':''}</span><span style="color:var(--faint)">+</span></summary><div class="eb md-scroll">${html}</div></details>`}).join('');}
+function mdHTML(src){try{marked.setOptions({breaks:true,gfm:true});return marked.parse(src||'');}catch(_){return esc(src);}}
+function renderSys(t){if(t==='memory'){$('#sysbody').innerHTML=D.memory.map(m=>
+    `<details class="exp"><summary><span>${m.t}${m.tag?' <span class="tag2">'+m.tag+'</span>':''}</span><span style="color:var(--faint)">+</span></summary><div class="eb"><div class="md-doc">${mdHTML(m.body)}</div></div></details>`).join('');
+    $('#sysbody').querySelectorAll('pre code').forEach(b=>{try{hljs.highlightElement(b);}catch(_){}});}
   else{$('#sysbody').innerHTML=`<div class="grid2"><div class="panel"><div class="phead">Permissions</div><div style="padding:14px 16px">
     <div class="cmeta" style="margin:0 0 12px"><span><b style="color:var(--text)">88</b> allow</span><span>·</span><span><b style="color:var(--text)">0</b> ask</span><span>·</span><span><b style="color:var(--text)">2</b> deny</span></div>
     <div class="mono" style="font-size:11.5px;color:var(--dim);line-height:1.9">Bash(git:*)<br>Bash(ls:*)<br>Bash(grep:*)<br>Read(*)<br>Edit(*)<br>WebFetch(*)</div></div></div>
     <div class="panel"><div class="phead">Hooks &amp; settings</div><div style="padding:14px 16px"><div class="chips" style="margin:0">${['SessionStart','PreToolUse','PostToolUse','Stop','UserPromptSubmit'].map(h=>'<span class="chip" style="cursor:default">'+h+'</span>').join('')}</div></div></div></div>
-    <h2 class="sub">CLAUDE.md</h2><div class="card"><div class="md-scroll"><h1>Global rules</h1><p>Be concise. Read before writing. Prefer editing over rewriting. Test before declaring done.</p></div></div>`;}}
+    <h2 class="sub">CLAUDE.md</h2><div class="card"><div class="md-doc">${mdHTML('# Global rules\n\nBe concise. Read before writing. Prefer editing over rewriting. Test before declaring done.\n\n```bash\n# token-efficient defaults\nalias cc="claude --model opus"\n```')}</div></div>`;}}
 
 /* modal + heatmap tooltip */
 function openModal(h){$('#modal').innerHTML=h;$('#mback').classList.add('on')}
