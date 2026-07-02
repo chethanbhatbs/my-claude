@@ -33,6 +33,12 @@
   .demobar .home{display:inline-flex;align-items:center;gap:6px}
   .tbtn{cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:#ecebe8;background:#2c2c2a;border:1px solid #383836;border-radius:999px;padding:4px 12px}
   .tbtn:hover{border-color:var(--accent)}
+  /* dismissible light notice, bottom */
+  .dnote{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;max-width:min(660px,calc(100% - 32px));background:#FFFFFF;color:#211D18;border:1px solid #E6E0D5;border-radius:12px;padding:12px 12px 12px 18px;box-shadow:0 12px 40px rgba(0,0,0,.28);font-size:13px;line-height:1.5}
+  .dnote b{font-weight:700}
+  .dnote-x{flex:none;cursor:pointer;background:#F0ECE4;border:1px solid #E6E0D5;color:#6E655A;width:27px;height:27px;border-radius:7px;font-size:17px;line-height:1;display:grid;place-items:center}
+  .dnote-x:hover{color:#211D18;border-color:#c9c0b1}
+  .dnote.hidden{display:none}
   .demobar .tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);padding:3px 9px;border-radius:999px}
   .demobar .msg{color:var(--dim)} .demobar .msg b{color:var(--text)}
   .demobar code{font-family:ui-monospace,Menlo,monospace;background:#0e0d0c;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:11.5px;color:var(--text)}
@@ -119,7 +125,8 @@
   details.exp{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface);overflow:hidden}
   details.exp>summary{list-style:none;cursor:pointer;padding:13px 16px;font-size:13.5px;display:flex;justify-content:space-between}
   details.exp>summary::-webkit-details-marker{display:none}
-  details.exp .eb{padding:2px 16px 16px} pre{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;overflow-x:auto;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+  details.exp .eb{padding:2px 16px 16px} pre{background:#1b1b1a;border:1px solid #33322f;border-radius:var(--r);padding:13px 15px;overflow-x:auto;font-size:12.5px;line-height:1.65;font-family:ui-monospace,"SF Mono",Menlo,monospace;color:#d4d4d4}
+  pre code{color:#d4d4d4}
   /* modal */
   .mback{position:fixed;inset:0;background:rgba(10,8,5,.6);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:52px 16px;z-index:50;overflow-y:auto}
   .mback.on{display:flex}
@@ -136,20 +143,24 @@
   .md-doc ul,.md-doc ol{margin:10px 0;padding-left:22px}.md-doc li{margin:4px 0}
   .md-doc a{color:var(--accent)}
   .md-doc code{background:var(--surface2);color:var(--sand);padding:1.5px 6px;border-radius:4px;font-size:.86em}
-  .md-doc pre{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;overflow-x:auto;margin:12px 0}
-  .md-doc pre code{background:none;color:var(--text);padding:0}
+  .md-doc pre{background:#1b1b1a;border:1px solid #33322f;border-radius:var(--r);padding:14px 16px;overflow-x:auto;margin:12px 0;color:#d4d4d4}
+  .md-doc pre code{background:none;color:#d4d4d4;padding:0}
   .md-doc blockquote{margin:12px 0;padding:6px 14px;background:var(--surface2);border-radius:var(--r);color:var(--dim)}
   .md-doc table{border-collapse:collapse;width:100%;margin:12px 0;font-size:12.5px}
   .md-doc th,.md-doc td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
   .md-doc th{background:var(--surface2);font-weight:600}
   .md-doc hr{border:0;border-top:1px solid var(--line);margin:18px 0}
   /* highlight.js token colours, mapped to the warm palette */
-  .hljs-keyword,.hljs-selector-tag,.hljs-built_in,.hljs-meta{color:var(--info)}
-  .hljs-string,.hljs-attr,.hljs-addition{color:var(--ok)}
-  .hljs-number,.hljs-literal,.hljs-type{color:var(--sand)}
-  .hljs-comment,.hljs-quote{color:var(--faint);font-style:italic}
-  .hljs-title,.hljs-section,.hljs-name,.hljs-selector-id{color:var(--accent)}
-  .hljs-attribute,.hljs-variable,.hljs-template-variable{color:var(--text)}
+  /* VS Code (Dark+) token palette, code blocks stay dark in both themes */
+  .hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#569cd6}
+  .hljs-string,.hljs-addition{color:#ce9178}
+  .hljs-attr,.hljs-attribute,.hljs-selector-attr{color:#9cdcfe}
+  .hljs-number,.hljs-literal{color:#b5cea8}
+  .hljs-type,.hljs-meta{color:#4ec9b0}
+  .hljs-comment,.hljs-quote{color:#6a9955;font-style:italic}
+  .hljs-title,.hljs-section,.hljs-name,.hljs-title.function_{color:#dcdcaa}
+  .hljs-variable,.hljs-template-variable,.hljs-selector-id{color:#9cdcfe}
+  .hljs-params{color:#d4d4d4}
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
   ::-webkit-scrollbar-track{background:transparent}
@@ -160,8 +171,12 @@
 </head>
 <body class="dark">
 <div class="demobar">
-  <div class="row"><span class="tag">Live demo</span><span class="msg"><b>Sample data.</b> This is a preview with fictional data. The real thing runs on your machine and reads your own ~/.claude.</span></div>
+  <div class="row"><span class="tag">Live demo</span><span class="msg">Interactive preview</span></div>
   <div class="row"><code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code><button class="tbtn" id="themeBtn" onclick="toggleTheme()">Light</button><a class="home" href="./">← back</a></div>
+</div>
+<div class="dnote" id="dnote">
+  <span><b>Sample data.</b> This is a preview with fictional data. The real thing runs on your machine and reads your own ~/.claude.</span>
+  <button class="dnote-x" onclick="dismissNote()" aria-label="Dismiss">×</button>
 </div>
 <script>
   (function(){var t=null;try{t=localStorage.getItem('mc-demo-theme')}catch(_){}; if(t==='light')document.body.classList.remove('dark');
@@ -169,6 +184,8 @@
   function toggleTheme(){var d=document.body.classList.toggle('dark');try{localStorage.setItem('mc-demo-theme',d?'dark':'light')}catch(_){}
     var b=document.getElementById('themeBtn');if(b)b.textContent=d?'Light':'Dark';
     if(typeof curV!=='undefined'&&curV)go(curV);}
+  function dismissNote(){var n=document.getElementById('dnote');if(n)n.classList.add('hidden');try{localStorage.setItem('mc-demo-note','off')}catch(_){}}
+  (function(){try{if(localStorage.getItem('mc-demo-note')==='off'){var n=document.getElementById('dnote');if(n)n.classList.add('hidden');}}catch(_){}})();
 </script>
 
 <div class="layout">
@@ -291,6 +308,13 @@ const V={
     </div>
     <h2 class="sub">Storage</h2>
     <div class="panel" style="padding:14px 16px"><div id="storage" class="chart" style="height:300px"></div></div>
+    <h2 class="sub">Activity · last year</h2>
+    <div class="heatmap" id="heat">${heat(0,53)}</div>
+    <div class="heat-legend">less
+      <span class="cell" style="background:var(--accent);opacity:.28"></span>
+      <span class="cell" style="background:var(--accent);opacity:.48"></span>
+      <span class="cell" style="background:var(--accent);opacity:.72"></span>
+      <span class="cell" style="background:var(--accent);opacity:1"></span>more · turns per day</div>
     <div class="alert" style="margin-top:16px">Conversation transcripts under ~/.claude/projects/ are stored in plaintext. Don't share this screen without redacting.</div>`;},
 
   usage(){return `
@@ -306,24 +330,23 @@ const V={
       <div class="metric"><div class="l">Output</div><div class="v">41.5M</div></div>
       <div class="metric"><div class="l">Est. cost</div><div class="v">$312</div></div>
     </div>
-    <h2 class="sub">Activity</h2>
-    <div class="heatmap" id="heat">${heat(0,22)}</div>
-    <div class="heat-legend">less
-      <span class="cell" style="background:var(--accent);opacity:.28"></span>
-      <span class="cell" style="background:var(--accent);opacity:.48"></span>
-      <span class="cell" style="background:var(--accent);opacity:.72"></span>
-      <span class="cell" style="background:var(--accent);opacity:1"></span>more · turns/day for the current window</div>
-    <h2 class="sub">Billable tokens per day</h2>
-    <div class="panel" style="padding:14px 16px"><div id="dayChart" class="chart" style="height:320px"></div></div>
+    <div class="grid2" style="grid-template-columns:1.55fr 1fr;align-items:stretch">
+      <div style="display:flex;flex-direction:column;min-width:0">
+        <h2 class="sub" style="margin-top:20px">Billable tokens per day</h2>
+        <div class="panel" style="padding:14px 16px;flex:1"><div id="dayChart" class="chart" style="height:320px"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;min-width:0">
+        <h2 class="sub" style="margin-top:20px">Cost by model</h2>
+        <div class="panel" style="padding:10px 12px;flex:1;display:flex;align-items:center"><div id="pie" class="chart" style="height:320px;width:100%"></div></div>
+      </div>
+    </div>
     <h2 class="sub">Top projects by cost</h2>
     <table class="data"><thead><tr><th>project</th><th>tokens</th><th>est cost</th><th>turns</th></tr></thead><tbody>
       <tr><td>my-app</td><td>7.15B</td><td>$182.40</td><td>2140</td></tr>
       <tr><td>gateway</td><td>1.02B</td><td>$61.20</td><td>640</td></tr>
       <tr><td>docs</td><td>0.62B</td><td>$38.10</td><td>310</td></tr>
       <tr><td>dashboard</td><td>0.35B</td><td>$30.30</td><td>420</td></tr>
-    </tbody></table>
-    <h2 class="sub">Cost by model</h2>
-    <div class="panel" style="padding:8px 12px"><div id="pie" class="chart" style="height:300px"></div></div>`;},
+    </tbody></table>`;},
 
   skills(){return `
     <div class="eye">~/.claude/skills</div><h1 class="pt">Skills</h1>
@@ -339,7 +362,7 @@ const V={
     <div class="row" style="margin-bottom:14px"><div class="seg"><a class="on">MCP · 4</a><a>Plugins · 5</a></div><button class="btn" onclick="checkHealth()" id="hbtn">Check health</button></div>
     <div id="mcplist">${D.mcp.map((m,i)=>`
       <details class="exp"><summary><span><span class="mcp-dot" id="dot${i}"></span>${m.n} <span class="tag2">${m.scope}</span><span id="st${i}" style="font-size:11.5px;color:var(--dim);margin-left:8px"></span></span><span style="color:var(--faint)">+</span></summary>
-      <div class="eb"><pre>${esc(m.cfg)}</pre></div></details>`).join('')}</div>`;},
+      <div class="eb"><pre><code class="language-json">${esc(m.cfg)}</code></pre></div></details>`).join('')}</div>`;},
 
   history(){return `
     <div class="eye">~/.claude/projects · transcripts</div><h1 class="pt">History</h1>
@@ -364,11 +387,11 @@ function go(v){
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
   $('#main').innerHTML=V[v](); window.scrollTo(0,0);
   if(v==='skills'){renderChips();renderSkills();}
-  if(v==='usage'){bindUsage();bindHeat();}
-  if(v==='mcp'){/* dots start neutral */}
+  if(v==='usage')bindUsage();
+  if(v==='mcp'){if(window.hljs)document.querySelectorAll('#mcplist pre code').forEach(b=>{try{hljs.highlightElement(b);}catch(_){}});}
   if(v==='history')openConv(0);
   if(v==='system')bindSys();
-  if(v==='overview')renderStorage();
+  if(v==='overview'){bindHeat();renderStorage();}
 }
 document.getElementById('nav').addEventListener('click',e=>{const a=e.target.closest('a');if(a)go(a.dataset.v)});
 
