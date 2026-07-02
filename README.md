@@ -1,10 +1,11 @@
 # My Claude
 
-A private, local dashboard for everything Claude Code keeps on your machine — skills, MCP
-connectors, plugins, token usage & cost, and your full conversation history.
+A private, local dashboard for everything Claude Code keeps on your machine: your skills, MCP
+connectors, plugins, token usage and cost, and your full conversation history.
 
-**Your data never leaves your computer.** It binds to `127.0.0.1`, makes zero external calls,
-and reads `~/.claude` on the machine it runs on. Share the tool, not the data.
+**Website:** https://chethanbhatbs.github.io/my-claude/
+
+![My Claude dashboard](assets/overview.png)
 
 ## Run it (one command)
 
@@ -12,30 +13,35 @@ and reads `~/.claude` on the machine it runs on. Share the tool, not the data.
 curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash
 ```
 
-That downloads the app to `~/.my-claude`, sets up a local Python environment (one-time, ~20s),
-and opens the dashboard at `http://127.0.0.1:8766` in your browser.
+That's it. This downloads the app, sets up a small local environment (one-time, ~20 seconds), and
+opens the dashboard at `http://127.0.0.1:8766` in your browser.
 
-**Requirements:** Python 3.9+, macOS or Linux. The optional "push skill to GitHub" feature uses
-your existing `gh` CLI login — no tokens are ever stored.
+**Needs:** Python 3.9+ on macOS or Linux.
 
-## What's inside
+## Your data stays on your machine
 
-Overview (KPIs, spend trend, cache savings, activity heatmap) · Skills (usage counts, categories,
-readable SKILL.md) · MCP & Plugins (with live health checks) · Usage (tokens, cost, per-model /
-per-project) · History (full-text search, per-conversation cost, export) · System (permissions,
-hooks, CLAUDE.md, memory).
+It runs only on `127.0.0.1`, makes no external calls, and reads the `~/.claude` folder on your own
+computer. Nothing is uploaded. You share the tool, not your data.
 
-## Privacy
+## What you get
 
-Conversation transcripts under `~/.claude/projects/` are stored in plaintext. This tool shows them
-so you can review and manage them locally — don't screen-share or screenshot the History page
-without redacting. There is no telemetry and nothing is uploaded.
+- **Overview** — everything at a glance: skills, conversations, tokens, and disk use.
+- **Usage** — what you spend, by day, model, and project.
+- **Skills** — every skill, how often you use it, and which ones you never touch.
+- **MCP & Plugins** — your connectors, with a one-click health check.
+- **History** — search past conversations and pick up where you left off.
+- **System** — your settings, hooks, and the memory Claude carries between sessions.
 
-## Manual install
+## Try it first
 
-Prefer not to pipe to bash? Download [`my-claude-dashboard.zip`](./my-claude-dashboard.zip), unzip
-it, and run `./run.sh`.
+Want to look before you install? Open the [live demo](https://chethanbhatbs.github.io/my-claude/demo.html)
+(sample data, nothing real).
+
+## Prefer to install manually?
+
+Download [`my-claude-dashboard.zip`](https://chethanbhatbs.github.io/my-claude/my-claude-dashboard.zip),
+unzip it, and run `./run.sh`.
 
 ---
 
-Landing page: https://chethanbhatbs.github.io/my-claude/ · Built with Claude Code.
+Built with Claude Code.
