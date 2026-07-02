@@ -40,9 +40,11 @@
   .nlinks{display:flex;gap:30px;align-items:center;font-size:14.5px}
   .nlinks a{color:var(--dim)} .nlinks a:hover{color:var(--ink)}
 
-  .hero{text-align:left;padding:92px 0 44px}
+  .hero{text-align:left;padding:80px 0 44px}
+  .hero .wrap{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:center}
+  .hero .htext{min-width:0}
   .hero .eyebrow{margin-bottom:22px}
-  h1{font-size:clamp(40px,6vw,72px);line-height:1.02;letter-spacing:-.04em;font-weight:800;margin:0 0 22px;max-width:16ch}
+  h1{font-size:clamp(34px,3.6vw,52px);line-height:1.04;letter-spacing:-.035em;font-weight:800;margin:0 0 20px;max-width:15ch}
   h1 em{font-style:normal;color:var(--accent)}
   .lead{font-size:1.25rem;color:var(--dim);max-width:52ch;margin:0 0 34px;line-height:1.55}
   .cmd{display:inline-flex;align-items:center;gap:14px;background:#f7f4ef;border:1px solid var(--line2);border-radius:12px;padding:13px 13px 13px 18px;max-width:100%}
@@ -53,9 +55,9 @@
   .cta{margin-top:22px;display:flex;gap:14px;justify-content:flex-start;align-items:center;flex-wrap:wrap}
   .cta .note{color:var(--faint);font-size:13.5px}
 
-  .heroshot{margin-top:60px}
+  .heroshot{min-width:0}
   .frame{border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:var(--shot);background:#1a1a19}
-  .frame.hero-f{max-width:1000px;margin:0 auto}
+  .frame.hero-f{margin:0}
 
   .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:70px;background:var(--bg2)}
   .trust .wrap{display:flex;justify-content:center;gap:44px;padding:26px;flex-wrap:wrap;font-size:14px;color:var(--dim)}
@@ -100,7 +102,8 @@
 
   @media(prefers-reduced-motion:no-preference){.rise{opacity:0;transform:translateY(14px);animation:r .7s cubic-bezier(.2,.7,.3,1) forwards}@keyframes r{to{opacity:1;transform:none}}}
   @media(max-width:860px){
-    h1{font-size:42px}.frow{grid-template-columns:1fr;gap:32px;padding:52px 0}
+    .hero .wrap{grid-template-columns:1fr;gap:38px}
+    h1{font-size:40px}.frow{grid-template-columns:1fr;gap:32px;padding:52px 0}
     .frow.rev .txt{order:1}.frow.rev .pic{order:2}
     .steps,.privacy ul,.pair{grid-template-columns:1fr}.trust .wrap{gap:22px}
     .nlinks a:not(.gh){display:none}
@@ -122,17 +125,19 @@
 </nav></div></header>
 
 <div class="hero"><div class="wrap rise">
-  <div class="eyebrow">Private · Local · One command</div>
-  <h1>See <em>everything</em> Claude Code keeps on your machine.</h1>
-  <p class="lead">Skills, MCP connectors, token spend, and your full conversation history — one private dashboard you run with a single command. Nothing leaves your laptop.</p>
-  <div class="cmd">
-    <span class="dollar mono">$</span>
-    <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
-    <button class="copy" onclick="copyCmd()">Copy</button>
-  </div>
-  <div class="cta">
-    <a class="btn solid" href="demo.html">Try the live demo →</a>
-    <span class="note">Python 3.9+ · macOS or Linux · opens in your browser</span>
+  <div class="htext">
+    <div class="eyebrow">Private · Local · One command</div>
+    <h1>See <em>everything</em> Claude Code keeps on your machine.</h1>
+    <p class="lead">Skills, MCP connectors, token spend, and your full conversation history — one private dashboard you run with a single command. Nothing leaves your laptop.</p>
+    <div class="cmd">
+      <span class="dollar mono">$</span>
+      <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
+      <button class="copy" onclick="copyCmd()">Copy</button>
+    </div>
+    <div class="cta">
+      <a class="btn solid" href="demo.html">Try the live demo →</a>
+      <span class="note">Python 3.9+ · macOS or Linux · opens in your browser</span>
+    </div>
   </div>
   <div class="heroshot"><div class="frame hero-f"><img src="assets/overview.png" alt="My Claude — Overview dashboard" loading="eager"></div></div>
 </div></div>
