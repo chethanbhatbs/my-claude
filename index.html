@@ -41,25 +41,27 @@
   .nlinks a:not(.gh){color:var(--dim)} .nlinks a:not(.gh):hover{color:var(--ink)}
 
   /* hero */
-  .hero{padding:42px 0 0;text-align:center}
+  .hero{padding:52px 0 66px;text-align:left}
+  .hero .wrap{display:grid;grid-template-columns:0.92fr 1.12fr;gap:46px;align-items:center}
+  .hero .htext{min-width:0}
   .hero .eyebrow{margin-bottom:16px}
-  h1{font-size:clamp(30px,3.8vw,48px);line-height:1.05;letter-spacing:-.035em;font-weight:800;margin:0 auto 14px;max-width:18ch}
+  h1{font-size:clamp(28px,3.2vw,44px);line-height:1.06;letter-spacing:-.035em;font-weight:800;margin:0 0 14px;max-width:16ch}
   h1 em{font-style:normal;color:var(--accent)}
-  .lead{font-size:clamp(16px,1.5vw,19px);color:var(--dim);max-width:54ch;margin:0 auto 22px;line-height:1.5}
+  .lead{font-size:clamp(16px,1.4vw,18px);color:var(--dim);max-width:46ch;margin:0 0 22px;line-height:1.55}
   .install-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
-  .cmd{display:inline-flex;align-items:center;gap:12px;background:#f7f4ef;border:1px solid var(--line2);border-radius:12px;padding:10px 10px 10px 18px;max-width:100%}
-  .cmd code{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--ink);overflow-x:auto;white-space:nowrap}
+  .cmd{display:flex;align-items:center;gap:12px;background:#f7f4ef;border:1px solid var(--line2);border-radius:12px;padding:10px 10px 10px 18px;max-width:100%}
+  .cmd code{font-family:"JetBrains Mono",monospace;font-size:13.5px;color:var(--ink);overflow-x:auto;white-space:nowrap;min-width:0}
   .cmd .dollar{color:var(--faint)}
   .copy{flex:none;padding:10px 16px;border-radius:8px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
   .copy:hover{border-color:var(--ink)}
-  .cta{margin-top:18px;display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
-  .tbadges{display:flex;justify-content:center;gap:10px 22px;flex-wrap:wrap;margin-top:20px;font-size:14px;color:var(--dim)}
+  .cta{margin-top:18px;display:flex;gap:12px;justify-content:flex-start;align-items:center;flex-wrap:wrap}
+  .tbadges{display:flex;justify-content:flex-start;gap:9px 18px;flex-wrap:wrap;margin-top:20px;font-size:13.5px;color:var(--dim)}
   .tbadges span{display:inline-flex;align-items:center;gap:7px}
   .tbadges .ck{color:var(--accent);font-weight:800}
 
   /* browser-chrome screenshot */
-  .heroshot{margin-top:34px}
-  .browser{max-width:1040px;margin:0 auto;border:1px solid var(--line2);border-radius:15px;overflow:hidden;box-shadow:var(--shot);background:#1a1a19;position:relative}
+  .heroshot{min-width:0}
+  .browser{max-width:none;margin:0;border:1px solid var(--line2);border-radius:15px;overflow:hidden;box-shadow:var(--shot);background:#1a1a19;position:relative}
   .bbar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#232322;border-bottom:1px solid #2f2e2c}
   .bbar .d{width:11px;height:11px;border-radius:50%;background:#3c3b38}
   .burl{margin-left:12px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#8f8a82;background:#1a1a19;border:1px solid #2f2e2c;border-radius:7px;padding:5px 16px}
@@ -142,6 +144,8 @@
 
   @media(prefers-reduced-motion:no-preference){.rise{opacity:0;transform:translateY(16px);animation:r .7s cubic-bezier(.2,.7,.3,1) forwards}@keyframes r{to{opacity:1;transform:none}}}
   @media(max-width:860px){
+    .hero{padding:38px 0 50px}
+    .hero .wrap{grid-template-columns:1fr;gap:32px}
     .stats .wrap{grid-template-columns:1fr 1fr;gap:28px 20px}
     .compare,.frow,.fcards,.steps,.privacy ul{grid-template-columns:1fr}
     .frow{gap:28px;padding:44px 0}.frow.rev .txt{order:1}.frow.rev .pic{order:2}
@@ -164,24 +168,26 @@
 </nav></div></header>
 
 <div class="hero"><div class="wrap rise">
-  <div class="eyebrow">Private · Local · One command</div>
-  <h1>Your private dashboard for <em>Claude Code</em>.</h1>
-  <p class="lead">Turn every Claude Code session into one clear dashboard: cost, tokens, projects, skills, MCP servers, and history, all on your own machine.</p>
-  <div class="install-label">Install in under 20 seconds</div>
-  <div class="cmd">
-    <span class="dollar mono">$</span>
-    <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
-    <button class="copy" onclick="copyCmd()">Copy</button>
-  </div>
-  <div class="cta">
-    <button class="btn solid" onclick="copyCmd()">Install now</button>
-    <a class="btn" href="demo.html">Live demo →</a>
-  </div>
-  <div class="tbadges">
-    <span><span class="ck">✓</span> 100% local</span>
-    <span><span class="ck">✓</span> No cloud, no telemetry</span>
-    <span><span class="ck">✓</span> Open source · MIT</span>
-    <span><span class="ck">✓</span> One command</span>
+  <div class="htext">
+    <div class="eyebrow">Private · Local · One command</div>
+    <h1>Your private dashboard for <em>Claude Code</em>.</h1>
+    <p class="lead">Turn every Claude Code session into one clear dashboard: cost, tokens, projects, skills, MCP servers, and history, all on your own machine.</p>
+    <div class="install-label">Install in under 20 seconds</div>
+    <div class="cmd">
+      <span class="dollar mono">$</span>
+      <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
+      <button class="copy" onclick="copyCmd()">Copy</button>
+    </div>
+    <div class="cta">
+      <button class="btn solid" onclick="copyCmd()">Install now</button>
+      <a class="btn" href="demo.html">Live demo →</a>
+    </div>
+    <div class="tbadges">
+      <span><span class="ck">✓</span> 100% local</span>
+      <span><span class="ck">✓</span> No cloud, no telemetry</span>
+      <span><span class="ck">✓</span> Open source · MIT</span>
+      <span><span class="ck">✓</span> One command</span>
+    </div>
   </div>
   <div class="heroshot">
     <div class="browser">
