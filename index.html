@@ -57,17 +57,15 @@
   .nlinks{display:flex;gap:28px;align-items:center;font-size:14.5px}
   .nlinks a:not(.gh){color:var(--dim)} .nlinks a:not(.gh):hover{color:var(--text)}
 
-  /* hero — centered, with a big dashboard below */
-  .hero{padding:76px 0 44px;text-align:center}
-  .hero .htext{max-width:820px;margin:0 auto}
-  .hero .eyebrow{margin-bottom:22px}
-  .hero .eyebrow::before{display:none}
-  .hero .cta{justify-content:center}
-  .hero .tbadges{justify-content:center}
-  h1{font-size:clamp(38px,5vw,66px);line-height:1.0;letter-spacing:-.04em;font-weight:800;margin:0 0 20px}
+  /* hero — side-by-side: text left, rotating dashboard right (both above the fold) */
+  .hero{padding:58px 0 44px}
+  .hero .wrap{display:grid;grid-template-columns:0.9fr 1.1fr;gap:48px;align-items:center}
+  .hero .htext{min-width:0}
+  .hero .eyebrow{margin-bottom:20px}
+  h1{font-size:clamp(32px,3.7vw,52px);line-height:1.03;letter-spacing:-.038em;font-weight:800;margin:0 0 18px}
   h1 .path{font-family:var(--mono);color:var(--accent);font-weight:600;font-size:.62em;letter-spacing:-.02em;white-space:nowrap;background:var(--accent-soft);border:1px solid var(--line2);padding:2px 12px;border-radius:10px;display:inline-block;vertical-align:middle}
-  .lead{font-size:clamp(16px,1.4vw,19px);color:var(--dim);max-width:54ch;margin:0 auto 28px;line-height:1.6}
-  .hero .cmd{margin:16px auto 0;max-width:660px;text-align:left}
+  .lead{font-size:clamp(16px,1.4vw,18.5px);color:var(--dim);max-width:46ch;margin:0 0 26px;line-height:1.6}
+  .hero .cmd{margin:16px 0 0;text-align:left}
   .install-label{font-family:var(--mono);font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
   .cmd{display:block;position:relative;background:#0a0908;border:1px solid var(--line2);border-radius:12px;padding:16px 92px 16px 18px;max-width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
   .cmd code{font-family:var(--mono);font-size:13px;color:var(--text);white-space:normal;overflow-wrap:anywhere;line-height:1.75;display:block}
@@ -81,7 +79,7 @@
   .x{color:var(--faint);font-weight:700}
 
   /* terminal-framed screenshot with glow */
-  .heroshot{position:relative;max-width:1060px;margin:56px auto 0}
+  .heroshot{position:relative;min-width:0}
   .heroshot::before{content:"";position:absolute;inset:-8% -5% -12% -5%;z-index:0;background:var(--glow);filter:blur(16px)}
   .frame{position:relative;z-index:1;border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:#0f0e0d;box-shadow:var(--shot)}
   .frame .bar{display:flex;align-items:center;gap:8px;padding:11px 15px;background:#14120f;border-bottom:1px solid var(--line)}
@@ -443,7 +441,7 @@
       slides[i].classList.remove('active'); if(dots[i])dots[i].classList.remove('active');
       i=n; slides[i].classList.add('active'); if(dots[i])dots[i].classList.add('active');
       if(url)url.textContent=slides[i].dataset.url; }
-    function start(){ if(reduce)return; stop(); timer=setInterval(()=>show(i+1),3800); }
+    function start(){ if(reduce)return; stop(); timer=setInterval(()=>show(i+1),2000); }
     function stop(){ if(timer){clearInterval(timer);timer=null;} }
     dots.forEach((d,n)=>d.addEventListener('click',()=>{ show(n); start(); }));
     const frame=wrap.closest('.frame');
