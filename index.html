@@ -57,9 +57,15 @@
   .nlinks{display:flex;gap:28px;align-items:center;font-size:14.5px}
   .nlinks a:not(.gh){color:var(--dim)} .nlinks a:not(.gh):hover{color:var(--text)}
 
-  /* hero - side-by-side: text left, rotating dashboard right (both above the fold) */
-  .hero{padding:50px 0 24px}
-  .hero .wrap{display:grid;grid-template-columns:0.8fr 1.32fr;gap:30px;align-items:center}
+  /* hero - rounded card with organic wavy orange divider + rotating dashboard */
+  .hero{padding:44px 0 22px}
+  .herocard{position:relative;display:grid;grid-template-columns:0.82fr 1.28fr;gap:34px;align-items:center;
+    border-radius:28px;padding:44px 44px;overflow:hidden;
+    background:linear-gradient(105deg,#151110 0%,#161210 46%,#1d1512 100%);
+    border:1px solid var(--line2);
+    box-shadow:0 50px 130px -55px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.035)}
+  .hc-wave{position:absolute;top:0;right:0;width:64%;height:100%;z-index:0;pointer-events:none}
+  .herocard>.htext,.herocard>.heroshot{position:relative;z-index:1}
   .hero .htext{min-width:0}
   .hero .eyebrow{margin-bottom:18px}
   h1{font-size:clamp(38px,4.5vw,62px);line-height:1.12;letter-spacing:-.04em;font-weight:800;margin:0 0 18px}
@@ -81,7 +87,7 @@
   .x{color:var(--faint);font-weight:700}
 
   /* terminal-framed screenshot with glow */
-  .heroshot{position:relative;min-width:0;margin-right:-30px}
+  .heroshot{position:relative;min-width:0}
   .heroshot::before{content:"";position:absolute;inset:-10% -6% -14% -6%;z-index:0;background:radial-gradient(60% 60% at 55% 45%, rgba(217,119,87,.36), transparent 70%);filter:blur(22px)}
   .frame{position:relative;z-index:1;border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:#0f0e0d;box-shadow:var(--shot),0 0 90px -28px rgba(217,119,87,.45)}
   .frame .bar{display:flex;align-items:center;gap:8px;padding:11px 15px;background:#14120f;border-bottom:1px solid var(--line)}
@@ -188,7 +194,8 @@
   }
   @media(max-width:880px){
     .hero{padding:44px 0 20px}
-    .hero .wrap{grid-template-columns:1fr;gap:38px}
+    .herocard{grid-template-columns:1fr;gap:30px;padding:26px 22px}
+    .hc-wave{display:none}
     .nums{grid-template-columns:1fr 1fr;gap:28px 20px}
     .compare,.frow,.steps,.pains{grid-template-columns:1fr}
     .frow{gap:30px;padding:48px 0}.frow.rev .txt{order:1}.frow.rev .pic{order:2}
@@ -213,7 +220,9 @@
 </nav></div></header>
 
 <div class="hero"><div class="wrap">
-  <div class="htext rise">
+  <div class="herocard rise">
+    <svg class="hc-wave" viewBox="0 0 300 600" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgba(217,119,87,0.22)"/><stop offset="1" stop-color="rgba(217,119,87,0.04)"/></linearGradient></defs><path d="M84,0 C8,118 150,236 58,360 C4,452 100,520 84,600 L300,600 L300,0 Z" fill="url(#wg)"/></svg>
+  <div class="htext">
     <div class="eyebrow">Private · Local · One command</div>
     <h1>Open the black box called <span class="path">~/.claude</span></h1>
     <p class="lead">Every conversation, token, skill, and MCP server Claude Code touches ends up in there. My Claude turns it into one dashboard you can actually read.</p>
@@ -234,7 +243,7 @@
       <span><span class="ck">✓</span> One command</span>
     </div>
   </div>
-  <div class="heroshot rise d3">
+  <div class="heroshot">
     <div class="frame">
       <div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="url" id="heroUrl">127.0.0.1:8766/p/overview</span></div>
       <div class="slides" id="heroSlides">
@@ -251,6 +260,7 @@
         <button class="dot" aria-label="MCP"></button>
       </div>
     </div>
+  </div>
   </div>
 </div></div>
 
