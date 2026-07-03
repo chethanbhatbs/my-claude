@@ -47,6 +47,7 @@
   .hero .eyebrow{margin-bottom:16px}
   h1{font-size:clamp(28px,3.2vw,44px);line-height:1.06;letter-spacing:-.035em;font-weight:800;margin:0 0 14px;max-width:16ch}
   h1 em{font-style:normal;color:var(--accent)}
+  h1 .path{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:600;font-size:.82em;letter-spacing:-.02em;white-space:nowrap}
   .lead{font-size:clamp(16px,1.4vw,18px);color:var(--dim);max-width:46ch;margin:0 0 22px;line-height:1.55}
   .install-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
   .cmd{display:flex;align-items:center;gap:12px;background:#f7f4ef;border:1px solid var(--line2);border-radius:12px;padding:10px 10px 10px 18px;max-width:100%}
@@ -186,8 +187,8 @@
 <div class="hero"><div class="wrap rise">
   <div class="htext">
     <div class="eyebrow">Private · Local · One command</div>
-    <h1>Your Claude Code data, <em>finally visible.</em></h1>
-    <p class="lead">Your conversations, token spend, skills, MCP servers, and history all sit hidden in <code>~/.claude</code>. My Claude makes them visible in one private, local dashboard.</p>
+    <h1>Open the black box called <span class="path">~/.claude</span></h1>
+    <p class="lead">Every conversation, token, skill, and MCP server Claude Code touches ends up in there. My Claude turns it into one dashboard you can actually read.</p>
     <div class="install-label">Install in under 20 seconds</div>
     <div class="cmd">
       <span class="dollar mono">$</span>
