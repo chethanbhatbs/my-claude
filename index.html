@@ -193,13 +193,11 @@ h1 .accent{color:var(--accent)}
 @media(min-width:1024px){
   .hero-visual{display:flex;flex-direction:column}
   .hero-visual .hero-shot-frame{
-    width:116%;max-width:none;
-    transform:perspective(1600px) rotateY(-4deg) rotateX(1deg);
-    transition:transform .5s ease,box-shadow .5s ease;
+    width:100%;max-width:100%;
+    transition:box-shadow .4s ease;
   }
   .hero-visual .hero-shot-frame img{width:100%;height:auto;display:block}
   .hero-visual .hero-shot-frame:hover{
-    transform:perspective(1400px) rotateY(0) rotateX(0);
     box-shadow:0 40px 120px rgba(0,0,0,.75),0 0 100px rgba(232,130,90,.12);
   }
   .hero-shot-caption{text-align:left}
