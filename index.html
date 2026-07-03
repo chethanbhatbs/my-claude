@@ -102,6 +102,7 @@
   .ccard ul{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
   .ccard li{display:flex;gap:11px;font-size:15px}
   .ccard li .ck{color:var(--accent);font-weight:800;flex:none}
+  .ccard li .x{color:var(--faint);font-weight:700;flex:none}
   .ccard li b{font-weight:600}
 
   /* feature rows */
@@ -133,7 +134,7 @@
   .step .n{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-ink);margin-bottom:12px;letter-spacing:1px}
   .step h3{margin:0 0 7px;font-size:1.08rem;font-weight:700}
   .step p{margin:0;color:var(--dim);font-size:14.5px}
-  .step code{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#efeae2;padding:2px 7px;border-radius:5px;color:var(--accent-ink)}
+  .step code{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#fdfcfb;border:1px solid var(--line2);padding:2px 7px;border-radius:6px;color:var(--accent-ink)}
 
   /* proof / why it exists */
   .proof{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -148,7 +149,9 @@
 
   .cta-final{text-align:center}
   .cta-final .cmd{margin-top:26px}
-  .cta-final .cta{margin-top:18px}
+  .cta-final .cta{margin-top:16px}
+  .cmd-note{margin-top:14px;font-size:13px;color:var(--faint)}
+  .cmd-note a{color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
 
   footer{border-top:1px solid var(--line);background:var(--bg2)}
   footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px;padding:48px 0 30px}
@@ -196,7 +199,7 @@
       <button class="copy" onclick="copyCmd()">Copy</button>
     </div>
     <div class="cta">
-      <button class="btn solid" onclick="copyCmd()">Install My Claude</button>
+      <a class="btn solid" href="#install">Get started</a>
       <a class="btn" href="demo.html">Live demo →</a>
     </div>
     <div class="tbadges">
@@ -234,10 +237,10 @@
   <h2 class="quote">Claude Code already has all this. <em>My Claude finally lets you see it.</em></h2>
   <p class="why">Built because Claude stores everything locally, but gives you no way to explore it.</p>
   <div class="nums">
-    <div class="stat"><div class="num" data-to="6">0</div><div class="lbl">dashboard views</div></div>
-    <div class="stat"><div class="num" data-to="20" data-suffix="s">0</div><div class="lbl">one-time setup</div></div>
-    <div class="stat"><div class="num" data-to="100" data-suffix="%">0</div><div class="lbl">on your machine</div></div>
-    <div class="stat"><div class="num" data-to="0">0</div><div class="lbl">bytes uploaded</div></div>
+    <div class="stat"><div class="num">0</div><div class="lbl">bytes uploaded</div></div>
+    <div class="stat"><div class="num">&lt;20s</div><div class="lbl">setup time</div></div>
+    <div class="stat"><div class="num" data-to="100" data-suffix="%">0</div><div class="lbl">local data</div></div>
+    <div class="stat"><div class="num">1</div><div class="lbl">command to run</div></div>
   </div>
   <div class="chips">
     <span class="chip">127.0.0.1 only</span>
@@ -256,17 +259,21 @@
     <div class="ccard">
       <div class="ct">Claude Code, built in</div>
       <h3>The chat in front of you</h3>
-      <p>You can scroll the current conversation. But the cost, the other projects, the skills, and everything from last week live in files you never see.</p>
+      <ul>
+        <li><span class="x">✕</span><span>Blind token and cost tracking per run</span></li>
+        <li><span class="x">✕</span><span>Transcripts buried in deep log files</span></li>
+        <li><span class="x">✕</span><span>Manual tracking of installed skills</span></li>
+        <li><span class="x">✕</span><span>Hidden MCP connection errors</span></li>
+      </ul>
     </div>
     <div class="ccard hi">
       <div class="ct">My Claude</div>
       <h3>Your whole local footprint</h3>
       <ul>
-        <li><span class="ck">✓</span><span>Every <b>project and conversation</b>, searchable</span></li>
         <li><span class="ck">✓</span><span><b>Token spend</b> and cost trends over time</span></li>
-        <li><span class="ck">✓</span><span>Skills you actually use, and the ones you don't</span></li>
-        <li><span class="ck">✓</span><span><b>MCP</b> connectors with live health checks</span></li>
-        <li><span class="ck">✓</span><span>Cache savings and per-project breakdowns</span></li>
+        <li><span class="ck">✓</span><span><b>Full-text searchable</b> conversation history</span></li>
+        <li><span class="ck">✓</span><span>Usage stats for <b>every skill</b></span></li>
+        <li><span class="ck">✓</span><span><b>Live health checks</b> for global and local MCP</span></li>
       </ul>
     </div>
   </div>
@@ -350,7 +357,8 @@
     <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
     <button class="copy" onclick="copyCmd()">Copy</button>
   </div>
-  <div class="cta"><button class="btn solid" onclick="copyCmd()">Install My Claude</button><a class="btn" href="demo.html">Live demo →</a></div>
+  <p class="cmd-note">Inspect the open-source install script anytime on <a href="https://github.com/chethanbhatbs/my-claude/blob/main/install.sh">GitHub</a>.</p>
+  <div class="cta"><a class="btn" href="demo.html">Live demo →</a></div>
 </section></div></div>
 
 <footer><div class="wrap">
@@ -384,7 +392,7 @@
   function copyCmd(){ navigator.clipboard.writeText('curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash').then(()=>{ const t=document.getElementById('toast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1900); }); }
   // count-up stats when they scroll into view
   (function(){
-    const nums=document.querySelectorAll('.stat .num'); if(!nums.length) return;
+    const nums=document.querySelectorAll('.stat .num[data-to]'); if(!nums.length) return;
     const run=el=>{ const to=+el.dataset.to, suf=el.dataset.suffix||''; const dur=900, t0=performance.now();
       const step=now=>{ const p=Math.min(1,(now-t0)/dur); el.textContent=Math.round(to*(1-Math.pow(1-p,3)))+suf; if(p<1) requestAnimationFrame(step); };
       requestAnimationFrame(step); };
