@@ -87,7 +87,8 @@
   /* problem / story */
   .pains{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:40px 0 36px;text-align:left}
   .pain{border:1px solid var(--line);border-radius:16px;padding:22px 24px;background:#fff}
-  .pain.solo{grid-column:1/-1;justify-self:center;width:100%;max-width:calc(50% - 8px)}
+  .pain.solo{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .pain.solo .q{margin-bottom:0}
   .pain .q{font-size:1.12rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
   .pain .a{color:var(--dim);font-size:14.5px}
   .solution-line{font-size:clamp(19px,2.2vw,26px);font-weight:800;letter-spacing:-.025em;line-height:1.3;margin:0 auto;max-width:28ch}
@@ -157,7 +158,7 @@
   .cmd-note a{color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
 
   footer{border-top:1px solid var(--line);background:var(--bg2)}
-  footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px;padding:48px 0 30px}
+  footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px;padding:48px 0 30px}
   footer .fbrand .brand{margin-bottom:10px}
   footer .fbrand p{color:var(--dim);font-size:14px;margin:0;max-width:34ch}
   footer h4{font-size:12px;font-family:"JetBrains Mono",monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
@@ -186,6 +187,7 @@
     <a href="#why">Why</a>
     <a href="#features">Features</a>
     <a href="demo.html">Live demo</a>
+    <a href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener">LinkedIn</a>
     <a class="gh btn solid" href="https://github.com/chethanbhatbs/my-claude" style="padding:9px 16px">GitHub</a>
   </div>
 </nav></div></header>
@@ -383,9 +385,14 @@
       <a href="https://github.com/chethanbhatbs/my-claude/issues">Issues</a>
       <a href="https://github.com/chethanbhatbs/my-claude/blob/main/LICENSE">MIT License</a>
     </div>
+    <div class="fcol">
+      <h4>Connect</h4>
+      <a href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/chethanbhatbs">GitHub profile</a>
+    </div>
   </div>
   <div class="fbot">
-    <span>Made by Chethan · Built with Claude Code</span>
+    <span>Made by Chethan · <a href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Connect on LinkedIn</a> · Built with Claude Code</span>
     <span>100% local · Open source</span>
   </div>
 </div></footer>

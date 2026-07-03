@@ -86,7 +86,7 @@
   .btn:hover{background:var(--surface2)} .btn.view:hover{color:var(--info)} .btn.push:hover{color:var(--ok)} .btn.share:hover{color:var(--sand)}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#1a1a19;font-weight:600}
   .tag2{font-size:9.5px;padding:2px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;background:var(--surface2);color:var(--dim);margin-left:8px}
-  .tag2.user{color:var(--info)}.tag2.recent{color:var(--accent)}.tag2.unused{color:var(--faint)}
+  .tag2.user{color:var(--info)}.tag2.plugin{color:#c89968}.tag2.recent{color:var(--accent)}.tag2.unused{color:var(--faint)}
   input.inp,select.inp{width:100%;padding:9px 13px;font-size:13.5px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--text);font-family:inherit}
   input.inp:focus,select.inp:focus{border-color:var(--accent);outline:none}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -213,16 +213,16 @@
 <script>
 const D={
   skills:[
-    {n:"accessibility-audit",cat:"Frontend & UI",src:"user",uses:0,last:"never",kb:"75.0 KB",desc:"Comprehensive WCAG accessibility audits with axe-core + pa11y + Lighthouse, context-aware remediation."},
-    {n:"api-tester",cat:"Testing & QA",src:"user",uses:11,last:"2026-06-30",kb:"1.8 MB",desc:"Generate and run REST API test suites: happy paths, edge cases, auth, and schema validation."},
-    {n:"report-builder",cat:"Docs & Reports",src:"user",uses:9,last:"2026-06-30",kb:"127 KB",desc:"Turn a dataset into an interactive HTML report with charts, filters, and a summary."},
+    {n:"accessibility-audit",cat:"Frontend & UI",src:"local",uses:0,last:"never",kb:"75.0 KB",desc:"Comprehensive WCAG accessibility audits with axe-core + pa11y + Lighthouse, context-aware remediation."},
+    {n:"api-tester",cat:"Testing & QA",src:"local",uses:11,last:"2026-06-30",kb:"1.8 MB",desc:"Generate and run REST API test suites: happy paths, edge cases, auth, and schema validation."},
+    {n:"report-builder",cat:"Docs & Reports",src:"local",uses:9,last:"2026-06-30",kb:"127 KB",desc:"Turn a dataset into an interactive HTML report with charts, filters, and a summary."},
     {n:"playwright-e2e",cat:"Testing & QA",src:"plugin",uses:6,last:"2026-06-24",kb:"44 KB",desc:"End-to-end browser tests with Playwright: fixtures, network mocking, visual assertions."},
     {n:"postgres-pro",cat:"Database & Data",src:"plugin",uses:4,last:"2026-06-20",kb:"38 KB",desc:"PostgreSQL query design, indexing, EXPLAIN analysis, and migration safety."},
-    {n:"security-review",cat:"Security",src:"user",uses:3,last:"2026-06-18",kb:"52 KB",desc:"Review a diff for injection, authz gaps, secret leaks; produce a severity-ranked report."},
+    {n:"security-review",cat:"Security",src:"local",uses:3,last:"2026-06-18",kb:"52 KB",desc:"Review a diff for injection, authz gaps, secret leaks; produce a severity-ranked report."},
     {n:"frontend-design",cat:"Frontend & UI",src:"plugin",uses:5,last:"2026-06-28",kb:"29 KB",desc:"Opinionated visual identity: palette, type pairing, layout, and a signature element."},
-    {n:"eos",cat:"Productivity & Process",src:"user",uses:5,last:"2026-06-29",kb:"12 KB",desc:"End-of-session summary saved to disk so the next session can resume where you left off."},
+    {n:"eos",cat:"Productivity & Process",src:"local",uses:5,last:"2026-06-29",kb:"12 KB",desc:"End-of-session summary saved to disk so the next session can resume where you left off."},
     {n:"kubernetes-specialist",cat:"DevOps & Infra",src:"plugin",uses:1,last:"2026-05-30",kb:"61 KB",desc:"Kubernetes manifests, operators, and cluster debugging."},
-    {n:"marp-slides",cat:"Docs & Reports",src:"user",uses:0,last:"never",kb:"18 KB",desc:"Build MARP decks with SVG charts, dashboard components, and dark/light themes."}
+    {n:"marp-slides",cat:"Docs & Reports",src:"plugin",uses:0,last:"never",kb:"18 KB",desc:"Build MARP decks with SVG charts, dashboard components, and dark/light themes."}
   ],
   convs:[
     {t:"Refactor the auth flow to use short-lived tokens",p:"my-app",n:42,cost:"$3.10",when:"2026-06-30 17:19",
@@ -284,7 +284,7 @@ function renderStorage(){
 const V={
   overview(){return `
     <div class="eye">~/.claude</div><h1 class="pt">My Claude</h1>
-    <div class="cap">Everything Claude keeps on this machine, at a glance. All local, nothing shared.</div>
+    <div class="cap">Everything Claude Code keeps on this machine, at a glance. All local, nothing shared.</div>
     <div class="metrics">
       <a class="metric" onclick="go('skills')"><div class="l">Skills</div><div class="v">214</div><div class="s">↑ 118 MB · 26 mine</div></a>
       <a class="metric" onclick="go('history')"><div class="l">Conversations</div><div class="v">96</div><div class="s">11.2k messages</div></a>
@@ -358,7 +358,7 @@ const V={
 
   mcp(){return `
     <div class="eye">settings.json · ~/.claude.json</div><h1 class="pt">MCP &amp; Plugins</h1>
-    <div class="cap">External tool servers via the Model Context Protocol. Secrets auto-redacted.</div>
+    <div class="cap">Claude Code's MCP servers, from ~/.claude.json and per-project .mcp.json. Secrets auto-redacted. Claude Desktop and claude.ai web connectors are separate and not shown here.</div>
     <div class="row" style="margin-bottom:14px"><div class="seg"><a class="on">MCP · 4</a><a>Plugins · 5</a></div><button class="btn" onclick="checkHealth()" id="hbtn">Check health</button></div>
     <div id="mcplist">${D.mcp.map((m,i)=>`
       <details class="exp"><summary><span><span class="mcp-dot" id="dot${i}"></span>${m.n} <span class="tag2">${m.scope}</span><span id="st${i}" style="font-size:11.5px;color:var(--dim);margin-left:8px"></span></span><span style="color:var(--faint)">+</span></summary>
@@ -402,7 +402,7 @@ function renderSkills(){const q=($('#sksearch')?.value||'').toLowerCase();let f=
   $('#skcount').innerHTML=`<b style="color:var(--text)">${f.length}</b> of ${D.skills.length} skills · sample`;
   $('#skgrid').innerHTML=f.map(s=>`<div class="card"><div class="chead"><div class="ctitle">${s.n}${s.uses===0?'<span class="tag2 unused">unused</span>':''}${s.last!=='never'&&s.uses>4?'<span class="tag2 recent">recent</span>':''}</div><div class="csize">${s.kb}</div></div>
     <div class="cdesc">${esc(s.desc)}</div><div class="cmeta"><span>${s.cat}</span><span>·</span><span>${s.uses} uses</span><span>·</span><span>used ${s.last}</span></div>
-    <div class="cbtns"><button class="btn view" onclick="viewSkill('${s.n}')">View</button><button class="btn push">Push</button><button class="btn share">Share</button><span class="tag2 ${s.src==='user'?'user':''}" style="margin-left:auto">${s.src}</span></div></div>`).join('')||'<div class="alert">No skills match.</div>'}
+    <div class="cbtns"><button class="btn view" onclick="viewSkill('${s.n}')">View</button><button class="btn push">Push</button><button class="btn share">Share</button><span class="tag2 ${s.src==='plugin'?'plugin':'user'}" style="margin-left:auto">${s.src}</span></div></div>`).join('')||'<div class="alert">No skills match.</div>'}
 function skillBody(s){
   const slug=s.n, cmd=`python3 ~/.claude/skills/${slug}/run.py --target ./src --report out.html`;
   return `# ${s.n}
