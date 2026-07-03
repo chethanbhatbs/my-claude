@@ -2,475 +2,747 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Claude: your private dashboard for Claude Code</title>
-<meta name="description" content="Turn every Claude Code session into one clear dashboard: cost, tokens, projects, skills, MCP, and history. One command. Everything stays on your machine.">
-<meta property="og:title" content="My Claude: a private local dashboard for Claude Code">
-<meta property="og:description" content="Cost, tokens, projects, skills, MCP, and history in one dashboard. One command. Fully local.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Claude · A private, 100% local dashboard for your ~/.claude folder</title>
+<meta name="description" content="My Claude is a private, 100% local dashboard for everything Claude Code stores on your machine: skills, MCP connectors, plugins, token usage and cost, and full conversation history. One command to install. Nothing leaves your machine.">
+<meta property="og:title" content="My Claude · Your Claude Code, finally visible">
+<meta property="og:description" content="A private, 100% local dashboard for the ~/.claude folder. Skills, MCP, plugins, usage, cost and full history in one view. Open source, MIT.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chethanbhatbs.github.io/my-claude/">
+<meta property="og:image" content="https://chethanbhatbs.github.io/my-claude/assets/overview.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23E8825A'/%3E%3Ctext x='16' y='22' font-family='monospace' font-weight='bold' font-size='18' fill='%230A0A0A' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,500,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0c0b0a; --bg2:#111010; --surface:#171614; --surface2:#1e1c19;
-    --line:#292622; --line2:#35312b;
-    --text:#f2efe9; --dim:#a8a199; --faint:#6d675e;
-    --accent:#e0805c; --accent-2:#d97757; --accent-soft:rgba(224,128,92,.12);
-    --green:#7fc9a0;
-    --glow:radial-gradient(60% 60% at 50% 40%, rgba(217,119,87,.28), transparent 70%);
-    --shot:0 50px 120px -40px rgba(0,0,0,.9), 0 0 0 1px var(--line2);
-    --disp:"Bricolage Grotesque", ui-sans-serif, sans-serif;
-    --body:"Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
-    --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+:root{
+  --base:#0A0A0A;
+  --surface:#141414;
+  --elevated:#1F1F1F;
+  --accent:#E8825A;
+  --accent-hover:#F0876D;
+  --accent-glow:rgba(232,130,90,.15);
+  --text:#F0F0F0;
+  --text-2:#A1A1AA;
+  --text-3:#71717A;
+  --line:rgba(255,255,255,.09);
+  --line-strong:rgba(255,255,255,.18);
+  --ok:#7BC79B;
+  --font-display:'Cabinet Grotesk','IBM Plex Sans',sans-serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  background:var(--base);
+  color:var(--text-2);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--accent);color:var(--base)}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+
+/* grain + grid backdrop */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,black 20%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,black 20%,transparent 75%);
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.35;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.mono{font-family:var(--font-mono)}
+.kicker{
+  font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent);
+}
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  background:rgba(10,10,10,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{max-width:1120px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text);font-family:var(--font-display);font-weight:700;font-size:17px}
+.logo-mark{
+  width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--base);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:15px;
+}
+.logo-path{font-family:var(--font-mono);font-size:11px;color:var(--text-3);margin-left:4px;display:none}
+@media(min-width:640px){.logo-path{display:inline}}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{
+  padding:8px 14px;border-radius:8px;font-size:14px;color:var(--text-2);
+  transition:color .2s,background-color .2s;display:inline-flex;align-items:center;gap:7px;
+}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.nav-link svg{width:16px;height:16px}
+.nav-cta{
+  padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;
+  background:var(--accent);color:var(--base);transition:background-color .2s,transform .2s;
+}
+.nav-cta:hover{background:var(--accent-hover);transform:translateY(-1px)}
+
+/* ---------- hero ---------- */
+.hero{padding:130px 0 56px;text-align:left;position:relative}
+@media(min-width:768px){.hero{padding:150px 0 72px}}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center}
+@media(min-width:1024px){.hero-grid{grid-template-columns:11fr 9fr;gap:48px;align-items:stretch}}
+.hero-glow{
+  position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:820px;height:480px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,var(--accent-glow),transparent 70%);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:28px;
+  padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);
+  font-family:var(--font-mono);font-size:12px;color:var(--text-2);
+}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+h1{
+  font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;line-height:1.06;
+  color:var(--text);font-size:clamp(2.4rem,5vw,3.6rem);max-width:820px;
+}
+h1 .accent{color:var(--accent)}
+.hero-sub{max-width:640px;margin-top:24px;font-size:17px}
+@media(min-width:768px){.hero-sub{font-size:19px}}
+.hero-sub strong{color:var(--text);font-weight:500}
+.badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.badge{
+  display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);
+  font-family:var(--font-mono);font-size:12px;color:var(--text-2);
+  transition:border-color .2s,color .2s;
+}
+.badge:hover{border-color:var(--line-strong);color:var(--text)}
+.badge svg{width:14px;height:14px;color:var(--accent);flex-shrink:0}
+
+/* terminal */
+.terminal{
+  margin-top:40px;max-width:720px;border-radius:14px;overflow:hidden;
+  background:#000;border:1px solid var(--line-strong);
+  box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(232,130,90,.06),0 0 60px rgba(232,130,90,.07);
+}
+.terminal-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#0E0E0E;border-bottom:1px solid var(--line)}
+.t-dot{width:11px;height:11px;border-radius:50%}
+.t-dot:nth-child(1){background:#FF5F57}.t-dot:nth-child(2){background:#FEBC2E}.t-dot:nth-child(3){background:#28C840}
+.terminal-title{margin-left:auto;margin-right:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-3);transform:translateX(-26px)}
+.terminal-body{padding:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.terminal-cmd{
+  flex:1;min-width:0;font-family:var(--font-mono);font-size:13px;line-height:1.7;color:var(--text);
+  word-break:break-all;
+}
+.terminal-cmd .prompt{color:var(--accent);user-select:none}
+.terminal-cmd .flag{color:var(--text-3)}
+.terminal-cmd .url{color:#8AB8E8}
+.copy-btn{
+  flex-shrink:0;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  padding:9px 16px;border-radius:9px;border:1px solid var(--line-strong);
+  background:var(--elevated);color:var(--text);font-family:var(--font-mono);font-size:12.5px;font-weight:500;
+  transition:background-color .2s,border-color .2s,color .2s;
+}
+.copy-btn:hover{background:#2A2A2A;border-color:rgba(232,130,90,.5)}
+.copy-btn.copied{background:rgba(123,199,155,.12);border-color:rgba(123,199,155,.5);color:var(--ok)}
+.copy-btn svg{width:14px;height:14px}
+.terminal-note{
+  padding:12px 20px;border-top:1px solid var(--line);background:#0C0C0C;
+  font-family:var(--font-mono);font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+}
+.terminal-note .ok{color:var(--ok)}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:32px}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:9px;padding:13px 26px;border-radius:999px;
+  background:var(--accent);color:var(--base);font-weight:600;font-size:15px;
+  box-shadow:0 0 24px rgba(232,130,90,.28);
+  transition:background-color .2s,transform .2s,box-shadow .2s;
+}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 6px 32px rgba(232,130,90,.4)}
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:9px;padding:13px 26px;border-radius:999px;
+  background:var(--elevated);color:var(--text);font-weight:500;font-size:15px;border:1px solid var(--line-strong);
+  transition:background-color .2s,border-color .2s,transform .2s;
+}
+.btn-secondary:hover{background:#2A2A2A;border-color:rgba(255,255,255,.3);transform:translateY(-2px)}
+.btn-primary svg,.btn-secondary svg{width:17px;height:17px}
+
+/* ---------- hero screenshot ---------- */
+.hero-visual{position:relative}
+.hero-shot-frame{
+  position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line-strong);
+  box-shadow:0 40px 120px rgba(0,0,0,.7),0 0 80px rgba(232,130,90,.08);
+  background:var(--surface);
+}
+.hero-shot-frame img{width:100%}
+.hero-shot-caption{
+  margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--text-3);text-align:center;
+}
+@media(min-width:1024px){
+  .hero-visual{display:flex;flex-direction:column}
+  .hero-visual .hero-shot-frame{
+    flex:1;min-height:0;width:126%;max-width:none;
+    transform:perspective(1400px) rotateY(-5deg) rotateX(1.5deg);
+    transition:transform .5s ease,box-shadow .5s ease;
   }
-  *,*::before,*::after{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
-  /* warm-dark atmosphere: layered radial washes + fine grain */
-  body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
-    background:
-      radial-gradient(80% 50% at 78% -5%, rgba(217,119,87,.10), transparent 60%),
-      radial-gradient(70% 40% at 8% 8%, rgba(217,119,87,.05), transparent 55%),
-      linear-gradient(180deg, #100e0d 0%, var(--bg) 40%, #0a0908 100%);}
-  body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.035;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
-  .mono{font-family:var(--mono)}
-  a{color:var(--accent);text-decoration:none}
-  .wrap{max-width:1140px;margin:0 auto;padding:0 28px}
-  ::selection{background:rgba(217,119,87,.28);color:#fff}
-  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
-  img{max-width:100%;display:block}
-  .eyebrow{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);display:inline-flex;align-items:center;gap:9px}
-  .eyebrow::before{content:"";width:22px;height:1px;background:var(--accent);opacity:.6}
-  .center .eyebrow::before{display:none}
-
-  h1,h2,h3,.disp{font-family:var(--disp)}
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:11px;border:1px solid rgba(242,239,233,.24);background:rgba(242,239,233,.02);color:var(--text);font-weight:600;font-size:15px;font-family:var(--body);cursor:pointer;transition:.16s}
-  .btn:hover{border-color:var(--text);background:rgba(242,239,233,.06);transform:translateY(-1px)}
-  .btn.solid{background:var(--accent-2);border-color:var(--accent-2);color:#1a0f0a;box-shadow:0 8px 30px -10px rgba(217,119,87,.6)}
-  .btn.solid:hover{background:var(--accent);box-shadow:0 12px 36px -8px rgba(217,119,87,.75)}
-
-  header{position:sticky;top:0;z-index:30;background:rgba(12,11,10,.7);backdrop-filter:blur(14px) saturate(1.2);border-bottom:1px solid var(--line)}
-  nav{display:flex;align-items:center;justify-content:space-between;height:66px}
-  .brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:-.01em}
-  .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(150deg,var(--accent),var(--accent-2));color:#1a0f0a;display:grid;place-items:center;font-weight:800;font-size:16px;box-shadow:0 4px 16px -4px rgba(217,119,87,.7)}
-  .nlinks{display:flex;gap:28px;align-items:center;font-size:14.5px}
-  .nlinks a:not(.gh){color:var(--dim)} .nlinks a:not(.gh):hover{color:var(--text)}
-
-  /* hero - rounded card with organic wavy orange divider + rotating dashboard */
-  .hero{padding:44px 0 22px}
-  .herocard{position:relative;display:grid;grid-template-columns:0.82fr 1.28fr;gap:34px;align-items:center;
-    border-radius:28px;padding:44px 44px;overflow:hidden;
-    background:linear-gradient(110deg,#1b1613 0%,#201a15 46%,#2c2018 100%);
-    border:1px solid #423a30;
-    box-shadow:0 50px 130px -55px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.06)}
-  .hc-wave{position:absolute;top:0;right:0;width:66%;height:100%;z-index:0;pointer-events:none}
-  .herocard>.htext,.herocard>.heroshot{position:relative;z-index:1}
-  .hero .htext{min-width:0}
-  .hero .eyebrow{margin-bottom:18px}
-  h1{font-size:clamp(38px,4.5vw,62px);line-height:1.12;letter-spacing:-.04em;font-weight:800;margin:0 0 18px}
-  h1 .path{font-family:var(--mono);color:var(--accent);font-weight:600;font-size:.62em;letter-spacing:-.02em;white-space:nowrap;background:var(--accent-soft);border:1px solid var(--line2);padding:2px 12px;border-radius:10px;display:inline-block;vertical-align:middle}
-  .lead{font-size:clamp(16px,1.4vw,18.5px);color:#c9c2b7;max-width:none;margin:0 0 26px;line-height:1.62}
-  .hero .cmd{margin:16px 0 0;text-align:left}
-  .src-link{display:inline-block;margin-top:11px;font-size:12.5px;color:var(--dim);text-decoration:underline;text-underline-offset:2px}
-  .src-link:hover{color:var(--accent)}
-  .install-label{font-family:var(--mono);font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
-  .cmd{display:block;position:relative;background:#0a0908;border:1px solid var(--line2);border-radius:11px;padding:12px 86px 12px 16px;max-width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
-  .cmd code{font-family:var(--mono);font-size:12.5px;color:var(--text);white-space:normal;overflow-wrap:anywhere;line-height:1.5;display:block}
-  .cmd .dollar{color:var(--faint);flex:none;font-family:var(--mono)}
-  .copy{position:absolute;top:11px;right:11px;padding:8px 14px;border-radius:8px;border:1px solid var(--line2);background:var(--surface2);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--body);transition:.15s}
-  .copy:hover{border-color:var(--accent);color:var(--accent)}
-  .cta{margin-top:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .tbadges{display:flex;gap:10px 20px;flex-wrap:wrap;margin-top:24px;font-size:13.5px;color:var(--dim)}
-  .tbadges span{display:inline-flex;align-items:center;gap:7px}
-  .ck{color:var(--green);font-weight:800}
-  .x{color:var(--faint);font-weight:700}
-
-  /* terminal-framed screenshot with glow */
-  .heroshot{position:relative;min-width:0}
-  .heroshot::before{content:"";position:absolute;inset:-10% -6% -14% -6%;z-index:0;background:radial-gradient(60% 60% at 55% 45%, rgba(217,119,87,.36), transparent 70%);filter:blur(22px)}
-  .frame{position:relative;z-index:1;border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:#0f0e0d;box-shadow:var(--shot),0 0 90px -28px rgba(217,119,87,.45)}
-  .frame .bar{display:flex;align-items:center;gap:8px;padding:11px 15px;background:#14120f;border-bottom:1px solid var(--line)}
-  .frame .d{width:11px;height:11px;border-radius:50%;background:#3a352e}
-  .frame .d.r{background:#e06552}.frame .d.y{background:#e0a355}.frame .d.g{background:#5fb37e}
-  .frame .url{margin-left:12px;font-family:var(--mono);font-size:11.5px;color:var(--faint);background:#0a0908;border:1px solid var(--line);border-radius:7px;padding:4px 14px}
-  .frame>img{width:100%;height:auto;display:block}
-  /* rotating dashboard slides */
-  .slides{position:relative;aspect-ratio:1280/820;background:#0f0e0d}
-  .slides .slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;opacity:0;transform:scale(1.015);transition:opacity .6s ease,transform .6s ease;filter:brightness(1.09) contrast(1.03)}
-  .slides .slide.active{opacity:1;transform:none}
-  .dots{position:absolute;right:18px;bottom:16px;z-index:3;display:flex;gap:7px}
-  .dots .dot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.28);cursor:pointer;transition:.25s}
-  .dots .dot.active{background:var(--accent);width:22px;border-radius:5px}
-  .floatpill{position:absolute;left:18px;bottom:16px;z-index:2;display:inline-flex;align-items:center;gap:8px;background:rgba(20,18,15,.92);backdrop-filter:blur(8px);color:var(--text);border:1px solid var(--line2);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
-
-  section{padding:100px 0}
-  #problem{padding-top:52px}
-  h2.big{font-size:clamp(30px,3.8vw,46px);font-weight:800;letter-spacing:-.035em;margin:14px 0 14px;line-height:1.04}
-  .sub-lead{font-size:1.1rem;color:var(--dim);max-width:56ch;line-height:1.6}
-  .center{text-align:center}.center .sub-lead{margin:0 auto}
-  code.k{font-family:var(--mono);background:var(--surface2);border:1px solid var(--line2);padding:1px 8px;border-radius:6px;font-size:.86em;color:var(--accent)}
-
-  /* problem */
-  .pains{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:44px 0 40px;text-align:left}
-  .pain{border:1px solid var(--line);border-radius:16px;padding:24px 26px;background:linear-gradient(180deg,var(--surface),var(--bg2));transition:.18s}
-  .pain:hover{border-color:var(--line2);transform:translateY(-2px)}
-  .pain .q{font-family:var(--disp);font-size:1.16rem;font-weight:700;letter-spacing:-.02em;margin-bottom:7px;color:var(--text)}
-  .pain .a{color:var(--dim);font-size:14.5px}
-  .solution-line{font-family:var(--disp);font-size:clamp(20px,2.4vw,30px);font-weight:800;letter-spacing:-.03em;line-height:1.3;margin:0 auto;max-width:30ch}
-  .solution-line em{font-style:normal;color:var(--accent)}
-
-  hr.sep{border:0;border-top:1px solid var(--line);margin:0}
-  .band{background:linear-gradient(180deg,var(--bg2),var(--bg));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-
-  /* why it exists */
-  .quote{font-family:var(--disp);font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-.035em;line-height:1.12;margin:14px auto 16px;max-width:24ch}
-  .quote em{font-style:normal;color:var(--accent)}
-  .why{font-size:1.08rem;color:var(--dim);max-width:54ch;margin:0 auto 44px}
-  .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:820px;margin:0 auto 36px}
-  .stat .num{font-family:var(--disp);font-size:2.4rem;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
-  .stat .lbl{font-size:13px;color:var(--dim);margin-top:8px}
-  .chips{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-  .chip{font-family:var(--mono);font-size:12px;color:var(--dim);background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:7px 15px}
-
-  /* compare */
-  .compare{display:grid;grid-template-columns:1fr 1.12fr;gap:20px;margin-top:44px}
-  .ccard{border:1px solid var(--line);border-radius:18px;padding:30px 32px;background:var(--bg2)}
-  .ccard.hi{background:linear-gradient(165deg,var(--surface2),var(--surface));border-color:var(--line2);box-shadow:0 40px 80px -50px rgba(217,119,87,.4)}
-  .ccard .ct{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
-  .ccard.hi .ct{color:var(--accent)}
-  .ccard h3{font-family:var(--disp);font-size:1.4rem;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
-  .ccard ul{margin:16px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
-  .ccard li{display:flex;gap:11px;font-size:15px;color:var(--dim)}
-  .ccard li b{font-weight:600;color:var(--text)}
-
-  /* feature rows */
-  .frow{display:grid;grid-template-columns:1fr 1.15fr;gap:60px;align-items:center;padding:60px 0}
-  .frow+.frow{border-top:1px solid var(--line)}
-  .frow.rev .txt{order:2} .frow.rev .pic{order:1}
-  .frow .eyebrow{margin-bottom:16px}
-  .frow h2{font-family:var(--disp);font-size:clamp(24px,2.4vw,32px);font-weight:800;letter-spacing:-.03em;line-height:1.08;margin:0 0 14px}
-  .frow p{font-size:1.05rem;color:var(--dim);margin:0 0 20px;max-width:44ch}
-  .frow ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px}
-  .frow li{display:flex;gap:11px;font-size:14.5px;color:var(--dim)}
-  .frow li b{color:var(--text);font-weight:600}
-  .frow li .tick{color:var(--accent);flex:none;font-weight:700;font-family:var(--mono)}
-  .pic{position:relative}
-  .pic::before{content:"";position:absolute;inset:-10% -6%;z-index:0;background:radial-gradient(55% 55% at 50% 45%,rgba(217,119,87,.14),transparent 70%);filter:blur(8px)}
-  .pic .frame{transition:.22s}
-  .pic .frame:hover{transform:translateY(-4px);box-shadow:0 60px 120px -40px rgba(0,0,0,.95),0 0 0 1px var(--accent-soft)}
-
-  /* install steps */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px;counter-reset:s}
-  .step{border:1px solid var(--line);border-radius:16px;padding:26px 26px;background:linear-gradient(180deg,var(--surface),var(--bg2))}
-  .step .n{font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:14px;letter-spacing:1px;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--line2);border-radius:9px;background:var(--accent-soft)}
-  .step h3{font-family:var(--disp);margin:0 0 8px;font-size:1.12rem;font-weight:700}
-  .step p{margin:0;color:var(--dim);font-size:14.5px}
-  .step .mini-cmd{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--text);background:#0a0908;border:1px solid var(--line2);border-radius:8px;padding:9px 12px;overflow-wrap:anywhere;line-height:1.5}
-  .step .mini-cmd .dollar{color:var(--accent)}
-  .step code{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--line2);padding:2px 7px;border-radius:6px;color:var(--accent)}
-
-  /* final CTA */
-  .cta-final{text-align:center}
-  .cta-final .cmd{margin:28px auto 0;max-width:620px}
-  .cta-final .cta{justify-content:center;margin-top:18px}
-  .cmd-note{margin-top:16px;font-size:13px;color:var(--faint)}
-  .cmd-note a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
-
-  footer{border-top:1px solid var(--line);background:var(--bg2)}
-  footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px;padding:56px 0 34px}
-  footer .fbrand .brand{margin-bottom:12px}
-  footer .fbrand p{color:var(--dim);font-size:14px;margin:0;max-width:34ch}
-  footer h4{font-size:11px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin:0 0 15px}
-  footer .fcol a{display:block;color:var(--dim);font-size:14.5px;margin-bottom:11px}
-  footer .fcol a:hover{color:var(--text)}
-  footer .fbot{border-top:1px solid var(--line);padding:22px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;color:var(--faint);font-size:13.5px}
-  footer .fbot a{color:var(--dim)}
-
-  @media(prefers-reduced-motion:no-preference){
-    .rise{opacity:0;transform:translateY(18px);animation:r .8s cubic-bezier(.2,.7,.3,1) forwards}
-    .rise.d1{animation-delay:.08s}.rise.d2{animation-delay:.16s}.rise.d3{animation-delay:.24s}
-    @keyframes r{to{opacity:1;transform:none}}
+  .hero-visual .hero-shot-frame img{width:100%;height:100%;object-fit:cover;object-position:left top}
+  .hero-visual .hero-shot-frame:hover{
+    transform:perspective(1400px) rotateY(0) rotateX(0);
+    box-shadow:0 40px 120px rgba(0,0,0,.75),0 0 100px rgba(232,130,90,.12);
   }
-  @media(max-width:880px){
-    .hero{padding:44px 0 20px}
-    .herocard{grid-template-columns:1fr;gap:30px;padding:26px 22px}
-    .hc-wave{display:none}
-    .nums{grid-template-columns:1fr 1fr;gap:28px 20px}
-    .compare,.frow,.steps,.pains{grid-template-columns:1fr}
-    .frow{gap:30px;padding:48px 0}.frow.rev .txt{order:1}.frow.rev .pic{order:2}
-    footer .cols{grid-template-columns:1fr 1fr}
-    .nlinks a:not(.gh){display:none}
-    section{padding:72px 0}
-  }
-  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--accent-2);color:#1a0f0a;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:99;box-shadow:0 12px 40px -10px rgba(217,119,87,.7)}
-  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hero-shot-caption{text-align:left}
+}
+
+/* ---------- sections ---------- */
+section{padding:88px 0}
+@media(min-width:768px){section{padding:112px 0}}
+.section-head{max-width:640px;margin-bottom:56px}
+h2{
+  font-family:var(--font-display);font-weight:700;letter-spacing:-.015em;line-height:1.12;
+  color:var(--text);font-size:clamp(1.75rem,4vw,2.6rem);margin-top:14px;
+}
+.section-sub{margin-top:16px;font-size:16px}
+@media(min-width:768px){.section-sub{font-size:17px}}
+
+/* the problem */
+.pain-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:640px){.pain-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.pain-grid{grid-template-columns:repeat(3,1fr)}}
+.pain-card{padding:24px 26px;border-radius:14px;background:var(--surface);border:1px solid var(--line);transition:border-color .3s,transform .3s}
+.pain-card:hover{border-color:rgba(232,130,90,.35);transform:translateY(-3px)}
+.pain-card .q{font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text);margin-bottom:7px}
+.pain-card .a{font-size:14px;color:var(--text-2)}
+.pain-close{text-align:center;margin-top:44px;font-family:var(--font-display);font-weight:700;font-size:clamp(1.25rem,2.6vw,1.7rem);color:var(--text);letter-spacing:-.01em}
+.pain-close .accent{color:var(--accent)}
+/* hero rotating dashboard */
+#hero-shot{transition:opacity .45s ease}
+
+/* how it works */
+.steps{display:grid;grid-template-columns:1fr;gap:20px;counter-reset:step}
+@media(min-width:768px){.steps{grid-template-columns:repeat(3,1fr)}}
+.step{
+  position:relative;padding:32px 28px;border-radius:16px;background:var(--surface);
+  border:1px solid var(--line);transition:border-color .3s,transform .3s;
+}
+.step:hover{border-color:rgba(232,130,90,.35);transform:translateY(-4px)}
+.step-num{
+  font-family:var(--font-mono);font-size:12px;color:var(--accent);letter-spacing:.15em;
+}
+.step h3{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text);margin:14px 0 10px}
+.step p{font-size:14.5px;color:var(--text-2)}
+.step .mono-chip{
+  display:inline-block;margin-top:14px;padding:5px 10px;border-radius:7px;
+  background:#000;border:1px solid var(--line);font-family:var(--font-mono);font-size:12px;color:var(--accent);
+}
+
+/* ---------- showcase tabs ---------- */
+.tabs{
+  display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:6px;margin-bottom:28px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;width:fit-content;max-width:100%;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex-shrink:0;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;background:transparent;
+  font-family:var(--font-mono);font-size:13px;color:var(--text-2);
+  transition:background-color .2s,color .2s;
+}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent);color:var(--base);font-weight:500}
+.showcase-panel{display:grid;grid-template-columns:1fr;gap:36px;align-items:center}
+@media(min-width:960px){.showcase-panel{grid-template-columns:5fr 3fr;gap:56px}}
+.showcase-img{
+  border-radius:16px;overflow:hidden;border:1px solid var(--line-strong);background:var(--surface);
+  box-shadow:0 24px 80px rgba(0,0,0,.55);
+}
+.showcase-img img{width:100%;opacity:0;transition:opacity .35s ease}
+.showcase-img img.show{opacity:1}
+.showcase-text h3{font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--text);margin-bottom:14px}
+.showcase-text p{font-size:15.5px}
+.showcase-text ul{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:11px}
+.showcase-text li{display:flex;gap:11px;font-size:14.5px;align-items:flex-start}
+.showcase-text li svg{width:16px;height:16px;color:var(--accent);flex-shrink:0;margin-top:3px}
+
+/* ---------- feature grid ---------- */
+.features{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:640px){.features{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.features{grid-template-columns:repeat(3,1fr)}}
+.feature{
+  padding:28px;border-radius:16px;background:var(--surface);border:1px solid var(--line);
+  transition:border-color .3s,background-color .3s,transform .3s;
+}
+.feature:hover{border-color:rgba(232,130,90,.35);background:#171310;transform:translateY(-4px)}
+.feature-icon{
+  width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:rgba(232,130,90,.1);border:1px solid rgba(232,130,90,.22);margin-bottom:18px;
+}
+.feature-icon svg{width:20px;height:20px;color:var(--accent)}
+.feature h3{font-family:var(--font-display);font-weight:700;font-size:17.5px;color:var(--text);margin-bottom:8px}
+.feature p{font-size:14px;color:var(--text-2)}
+
+/* ---------- privacy ---------- */
+.privacy{
+  border-radius:22px;border:1px solid var(--line);background:var(--surface);
+  padding:48px 28px;position:relative;overflow:hidden;
+}
+@media(min-width:768px){.privacy{padding:64px 56px}}
+.privacy::before{
+  content:"";position:absolute;top:-160px;right:-160px;width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(232,130,90,.12),transparent 70%);pointer-events:none;
+}
+.privacy-grid{display:grid;grid-template-columns:1fr;gap:40px;position:relative}
+@media(min-width:900px){.privacy-grid{grid-template-columns:1fr 1fr;gap:64px}}
+.privacy-list{list-style:none;display:flex;flex-direction:column;gap:18px;margin-top:8px}
+.privacy-list li{display:flex;gap:14px;align-items:flex-start}
+.privacy-list .p-ic{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(123,199,155,.1);border:1px solid rgba(123,199,155,.25);
+}
+.privacy-list .p-ic svg{width:16px;height:16px;color:var(--ok)}
+.privacy-list b{display:block;color:var(--text);font-weight:600;font-size:15px;margin-bottom:2px}
+.privacy-list span{font-size:14px;color:var(--text-2)}
+.loopback{
+  margin-top:36px;font-family:var(--font-mono);font-size:12.5px;color:var(--text-3);
+  padding:16px 18px;border-radius:11px;background:#000;border:1px solid var(--line);line-height:1.9;
+}
+.loopback .g{color:var(--ok)}.loopback .o{color:var(--accent)}.loopback .b{color:#8AB8E8}
+
+/* ---------- final cta ---------- */
+.cta{text-align:center}
+.cta .section-head{margin-left:auto;margin-right:auto;text-align:center}
+.cta .terminal{margin-left:auto;margin-right:auto}
+.cta .hero-actions{justify-content:center}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);padding:44px 0 52px}
+.footer-inner{display:flex;flex-direction:column;gap:22px;align-items:flex-start}
+@media(min-width:768px){.footer-inner{flex-direction:row;align-items:center;justify-content:space-between}}
+.footer-links{display:flex;flex-wrap:wrap;gap:8px}
+.footer-link{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;
+  font-size:14px;color:var(--text-2);transition:color .2s,background-color .2s;
+}
+.footer-link:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.footer-link svg{width:16px;height:16px}
+.footer-meta{font-family:var(--font-mono);font-size:12px;color:var(--text-3)}
+
+/* ---------- reveal animations ---------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+.reveal-d1{transition-delay:.08s}.reveal-d2{transition-delay:.16s}.reveal-d3{transition-delay:.24s}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap"><nav>
-  <div class="brand"><span class="mark">C</span> My Claude</div>
-  <div class="nlinks">
-    <a href="#why">Why</a>
-    <a href="#features">Features</a>
-    <a href="demo.html">Live demo</a>
-    <a href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener">LinkedIn</a>
-    <a class="gh btn solid" href="https://github.com/chethanbhatbs/my-claude" style="padding:9px 16px">GitHub</a>
-  </div>
-</nav></div></header>
 
-<div class="hero"><div class="wrap">
-  <div class="herocard rise">
-    <svg class="hc-wave" viewBox="0 0 300 600" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgba(224,128,92,0.34)"/><stop offset="1" stop-color="rgba(224,128,92,0.09)"/></linearGradient></defs><path d="M84,0 C8,118 150,236 58,360 C4,452 100,520 84,600 L300,600 L300,0 Z" fill="url(#wg)" stroke="rgba(224,128,92,0.5)" stroke-width="2"/></svg>
-  <div class="htext">
-    <div class="eyebrow">Private · Local · One command</div>
-    <h1>Open the black box called <span class="path">~/.claude</span></h1>
-    <p class="lead">Every conversation, token, skill, and MCP server Claude Code touches ends up in there. My Claude turns it into one dashboard you can actually read.</p>
-    <div class="install-label">Paste into your terminal · ready in ~20s</div>
-    <div class="cmd">
-      <code><span class="dollar">$</span> curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
-      <button class="copy" onclick="copyCmd()">Copy</button>
-    </div>
-    <a class="src-link" href="https://github.com/chethanbhatbs/my-claude/blob/main/install.sh" target="_blank" rel="noopener">Inspect the install script on GitHub ↗</a>
-    <div class="cta">
-      <a class="btn solid" href="#install">Get started</a>
-      <a class="btn" href="demo.html">Live demo →</a>
-    </div>
-    <div class="tbadges">
-      <span><span class="ck">✓</span> 100% local</span>
-      <span><span class="ck">✓</span> No cloud, no telemetry</span>
-      <span><span class="ck">✓</span> Open source · MIT</span>
-      <span><span class="ck">✓</span> One command</span>
+<nav data-testid="main-nav">
+  <div class="nav-inner">
+    <a href="#" class="logo" data-testid="nav-logo">
+      <span class="logo-mark">C</span>
+      My Claude
+      <span class="logo-path">~/.claude</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="https://github.com/chethanbhatbs/my-claude" target="_blank" rel="noopener" data-testid="nav-github-link">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.7 5.38-5.26 5.67.41.35.77 1.04.77 2.1v3.11c0 .3.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+        GitHub
+      </a>
+      <a class="nav-cta" href="https://chethanbhatbs.github.io/my-claude/demo.html" target="_blank" rel="noopener" data-testid="nav-demo-link">Live demo</a>
     </div>
   </div>
-  <div class="heroshot">
-    <div class="frame">
-      <div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="url" id="heroUrl">127.0.0.1:8766/p/overview</span></div>
-      <div class="slides" id="heroSlides">
-        <img class="slide active" data-url="127.0.0.1:8766/p/overview" src="assets/overview.png?v=3" alt="Overview dashboard: skills, conversations, tokens, storage" loading="eager">
-        <img class="slide" data-url="127.0.0.1:8766/p/usage" src="assets/usage.png?v=4" alt="Token usage and cost analytics" loading="lazy">
-        <img class="slide" data-url="127.0.0.1:8766/p/history" src="assets/history.png?v=3" alt="Conversation history browser" loading="lazy">
-        <img class="slide" data-url="127.0.0.1:8766/p/mcp-plugins" src="assets/mcp.png?v=3" alt="MCP connectors with health checks" loading="lazy">
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="hero-glow"></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="hero-badge reveal" data-testid="hero-badge">
+          <span class="dot"></span> Open source · MIT · Built for Claude Code users
+        </div>
+        <h1 class="reveal reveal-d1" data-testid="hero-title">Your Claude Code,<br>finally <span class="accent">visible</span>.</h1>
+    <p class="hero-sub reveal reveal-d2" data-testid="hero-subtitle">
+      Claude Code quietly fills your <strong>~/.claude</strong> folder with skills, MCP connectors, plugins, token spend and every conversation you have ever had. My Claude turns all of it into <strong>one private dashboard you can actually read</strong>. Runs only on your machine. Nothing is uploaded, ever.
+    </p>
+    <div class="badges reveal reveal-d3" data-testid="hero-badges">
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>100% local</span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>No telemetry</span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>No cloud</span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Open source · MIT</span>
+    </div>
+
+    <div class="terminal reveal" data-testid="install-terminal">
+      <div class="terminal-bar">
+        <span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>
+        <span class="terminal-title">bash · install my-claude</span>
       </div>
-      <div class="floatpill"><span class="ck">✓</span> Nothing leaves your machine</div>
-      <div class="dots" id="heroDots">
-        <button class="dot active" aria-label="Overview"></button>
-        <button class="dot" aria-label="Usage"></button>
-        <button class="dot" aria-label="History"></button>
-        <button class="dot" aria-label="MCP"></button>
+      <div class="terminal-body">
+        <code class="terminal-cmd" id="install-cmd" data-testid="install-command"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://chethanbhatbs.github.io/my-claude/install.sh</span> | bash</code>
+        <button class="copy-btn" id="copy-hero" data-testid="copy-install-button" aria-label="Copy install command">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Copy</span>
+        </button>
+      </div>
+      <div class="terminal-note">
+        <span class="ok">&#10003;</span> ~20 second setup, then your dashboard opens at <span style="color:var(--accent)">127.0.0.1:8766</span>
+      </div>
+    </div>
+
+        </div>
+      </div>
+      <div class="hero-visual reveal reveal-d2">
+        <div class="hero-shot-frame" data-testid="hero-screenshot">
+          <img id="hero-shot" src="./assets/overview.png" alt="My Claude dashboard" loading="eager">
+        </div>
+        <p class="hero-shot-caption" id="hero-caption">127.0.0.1:8766/p/overview · everything at a glance, all local</p>
       </div>
     </div>
   </div>
-  </div>
-</div></div>
+</header>
 
-<div class="wrap"><section id="problem" class="center">
-  <div class="eyebrow">The problem</div>
-  <h2 class="big">Sound familiar?</h2>
-  <p class="sub-lead" style="margin:0 auto">Claude Code writes everything to <code class="k">~/.claude</code>, then gives you no way to look. So you keep asking:</p>
-  <div class="pains">
-    <div class="pain"><div class="q">"Where's that conversation from last week?"</div><div class="a">Buried somewhere in hundreds of transcripts.</div></div>
-    <div class="pain"><div class="q">"What skills do I even have installed?"</div><div class="a">Dozens, and half of them forgotten.</div></div>
-    <div class="pain"><div class="q">"Where did my tokens go?"</div><div class="a">Spend disappears into logs with no running total.</div></div>
-    <div class="pain"><div class="q">"Which project cost me the most?"</div><div class="a">No breakdown, no ranking, no idea.</div></div>
-    <div class="pain"><div class="q">"How much did caching actually save me?"</div><div class="a">Real savings, invisible unless something adds them up.</div></div>
-    <div class="pain"><div class="q">"Are my MCP connectors even working?"</div><div class="a">Failures stay hidden until something breaks.</div></div>
-  </div>
-  <p class="solution-line">My Claude reads all of it, and lays it out in <em>one place</em>.</p>
-</section></div>
-
-<div class="band"><div class="wrap"><section id="why-exists" class="center">
-  <div class="eyebrow">Why it exists</div>
-  <h2 class="quote">Claude Code already has all this. <em>My Claude finally lets you see it.</em></h2>
-  <p class="why">Built because Claude stores everything locally, but gives you no way to explore it.</p>
-  <div class="nums">
-    <div class="stat"><div class="num">0</div><div class="lbl">bytes uploaded</div></div>
-    <div class="stat"><div class="num">&lt;20s</div><div class="lbl">setup time</div></div>
-    <div class="stat"><div class="num" data-to="100" data-suffix="%">0</div><div class="lbl">local data</div></div>
-    <div class="stat"><div class="num">1</div><div class="lbl">command to run</div></div>
-  </div>
-  <div class="chips">
-    <span class="chip">127.0.0.1 only</span>
-    <span class="chip">zero external calls</span>
-    <span class="chip">reads ~/.claude</span>
-    <span class="chip">open source · MIT</span>
-  </div>
-</section></div></div>
-
-<div class="wrap"><section id="why">
-  <div class="center">
-    <div class="eyebrow">Why not just Claude Code?</div>
-    <h2 class="big">Claude shows one chat.<br>This shows all of it.</h2>
-  </div>
-  <div class="compare">
-    <div class="ccard">
-      <div class="ct">Claude Code, built in</div>
-      <h3>The chat in front of you</h3>
-      <ul>
-        <li><span class="x">✕</span><span>Blind token and cost tracking per run</span></li>
-        <li><span class="x">✕</span><span>Transcripts buried in deep log files</span></li>
-        <li><span class="x">✕</span><span>Manual tracking of installed skills</span></li>
-        <li><span class="x">✕</span><span>Hidden MCP connection errors</span></li>
-      </ul>
+<!-- ============ THE PROBLEM ============ -->
+<section id="problem" data-testid="problem-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">// the problem</span>
+      <h2>Sound familiar?</h2>
+      <p class="section-sub">Claude Code writes everything to ~/.claude, then gives you no way to look. So you keep asking:</p>
     </div>
-    <div class="ccard hi">
-      <div class="ct">My Claude</div>
-      <h3>Your whole local footprint</h3>
-      <ul>
-        <li><span class="ck">✓</span><span><b>Token spend</b> and cost trends over time</span></li>
-        <li><span class="ck">✓</span><span><b>Full-text searchable</b> conversation history</span></li>
-        <li><span class="ck">✓</span><span>Usage stats for <b>every skill</b></span></li>
-        <li><span class="ck">✓</span><span><b>Live health checks</b> for global and local MCP</span></li>
-      </ul>
+    <div class="pain-grid">
+      <div class="pain-card reveal"><div class="q">"Where's that conversation from last week?"</div><div class="a">Buried somewhere in hundreds of transcripts.</div></div>
+      <div class="pain-card reveal reveal-d1"><div class="q">"What skills do I even have installed?"</div><div class="a">Dozens, and half of them forgotten.</div></div>
+      <div class="pain-card reveal reveal-d2"><div class="q">"Where did my tokens go?"</div><div class="a">Spend disappears into logs with no running total.</div></div>
+      <div class="pain-card reveal"><div class="q">"Which project cost me the most?"</div><div class="a">No breakdown, no ranking, no idea.</div></div>
+      <div class="pain-card reveal reveal-d1"><div class="q">"How much did caching actually save me?"</div><div class="a">Real savings, invisible unless something adds them up.</div></div>
+      <div class="pain-card reveal reveal-d2"><div class="q">"Are my MCP connectors even working?"</div><div class="a">Failures stay hidden until something breaks.</div></div>
+    </div>
+    <p class="pain-close reveal">My Claude reads all of it, and lays it out in <span class="accent">one place</span>.</p>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how" data-testid="how-it-works-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">// how it works</span>
+      <h2>From terminal to dashboard in about 20 seconds</h2>
+      <p class="section-sub">No account, no config, no Docker. One command reads your local ~/.claude folder and serves a dashboard on loopback only.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal" data-testid="step-1">
+        <span class="step-num">STEP 01</span>
+        <h3>Run one command</h3>
+        <p>Paste the install command into your terminal. It sets everything up for you, no manual steps.</p>
+        <span class="mono-chip">curl ... | bash</span>
+      </div>
+      <div class="step reveal reveal-d1" data-testid="step-2">
+        <span class="step-num">STEP 02</span>
+        <h3>~20 second setup</h3>
+        <p>My Claude indexes your skills, MCP servers, plugins, usage logs and conversation transcripts locally.</p>
+        <span class="mono-chip">indexing ~/.claude ...</span>
+      </div>
+      <div class="step reveal reveal-d2" data-testid="step-3">
+        <span class="step-num">STEP 03</span>
+        <h3>Dashboard opens</h3>
+        <p>Your browser opens the dashboard, bound strictly to loopback. Only you can reach it.</p>
+        <span class="mono-chip">127.0.0.1:8766</span>
+      </div>
     </div>
   </div>
-</section></div>
+</section>
 
-<div class="wrap"><section id="features" style="padding-top:0">
-  <div class="center" style="margin-bottom:8px">
-    <div class="eyebrow">What you get</div>
-    <h2 class="big">Everything, finally legible.</h2>
-  </div>
-
-  <div class="frow">
-    <div class="txt">
-      <div class="eyebrow">Usage &amp; cost</div>
-      <h2>Find what's costing you money.</h2>
-      <p>Cost, tokens, and cache hit rate, broken down by day, model, and project.</p>
-      <ul>
-        <li><span class="tick">→</span><span>Filter by <b>window or model</b>, every chart follows.</span></li>
-        <li><span class="tick">→</span><span>See <b>which projects</b> cost the most.</span></li>
-      </ul>
+<!-- ============ SHOWCASE ============ -->
+<section id="tour" style="padding-top:0" data-testid="showcase-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">// the product</span>
+      <h2>One view you can actually read</h2>
+      <p class="section-sub">Real screenshots from the dashboard. This is what lands on 127.0.0.1:8766 after install.</p>
     </div>
-    <div class="pic"><div class="frame"><div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="url">127.0.0.1:8766/p/usage</span></div><img src="assets/usage.png?v=4" alt="Token usage and cost analytics" loading="lazy"></div></div>
-  </div>
 
-  <div class="frow rev">
-    <div class="txt">
-      <div class="eyebrow">History</div>
-      <h2>Never lose a conversation again.</h2>
-      <p>Full-text search across every transcript, with per-chat cost. Resume or export in one click.</p>
-      <ul>
-        <li><span class="tick">→</span><span><b>Resume in Claude</b> from any conversation.</span></li>
-        <li><span class="tick">→</span><span><b>Export to Markdown</b> instantly.</span></li>
-      </ul>
+    <div class="tabs reveal" role="tablist" data-testid="showcase-tabs">
+      <button class="tab active" data-tab="overview" data-testid="tab-overview">Overview</button>
+      <button class="tab" data-tab="usage" data-testid="tab-usage">Usage &amp; cost</button>
+      <button class="tab" data-tab="history" data-testid="tab-history">History</button>
+      <button class="tab" data-tab="skill" data-testid="tab-skills">Skills</button>
+      <button class="tab" data-tab="mcp" data-testid="tab-mcp">MCP &amp; Plugins</button>
     </div>
-    <div class="pic"><div class="frame"><div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="url">127.0.0.1:8766/p/history</span></div><img src="assets/history.png?v=3" alt="Conversation history browser" loading="lazy"></div></div>
-  </div>
 
-  <div class="frow">
-    <div class="txt">
-      <div class="eyebrow">Skills</div>
-      <h2>Rediscover the skills you forgot.</h2>
-      <p>See every skill, how often you use it, and which ones you never touch. Read any SKILL.md as clean markdown.</p>
-      <ul>
-        <li><span class="tick">→</span><span>Search, filter, spot <b>unused skills</b>.</span></li>
-        <li><span class="tick">→</span><span>View, push to GitHub, or share as a <b>.zip</b>.</span></li>
-      </ul>
-    </div>
-    <div class="pic"><div class="frame"><div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="url">127.0.0.1:8766/p/skills</span></div><img src="assets/skill-view.png?v=3" alt="Skill view, SKILL.md rendered as markdown" loading="lazy"></div></div>
-  </div>
-
-  <div class="frow rev">
-    <div class="txt">
-      <div class="eyebrow">MCP &amp; System</div>
-      <h2>Know your whole setup is healthy.</h2>
-      <p>Every connector with a one-click health check, plus permissions, hooks, and memory. Secrets auto-redacted.</p>
-      <ul>
-        <li><span class="tick">→</span><span>Connectors, <b>global and per-project</b>, with live status.</span></li>
-        <li><span class="tick">→</span><span>Secrets are <b>auto-redacted</b> before you see them.</span></li>
-      </ul>
-    </div>
-    <div class="pic"><div class="frame"><div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="url">127.0.0.1:8766/p/mcp-plugins</span></div><img src="assets/mcp.png?v=3" alt="MCP connectors with health checks" loading="lazy"></div></div>
-  </div>
-</section></div>
-
-<div class="band"><div class="wrap"><section id="install">
-  <div class="center">
-    <div class="eyebrow">Install</div>
-    <h2 class="big">From nothing to dashboard in ~20 seconds.</h2>
-    <p class="sub-lead" style="margin:0 auto">No accounts, no config, no cloud. The installer sets up an isolated Python environment and opens the dashboard.</p>
-  </div>
-  <div class="steps">
-    <div class="step"><div class="n">01</div><h3>Paste one command</h3><p>Run this in your terminal. It downloads a small app to <code>~/.my-claude</code>.</p><div class="mini-cmd"><span class="dollar">$</span> curl -fsSL …/install.sh | bash</div></div>
-    <div class="step"><div class="n">02</div><h3>It sets up locally</h3><p>A one-time ~20-second setup. No global installs, no admin rights, no cloud.</p></div>
-    <div class="step"><div class="n">03</div><h3>Opens in your browser</h3><p>Launches at <code>127.0.0.1:8766</code> (or the next free port), reading your own <code>~/.claude</code>.</p></div>
-  </div>
-</section></div></div>
-
-<div class="wrap"><section class="cta-final">
-  <div class="eyebrow">Ready?</div>
-  <h2 class="big">See your Claude in one command.</h2>
-  <div class="cmd">
-    <code><span class="dollar">$</span> curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
-    <button class="copy" onclick="copyCmd()">Copy</button>
-  </div>
-  <p class="cmd-note">Inspect the open-source install script anytime on <a href="https://github.com/chethanbhatbs/my-claude/blob/main/install.sh">GitHub</a>.</p>
-  <div class="cta"><a class="btn" href="demo.html">Live demo →</a></div>
-</section></div>
-
-<footer><div class="wrap">
-  <div class="cols">
-    <div class="fbrand">
-      <div class="brand"><span class="mark">C</span> My Claude</div>
-      <p>A private, local dashboard for everything Claude Code keeps on your machine.</p>
-    </div>
-    <div class="fcol">
-      <h4>Product</h4>
-      <a href="#features">Features</a>
-      <a href="demo.html">Live demo</a>
-      <a href="#install">Install</a>
-      <a href="#why-exists">Why it exists</a>
-    </div>
-    <div class="fcol">
-      <h4>Project</h4>
-      <a href="https://github.com/chethanbhatbs/my-claude">GitHub</a>
-      <a href="https://github.com/chethanbhatbs/my-claude/issues">Issues</a>
-      <a href="https://github.com/chethanbhatbs/my-claude/blob/main/LICENSE">MIT License</a>
-    </div>
-    <div class="fcol">
-      <h4>Connect</h4>
-      <a href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener">LinkedIn</a>
-      <a href="https://github.com/chethanbhatbs">GitHub profile</a>
+    <div class="showcase-panel reveal">
+      <div class="showcase-img" data-testid="showcase-image">
+        <img id="showcase-img" class="show" src="./assets/overview.png" alt="My Claude dashboard screenshot">
+      </div>
+      <div class="showcase-text" id="showcase-text" data-testid="showcase-text">
+        <!-- filled by JS -->
+      </div>
     </div>
   </div>
-  <div class="fbot">
-    <span>Made by Chethan · <a href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener" style="text-decoration:underline">Connect on LinkedIn</a> · Built with Claude Code</span>
-    <span>100% local · Open source</span>
-  </div>
-</div></footer>
+</section>
 
-<div id="toast">Copied. Paste it in your terminal.</div>
+<!-- ============ FEATURES ============ -->
+<section id="features" style="padding-top:0" data-testid="features-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">// what you get</span>
+      <h2>Six sections. Zero guesswork.</h2>
+      <p class="section-sub">Everything Claude Code stores on your machine, organized into views built for developers.</p>
+    </div>
+    <div class="features">
+      <div class="feature reveal" data-testid="feature-overview">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></div>
+        <h3>Overview</h3>
+        <p>Skills count, conversations, 30-day tokens, disk footprint, spend trend, cache savings and your busiest project. All at a glance.</p>
+      </div>
+      <div class="feature reveal reveal-d1" data-testid="feature-usage">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h3>Usage &amp; cost</h3>
+        <p>Billable vs context tokens, estimated cost with public pricing, per-day charts, cost by model and top projects by spend.</p>
+      </div>
+      <div class="feature reveal reveal-d2" data-testid="feature-skills">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+        <h3>Skills</h3>
+        <p>Every skill in ~/.claude/skills with rendered SKILL.md, size, category, and quick actions: open in Finder, Terminal, or copy path.</p>
+      </div>
+      <div class="feature reveal" data-testid="feature-mcp">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <h3>MCP &amp; Plugins</h3>
+        <p>All MCP servers from ~/.claude.json and per-project .mcp.json, plus installed plugins. Secrets auto-redacted, health checks built in.</p>
+      </div>
+      <div class="feature reveal reveal-d1" data-testid="feature-history">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <h3>History, searchable</h3>
+        <p>Full-text search across every conversation transcript. Filter by project or time range, resume a session, export to Markdown.</p>
+      </div>
+      <div class="feature reveal reveal-d2" data-testid="feature-system">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <h3>System</h3>
+        <p>What is on disk, where it lives and what is safe to clean. Understand the 1 GB+ that ~/.claude quietly accumulates.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRIVACY ============ -->
+<section id="privacy" style="padding-top:0" data-testid="privacy-section">
+  <div class="wrap">
+    <div class="privacy reveal">
+      <div class="privacy-grid">
+        <div>
+          <span class="kicker">// private by architecture</span>
+          <h2>Nothing leaves your machine. Not a byte.</h2>
+          <p class="section-sub">Your transcripts and usage data are sensitive. My Claude is built so that trusting it is not required: you can verify every claim in the source.</p>
+          <div class="loopback" data-testid="loopback-proof">
+            <span class="g">&#10003;</span> server bind &nbsp;<span class="o">127.0.0.1:8766</span> <span style="color:var(--text-3)">(loopback only)</span><br>
+            <span class="g">&#10003;</span> outbound network calls &nbsp;<span class="b">0</span><br>
+            <span class="g">&#10003;</span> analytics / telemetry &nbsp;<span class="b">none</span><br>
+            <span class="g">&#10003;</span> license &nbsp;<span class="o">MIT</span> · audit the code yourself
+          </div>
+        </div>
+        <ul class="privacy-list">
+          <li data-testid="privacy-local">
+            <span class="p-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <div><b>Loopback only</b><span>The server binds to 127.0.0.1. It is unreachable from your network, let alone the internet.</span></div>
+          </li>
+          <li data-testid="privacy-nocalls">
+            <span class="p-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></span>
+            <div><b>Zero external calls</b><span>No cloud sync, no CDN pings, no update checks. Unplug your network and it works the same.</span></div>
+          </li>
+          <li data-testid="privacy-redaction">
+            <span class="p-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <div><b>Secrets auto-redacted</b><span>API keys and tokens in your MCP configs are masked before they ever hit the screen.</span></div>
+          </li>
+          <li data-testid="privacy-opensource">
+            <span class="p-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+            <div><b>Open source, MIT</b><span>Every line is on GitHub. Read it, fork it, or strip out anything you do not like.</span></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="cta" id="install" style="padding-top:0" data-testid="cta-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">// get started</span>
+      <h2>See what your ~/.claude has been hiding</h2>
+      <p class="section-sub">One command. Twenty seconds. Your entire Claude Code footprint, readable at last.</p>
+    </div>
+    <div class="terminal reveal" data-testid="cta-terminal">
+      <div class="terminal-bar">
+        <span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>
+        <span class="terminal-title">bash · install my-claude</span>
+      </div>
+      <div class="terminal-body">
+        <code class="terminal-cmd" data-testid="cta-install-command"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://chethanbhatbs.github.io/my-claude/install.sh</span> | bash</code>
+        <button class="copy-btn" id="copy-cta" data-testid="cta-copy-button" aria-label="Copy install command">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Copy</span>
+        </button>
+      </div>
+      <div class="terminal-note">
+        <span class="ok">&#10003;</span> macOS &amp; Linux · uninstall any time · your data never moves
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer data-testid="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <a href="#" class="logo">
+        <span class="logo-mark">C</span> My Claude
+      </a>
+      <div class="footer-links">
+        <a class="footer-link" href="https://github.com/chethanbhatbs/my-claude" target="_blank" rel="noopener" data-testid="footer-github-link">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.7 5.38-5.26 5.67.41.35.77 1.04.77 2.1v3.11c0 .3.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          GitHub
+        </a>
+        <a class="footer-link" href="https://chethanbhatbs.github.io/my-claude/demo.html" target="_blank" rel="noopener" data-testid="footer-demo-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Live demo
+        </a>
+        <a class="footer-link" href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener" data-testid="footer-linkedin-link">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.55V9h3.57v11.45z"/></svg>
+          LinkedIn
+        </a>
+      </div>
+      <span class="footer-meta" data-testid="footer-meta">MIT license · no cloud · no telemetry</span>
+    </div>
+  </div>
+</footer>
+
 <script>
-  function copyCmd(){ navigator.clipboard.writeText('curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash').then(()=>{ const t=document.getElementById('toast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1900); }); }
-  // hero dashboard: auto-rotate the views (slides), clickable dots, pause on hover, reduced-motion safe
-  (function(){
-    const wrap=document.getElementById('heroSlides'); if(!wrap) return;
-    const slides=[...wrap.querySelectorAll('.slide')];
-    const dots=[...document.querySelectorAll('#heroDots .dot')];
-    const url=document.getElementById('heroUrl');
-    const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-    let i=0, timer=null;
-    function show(n){ n=(n+slides.length)%slides.length;
-      slides[i].classList.remove('active'); if(dots[i])dots[i].classList.remove('active');
-      i=n; slides[i].classList.add('active'); if(dots[i])dots[i].classList.add('active');
-      if(url)url.textContent=slides[i].dataset.url; }
-    function start(){ if(reduce)return; stop(); timer=setInterval(()=>show(i+1),2000); }
-    function stop(){ if(timer){clearInterval(timer);timer=null;} }
-    dots.forEach((d,n)=>d.addEventListener('click',()=>{ show(n); start(); }));
-    const frame=wrap.closest('.frame');
-    if(frame){ frame.addEventListener('mouseenter',stop); frame.addEventListener('mouseleave',start); }
-    start();
-  })();
-  (function(){
-    const nums=document.querySelectorAll('.stat .num[data-to]'); if(!nums.length) return;
-    const run=el=>{ const to=+el.dataset.to, suf=el.dataset.suffix||''; const dur=900, t0=performance.now();
-      const step=now=>{ const p=Math.min(1,(now-t0)/dur); el.textContent=Math.round(to*(1-Math.pow(1-p,3)))+suf; if(p<1) requestAnimationFrame(step); };
-      requestAnimationFrame(step); };
-    if(!('IntersectionObserver' in window)){ nums.forEach(run); return; }
-    const io=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ run(e.target); io.unobserve(e.target); } }); }, {threshold:.5});
-    nums.forEach(n=>io.observe(n));
-  })();
+// copy to clipboard
+const CMD = 'curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash';
+function wireCopy(btn){
+  if(!btn) return;
+  btn.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(CMD);
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = CMD; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    const label = btn.querySelector('span');
+    btn.classList.add('copied'); label.textContent = 'Copied';
+    setTimeout(() => { btn.classList.remove('copied'); label.textContent = 'Copy'; }, 1800);
+  });
+}
+wireCopy(document.getElementById('copy-hero'));
+wireCopy(document.getElementById('copy-cta'));
+
+// hero: auto-rotating dashboard (slides), pause on hover, reduced-motion safe
+(function(){
+  const img = document.getElementById('hero-shot');
+  const cap = document.getElementById('hero-caption');
+  if(!img) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const views = [
+    {src:'./assets/overview.png', cap:'127.0.0.1:8766/p/overview · everything at a glance, all local'},
+    {src:'./assets/usage.png',    cap:'127.0.0.1:8766/p/usage · tokens and cost by day, model, project'},
+    {src:'./assets/history.png',  cap:'127.0.0.1:8766/p/history · every conversation, searchable'},
+    {src:'./assets/mcp.png',      cap:'127.0.0.1:8766/p/mcp · connectors with health checks'}
+  ];
+  views.forEach(v => { const p = new Image(); p.src = v.src; });
+  let i = 0, timer = null;
+  function show(n){ i = (n + views.length) % views.length;
+    img.style.opacity = '0';
+    setTimeout(() => { img.src = views[i].src; if(cap) cap.textContent = views[i].cap; img.style.opacity = '1'; }, 320);
+  }
+  function start(){ if(reduce) return; stop(); timer = setInterval(() => show(i + 1), 2000); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+  const frame = img.closest('.hero-shot-frame');
+  if(frame){ frame.addEventListener('mouseenter', stop); frame.addEventListener('mouseleave', start); }
+  start();
+})();
+
+// showcase tabs
+const SHOTS = {
+  overview: {
+    img: './assets/overview.png',
+    alt: 'Overview dashboard with skills, conversations, tokens and disk stats',
+    title: 'Overview',
+    desc: 'The 10,000-foot view of your Claude Code footprint: skills, conversations, tokens, spend and disk, updated from your local files.',
+    points: ['Skills, conversations and 30-day token totals','7-day spend trend and cache savings','Busiest project and priciest day, spotted instantly']
+  },
+  usage: {
+    img: './assets/usage.png',
+    alt: 'Token usage view with billable tokens per day and cost by model',
+    title: 'Usage & cost',
+    desc: 'Know exactly where your tokens go. Billable vs context, estimated cost from public pricing, broken down by day, model and project.',
+    points: ['Billable tokens per day, stacked by model','Cost by model donut: opus, sonnet, haiku','Top projects ranked by estimated cost']
+  },
+  history: {
+    img: './assets/history.png',
+    alt: 'Searchable conversation history with full transcripts',
+    title: 'History, searchable',
+    desc: 'Every conversation transcript Claude Code has saved, full-text searchable and readable. Stop grepping JSONL files by hand.',
+    points: ['Full-text search plus project and time filters','Read complete user and assistant transcripts','Resume a session or export it to Markdown']
+  },
+  skill: {
+    img: './assets/skill.png',
+    alt: 'Skill detail view rendering SKILL.md with quick actions',
+    title: 'Skills',
+    desc: 'Every skill in ~/.claude/skills, rendered and readable. See what each one does, when Claude loads it and how to run it.',
+    points: ['SKILL.md rendered, with raw view and copy','Open in Finder or Terminal, or copy the path','Size and category for every skill']
+  },
+  mcp: {
+    img: './assets/mcp.png',
+    alt: 'MCP servers and plugins view with scopes and health check',
+    title: 'MCP & Plugins',
+    desc: 'All your MCP servers and plugins from ~/.claude.json and per-project .mcp.json, with scopes made obvious and secrets masked.',
+    points: ['Global vs per-project scope for each server','One-click health check for every connector','Secrets auto-redacted before display']
+  }
+};
+const check = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const tabBtns = document.querySelectorAll('.tab');
+const scImg = document.getElementById('showcase-img');
+const scText = document.getElementById('showcase-text');
+function renderShot(key){
+  const s = SHOTS[key];
+  scImg.classList.remove('show');
+  setTimeout(() => {
+    scImg.src = s.img; scImg.alt = s.alt;
+    scImg.onload = () => scImg.classList.add('show');
+    if (scImg.complete) scImg.classList.add('show');
+  }, 160);
+  scText.innerHTML = '<h3>' + s.title + '</h3><p>' + s.desc + '</p><ul>' +
+    s.points.map(p => '<li>' + check + '<span>' + p + '</span></li>').join('') + '</ul>';
+}
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderShot(btn.dataset.tab);
+  });
+});
+renderShot('overview');
+
+// scroll reveal
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 </script>
 </body>
 </html>
