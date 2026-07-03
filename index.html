@@ -42,8 +42,8 @@
 
   /* hero */
   .hero{padding:52px 0 66px;text-align:left}
-  .hero .wrap{display:grid;grid-template-columns:0.9fr 1.18fr;gap:44px;align-items:stretch}
-  .hero .htext{min-width:0;align-self:center}
+  .hero .wrap{display:grid;grid-template-columns:0.88fr 1.2fr;gap:44px;align-items:center}
+  .hero .htext{min-width:0}
   .hero .eyebrow{margin-bottom:16px}
   h1{font-size:clamp(28px,3.2vw,44px);line-height:1.06;letter-spacing:-.035em;font-weight:800;margin:0 0 14px;max-width:16ch}
   h1 em{font-style:normal;color:var(--accent)}
@@ -60,12 +60,12 @@
   .tbadges .ck{color:var(--accent);font-weight:800}
 
   /* browser-chrome screenshot */
-  .heroshot{min-width:0;display:flex}
-  .browser{width:100%;margin:0;border:1px solid var(--line2);border-radius:15px;overflow:hidden;box-shadow:var(--shot);background:#f7f5f0;position:relative;display:flex;flex-direction:column}
-  .bbar{flex:none;display:flex;align-items:center;gap:8px;padding:12px 16px;background:#ece5d9;border-bottom:1px solid var(--line2)}
+  .heroshot{min-width:0}
+  .browser{width:100%;margin:0;border:1px solid var(--line2);border-radius:15px;overflow:hidden;box-shadow:var(--shot);background:#f7f5f0;position:relative}
+  .bbar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#ece5d9;border-bottom:1px solid var(--line2)}
   .bbar .d{width:11px;height:11px;border-radius:50%;background:#cdc4b4}
   .burl{margin-left:12px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#7d766b;background:#faf8f5;border:1px solid var(--line2);border-radius:7px;padding:5px 16px}
-  .browser>img{flex:1;min-height:0;width:100%;object-fit:contain;object-position:top;display:block;background:#f7f5f0}
+  .browser>img{width:100%;height:auto;display:block}
   .floatpill{position:absolute;left:20px;bottom:20px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.95);color:var(--ink);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:600;box-shadow:0 8px 24px -8px rgba(0,0,0,.4)}
   .floatpill .ck{color:var(--accent);font-weight:800}
 
@@ -112,7 +112,7 @@
   .frow li{display:flex;gap:10px;font-size:14.5px;color:var(--dim)}
   .frow li b{color:var(--ink);font-weight:600}
   .frow li .tick{color:var(--accent);flex:none;font-weight:700}
-  .frame{border:1px solid var(--line2);border-radius:14px;overflow:hidden;box-shadow:var(--shot);background:#1a1a19}
+  .frame{border:1px solid var(--line2);border-radius:14px;overflow:hidden;box-shadow:var(--shot);background:#f7f5f0}
 
   /* feature cards */
   .fcards{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
@@ -133,11 +133,16 @@
   .step p{margin:0;color:var(--dim);font-size:14.5px}
   .step code{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#efeae2;padding:2px 7px;border-radius:5px;color:var(--accent-ink)}
 
-  /* privacy */
-  .privacy ul{margin:24px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .privacy li{display:flex;gap:12px;font-size:15px;color:var(--dim)}
-  .privacy li b{color:var(--ink);font-weight:600}
-  .privacy .dot{color:var(--accent);flex:none;font-size:11px;margin-top:6px}
+  /* proof / why it exists */
+  .proof{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .proof .quote{font-size:clamp(20px,2.4vw,30px);font-weight:800;letter-spacing:-.03em;line-height:1.2;margin:0 auto 16px;max-width:22ch}
+  .proof .quote em{font-style:normal;color:var(--accent)}
+  .proof .why{font-size:1.05rem;color:var(--dim);max-width:52ch;margin:0 auto 40px}
+  .proof .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:760px;margin:0 auto 34px}
+  .proof .stat .num{font-size:2.1rem;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+  .proof .stat .lbl{font-size:13px;color:var(--dim);margin-top:6px}
+  .chips{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--dim);background:#fff;border:1px solid var(--line2);border-radius:999px;padding:7px 14px}
 
   .cta-final{text-align:center}
   .cta-final .cmd{margin-top:26px}
@@ -180,8 +185,8 @@
 <div class="hero"><div class="wrap rise">
   <div class="htext">
     <div class="eyebrow">Private · Local · One command</div>
-    <h1>Your private dashboard for <em>Claude Code</em>.</h1>
-    <p class="lead">Turn every Claude Code session into one clear dashboard: cost, tokens, projects, skills, MCP servers, and history, all on your own machine.</p>
+    <h1>Claude Code knows everything. <em>You don't.</em></h1>
+    <p class="lead">Cost, conversations, skills, MCP, and history, all in one private dashboard on your own machine.</p>
     <div class="install-label">Install in under 20 seconds</div>
     <div class="cmd">
       <span class="dollar mono">$</span>
@@ -189,7 +194,7 @@
       <button class="copy" onclick="copyCmd()">Copy</button>
     </div>
     <div class="cta">
-      <button class="btn solid" onclick="copyCmd()">Install now</button>
+      <button class="btn solid" onclick="copyCmd()">See your Claude data</button>
       <a class="btn" href="demo.html">Live demo →</a>
     </div>
     <div class="tbadges">
@@ -208,22 +213,15 @@
   </div>
 </div></div>
 
-<div class="stats"><div class="wrap">
-  <div class="stat"><div class="num" data-to="6">0</div><div class="lbl">dashboard views</div></div>
-  <div class="stat"><div class="num" data-to="20" data-suffix="s">0</div><div class="lbl">one-time setup</div></div>
-  <div class="stat"><div class="num" data-to="100" data-suffix="%">0</div><div class="lbl">on your machine</div></div>
-  <div class="stat"><div class="num" data-to="0">0</div><div class="lbl">bytes uploaded</div></div>
-</div></div>
-
 <div class="wrap"><section id="problem" class="center">
   <div class="eyebrow" style="margin-bottom:12px">The problem</div>
-  <h2 class="big">Claude Code does a lot.<br>You just can't see any of it.</h2>
-  <p class="sub-lead" style="margin:0 auto">Every session quietly writes to your machine: conversations, token spend, skills, MCP servers, memory. It all piles up in <code>~/.claude</code> as raw files you never open.</p>
+  <h2 class="big">Sound familiar?</h2>
+  <p class="sub-lead" style="margin:0 auto">Claude Code writes everything to <code>~/.claude</code>, then gives you no way to look. So you keep asking:</p>
   <div class="pains">
-    <div class="pain"><div class="q">"What did this month cost?"</div><div class="a">No idea. Tokens and dollars vanish into logs.</div></div>
-    <div class="pain"><div class="q">"Where was that conversation?"</div><div class="a">Somewhere in hundreds of plaintext transcripts.</div></div>
-    <div class="pain"><div class="q">"Which skills do I even have?"</div><div class="a">Dozens installed, half of them forgotten.</div></div>
-    <div class="pain"><div class="q">"Is that MCP server still working?"</div><div class="a">No way to tell without digging through JSON.</div></div>
+    <div class="pain"><div class="q">"Where did my tokens go?"</div><div class="a">Spend disappears into logs with no running total.</div></div>
+    <div class="pain"><div class="q">"Which project cost me the most?"</div><div class="a">No breakdown, no ranking, no idea.</div></div>
+    <div class="pain"><div class="q">"Where's that conversation from last week?"</div><div class="a">Buried somewhere in hundreds of transcripts.</div></div>
+    <div class="pain"><div class="q">"What skills do I even have installed?"</div><div class="a">Dozens, and half of them forgotten.</div></div>
   </div>
   <p class="solution-line">My Claude reads all of it, and lays it out in <em>one place</em>.</p>
 </section></div>
@@ -264,7 +262,7 @@
   <div class="frow">
     <div class="txt">
       <div class="eyebrow">Usage &amp; cost</div>
-      <h2>Know exactly what you spend.</h2>
+      <h2>Find what's costing you money.</h2>
       <p>Cost, tokens, and cache hit rate, broken down by day, model, and project.</p>
       <ul>
         <li><span class="tick">→</span><span>Filter by <b>window or model</b>, every chart follows.</span></li>
@@ -277,7 +275,7 @@
   <div class="frow rev">
     <div class="txt">
       <div class="eyebrow">History</div>
-      <h2>Find any past conversation.</h2>
+      <h2>Never lose a conversation again.</h2>
       <p>Full-text search across every transcript, with per-chat cost. Resume or export in one click.</p>
       <ul>
         <li><span class="tick">→</span><span><b>Resume in Claude</b> from any conversation.</span></li>
@@ -290,7 +288,7 @@
   <div class="frow">
     <div class="txt">
       <div class="eyebrow">Skills</div>
-      <h2>Tame hundreds of skills.</h2>
+      <h2>Rediscover the skills you forgot.</h2>
       <p>See every skill, how often you use it, and which ones you never touch. Read any SKILL.md as clean markdown.</p>
       <ul>
         <li><span class="tick">→</span><span>Search, filter, spot <b>unused skills</b>.</span></li>
@@ -303,7 +301,7 @@
   <div class="frow rev">
     <div class="txt">
       <div class="eyebrow">MCP &amp; System</div>
-      <h2>The rest of your setup.</h2>
+      <h2>Know your whole setup is healthy.</h2>
       <p>Every connector with a one-click health check, plus permissions, hooks, and memory. Secrets auto-redacted.</p>
       <ul>
         <li><span class="tick">→</span><span>Connectors, <b>global and per-project</b>, with live status.</span></li>
@@ -313,6 +311,24 @@
     <div class="pic"><div class="frame"><img src="assets/mcp.png" alt="MCP connectors with health checks" loading="lazy"></div></div>
   </div>
 </section></div>
+
+<div class="proof"><div class="wrap"><section id="why-exists" class="center">
+  <div class="eyebrow" style="margin-bottom:14px">Why it exists</div>
+  <h2 class="quote">Claude Code already has all this. <em>My Claude finally lets you see it.</em></h2>
+  <p class="why">Built because Claude stores everything locally, but gives you no way to explore it.</p>
+  <div class="nums">
+    <div class="stat"><div class="num" data-to="6">0</div><div class="lbl">dashboard views</div></div>
+    <div class="stat"><div class="num" data-to="20" data-suffix="s">0</div><div class="lbl">one-time setup</div></div>
+    <div class="stat"><div class="num" data-to="100" data-suffix="%">0</div><div class="lbl">on your machine</div></div>
+    <div class="stat"><div class="num" data-to="0">0</div><div class="lbl">bytes uploaded</div></div>
+  </div>
+  <div class="chips">
+    <span class="chip">127.0.0.1 only</span>
+    <span class="chip">zero external calls</span>
+    <span class="chip">reads ~/.claude</span>
+    <span class="chip">open source · MIT</span>
+  </div>
+</section></div></div>
 
 <div class="install"><div class="wrap"><section id="install">
   <div class="eyebrow" style="margin-bottom:12px">Install in under 20 seconds</div>
@@ -325,18 +341,6 @@
   </div>
 </section></div></div>
 
-<div class="wrap"><section id="privacy" class="privacy">
-  <div class="eyebrow" style="margin-bottom:12px">Private by design</div>
-  <h2 class="big">Your data never leaves your computer.</h2>
-  <p class="sub-lead">Your transcripts are sensitive. This tool treats them that way.</p>
-  <ul>
-    <li><span class="dot">●</span><span>Binds to <b>127.0.0.1</b> only, so nobody else can reach it.</span></li>
-    <li><span class="dot">●</span><span><b>Zero external calls.</b> No telemetry, no upload.</span></li>
-    <li><span class="dot">●</span><span>Reads <b>~/.claude</b> on the machine it runs on. Nothing else.</span></li>
-    <li><span class="dot">●</span><span>Share the <b>tool</b>, not the data.</span></li>
-  </ul>
-</section></div>
-
 <div class="install"><div class="wrap"><section class="cta-final">
   <div class="eyebrow" style="margin-bottom:12px">Ready?</div>
   <h2 class="big">See your Claude in one command.</h2>
@@ -345,7 +349,7 @@
     <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
     <button class="copy" onclick="copyCmd()">Copy</button>
   </div>
-  <div class="cta"><button class="btn solid" onclick="copyCmd()">Install now</button><a class="btn" href="demo.html">Live demo →</a></div>
+  <div class="cta"><button class="btn solid" onclick="copyCmd()">See your Claude data</button><a class="btn" href="demo.html">Live demo →</a></div>
 </section></div></div>
 
 <footer><div class="wrap">
@@ -359,7 +363,7 @@
       <a href="#features">Features</a>
       <a href="demo.html">Live demo</a>
       <a href="#install">Install</a>
-      <a href="#privacy">Privacy</a>
+      <a href="#why-exists">Why it exists</a>
     </div>
     <div class="fcol">
       <h4>Project</h4>
