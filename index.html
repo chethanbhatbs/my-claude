@@ -101,7 +101,7 @@ nav{
 .hero{padding:130px 0 56px;text-align:left;position:relative}
 @media(min-width:768px){.hero{padding:150px 0 72px}}
 .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center}
-@media(min-width:1024px){.hero-grid{grid-template-columns:11fr 9fr;gap:48px;align-items:stretch}}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1fr 1.05fr;gap:48px;align-items:center}}
 .hero-glow{
   position:absolute;top:-120px;left:50%;transform:translateX(-50%);
   width:820px;height:480px;border-radius:50%;pointer-events:none;
@@ -193,11 +193,11 @@ h1 .accent{color:var(--accent)}
 @media(min-width:1024px){
   .hero-visual{display:flex;flex-direction:column}
   .hero-visual .hero-shot-frame{
-    flex:1;min-height:0;width:126%;max-width:none;
-    transform:perspective(1400px) rotateY(-5deg) rotateX(1.5deg);
+    width:116%;max-width:none;
+    transform:perspective(1600px) rotateY(-4deg) rotateX(1deg);
     transition:transform .5s ease,box-shadow .5s ease;
   }
-  .hero-visual .hero-shot-frame img{width:100%;height:100%;object-fit:cover;object-position:left top}
+  .hero-visual .hero-shot-frame img{width:100%;height:auto;display:block}
   .hero-visual .hero-shot-frame:hover{
     transform:perspective(1400px) rotateY(0) rotateX(0);
     box-shadow:0 40px 120px rgba(0,0,0,.75),0 0 100px rgba(232,130,90,.12);
@@ -361,6 +361,10 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
       <a class="nav-link" href="https://github.com/chethanbhatbs/my-claude" target="_blank" rel="noopener" data-testid="nav-github-link">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.7 5.38-5.26 5.67.41.35.77 1.04.77 2.1v3.11c0 .3.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
         GitHub
+      </a>
+      <a class="nav-link" href="https://www.linkedin.com/in/chethan-bhat-535b0a212/" target="_blank" rel="noopener" data-testid="nav-linkedin-link">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.55V9h3.57v11.45z"/></svg>
+        LinkedIn
       </a>
       <a class="nav-cta" href="https://chethanbhatbs.github.io/my-claude/demo.html" target="_blank" rel="noopener" data-testid="nav-demo-link">Live demo</a>
     </div>
