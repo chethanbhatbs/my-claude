@@ -29,9 +29,9 @@
   ::selection{background:var(--accent-soft)}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  .demobar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;background:#141311;border-bottom:1px solid #383836;font-size:12.5px;flex-wrap:wrap}
+  .demobar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;background:var(--surface2);border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
   .demobar .home{display:inline-flex;align-items:center;gap:6px}
-  .tbtn{cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:#ecebe8;background:#2c2c2a;border:1px solid #383836;border-radius:999px;padding:4px 12px}
+  .tbtn{cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
   .tbtn:hover{border-color:var(--accent)}
   /* dismissible light notice, bottom */
   .dnote{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;max-width:min(660px,calc(100% - 32px));background:#FFFFFF;color:#211D18;border:1px solid #E6E0D5;border-radius:12px;padding:12px 12px 12px 18px;box-shadow:0 12px 40px rgba(0,0,0,.28);font-size:13px;line-height:1.5}
@@ -40,9 +40,9 @@
   .dnote-x:hover{color:#211D18;border-color:#c9c0b1}
   .dnote.hidden{display:none}
   .demobar .tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);padding:3px 9px;border-radius:999px}
-  .demobar .msg{color:#a2a29c} .demobar .msg b{color:#ecebe8}
-  .demobar code{font-family:ui-monospace,Menlo,monospace;background:#0e0d0c;border:1px solid #33322f;border-radius:6px;padding:4px 9px;font-size:11.5px;color:#e8e4dd}
-  .demobar .home{color:#a2a29c}
+  .demobar .msg{color:var(--dim)} .demobar .msg b{color:var(--text)}
+  .demobar code{font-family:ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:11.5px;color:var(--text)}
+  .demobar .home{color:var(--dim)}
 
   .layout{display:flex;min-height:calc(100vh - 42px)}
   .sidebar{width:230px;flex:none;background:var(--surface);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column}

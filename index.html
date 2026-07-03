@@ -51,7 +51,7 @@
   .lead{font-size:clamp(16px,1.4vw,18px);color:var(--dim);max-width:46ch;margin:0 0 22px;line-height:1.55}
   .install-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
   .cmd{display:flex;align-items:center;gap:12px;background:#f7f4ef;border:1px solid var(--line2);border-radius:12px;padding:10px 10px 10px 18px;max-width:100%}
-  .cmd code{font-family:"JetBrains Mono",monospace;font-size:13.5px;color:var(--ink);overflow-x:auto;white-space:nowrap;min-width:0}
+  .cmd code{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink);white-space:normal;overflow-wrap:anywhere;min-width:0;line-height:1.5}
   .cmd .dollar{color:var(--faint)}
   .copy{flex:none;padding:10px 16px;border-radius:8px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
   .copy:hover{border-color:var(--ink)}
@@ -197,7 +197,7 @@
     <div class="eyebrow">Private · Local · One command</div>
     <h1>Open the black box called <span class="path">~/.claude</span></h1>
     <p class="lead">Every conversation, token, skill, and MCP server Claude Code touches ends up in there. My Claude turns it into one dashboard you can actually read.</p>
-    <div class="install-label">Install in under 20 seconds</div>
+    <div class="install-label">Paste into your terminal · ready in ~20s</div>
     <div class="cmd">
       <span class="dollar mono">$</span>
       <code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code>
@@ -217,7 +217,7 @@
   <div class="heroshot">
     <div class="browser">
       <div class="bbar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="burl mono">127.0.0.1:8766</span></div>
-      <img src="assets/overview.png" alt="My Claude dashboard, showing skills, conversations, token usage and storage" loading="eager">
+      <img src="assets/overview.png?v=2" alt="My Claude dashboard, showing skills, conversations, token usage and storage" loading="eager">
       <div class="floatpill"><span class="ck">✓</span> Nothing leaves your machine</div>
     </div>
   </div>
@@ -300,7 +300,7 @@
         <li><span class="tick">→</span><span>See <b>which projects</b> cost the most.</span></li>
       </ul>
     </div>
-    <div class="pic"><div class="frame"><img src="assets/usage.png" alt="Token usage and cost analytics" loading="lazy"></div></div>
+    <div class="pic"><div class="frame"><img src="assets/usage.png?v=2" alt="Token usage and cost analytics" loading="lazy"></div></div>
   </div>
 
   <div class="frow rev">
@@ -313,7 +313,7 @@
         <li><span class="tick">→</span><span><b>Export to Markdown</b> instantly.</span></li>
       </ul>
     </div>
-    <div class="pic"><div class="frame"><img src="assets/history.png" alt="Conversation history browser" loading="lazy"></div></div>
+    <div class="pic"><div class="frame"><img src="assets/history.png?v=2" alt="Conversation history browser" loading="lazy"></div></div>
   </div>
 
   <div class="frow">
@@ -326,7 +326,7 @@
         <li><span class="tick">→</span><span>View, push to GitHub, or share as a <b>.zip</b>.</span></li>
       </ul>
     </div>
-    <div class="pic"><div class="frame"><img src="assets/skill-view.png" alt="Skill view, SKILL.md rendered as markdown" loading="lazy"></div></div>
+    <div class="pic"><div class="frame"><img src="assets/skill-view.png?v=2" alt="Skill view, SKILL.md rendered as markdown" loading="lazy"></div></div>
   </div>
 
   <div class="frow rev">
@@ -339,7 +339,7 @@
         <li><span class="tick">→</span><span>Secrets are <b>auto-redacted</b> before you see them.</span></li>
       </ul>
     </div>
-    <div class="pic"><div class="frame"><img src="assets/mcp.png" alt="MCP connectors with health checks" loading="lazy"></div></div>
+    <div class="pic"><div class="frame"><img src="assets/mcp.png?v=2" alt="MCP connectors with health checks" loading="lazy"></div></div>
   </div>
 </section></div>
 
