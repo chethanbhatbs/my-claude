@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # My Claude — one-command installer.
 # Downloads the app to ~/.my-claude, sets up a local Python env, and launches it.
-# Everything runs on your machine. Nothing is uploaded.
+# Everything runs on your machine. Nothing is uploaded automatically.
 set -e
 
 BASE="${MY_CLAUDE_BASE:-https://chethanbhatbs.github.io/my-claude}"

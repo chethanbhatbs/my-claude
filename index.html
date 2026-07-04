@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Claude · A private, 100% local dashboard for your ~/.claude folder</title>
-<meta name="description" content="My Claude is a private, 100% local dashboard for everything Claude Code stores on your machine: skills, MCP connectors, plugins, token usage and cost, and full conversation history. One command to install. Nothing leaves your machine.">
+<title>My Claude · A private, local-first dashboard for your ~/.claude folder</title>
+<meta name="description" content="My Claude is a private, local-first dashboard for everything Claude Code stores on your machine: skills, MCP connectors, plugins, token usage and cost, and full conversation history. One command to install. Runs entirely on your machine; nothing is sent automatically.">
 <meta property="og:title" content="My Claude · Your Claude Code, finally visible">
-<meta property="og:description" content="A private, 100% local dashboard for the ~/.claude folder. Skills, MCP, plugins, usage, cost and full history in one view. Open source, MIT.">
+<meta property="og:description" content="A private, local-first dashboard for the ~/.claude folder. Skills, MCP, plugins, usage, cost and full history in one view. Open source, MIT.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://chethanbhatbs.github.io/my-claude/">
 <meta property="og:image" content="https://chethanbhatbs.github.io/my-claude/assets/overview.png">
@@ -313,8 +313,9 @@ h2{
 .step h3{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text);margin:14px 0 10px}
 .step p{font-size:14.5px;color:var(--text-2)}
 .step .mono-chip{
-  display:inline-block;margin-top:14px;padding:5px 10px;border-radius:7px;
-  background:#000;border:1px solid var(--line);font-family:var(--font-mono);font-size:12px;color:var(--accent);
+  display:inline-block;margin-top:14px;padding:6px 11px;border-radius:7px;
+  background:#000;border:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--accent);
+  max-width:100%;word-break:break-all;line-height:1.55;
 }
 
 /* ---------- showcase tabs ---------- */
@@ -452,10 +453,10 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
       <div class="hero-copy">
         <h1 class="reveal reveal-d1" data-testid="hero-title">Beyond the <span class="accent">Terminal</span>.</h1>
     <p class="hero-sub reveal reveal-d2" data-testid="hero-subtitle">
-      See everything Claude Code knows, uses, and remembers. My Claude reads your <strong>~/.claude</strong> folder and lays it all out in <strong>one private dashboard</strong>. Runs only on your machine. Nothing is uploaded, ever.
+      See everything Claude Code knows, uses, and remembers. My Claude reads your <strong>~/.claude</strong> folder and lays it all out in <strong>one private dashboard</strong>, running entirely on your machine. No telemetry, no cloud. Nothing leaves unless you choose to push it to GitHub yourself.
     </p>
     <div class="badges reveal reveal-d3" data-testid="hero-badges">
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>100% local</span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Local-first</span>
       <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>No telemetry</span>
       <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>No cloud</span>
       <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Open source · MIT</span>
@@ -532,7 +533,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
         <span class="step-num">STEP 01</span>
         <h3>Run one command</h3>
         <p>Paste the install command into your terminal. It sets everything up for you, no manual steps.</p>
-        <span class="mono-chip">curl ... | bash</span>
+        <span class="mono-chip">curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</span>
       </div>
       <div class="step reveal reveal-d1" data-testid="step-2">
         <span class="step-num">STEP 02</span>
@@ -628,11 +629,11 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
       <div class="privacy-grid">
         <div>
           <span class="kicker">// private by architecture</span>
-          <h2>Nothing leaves your machine. Not a byte.</h2>
-          <p class="section-sub">Your transcripts and usage data are sensitive. My Claude is built so that trusting it is not required: you can verify every claim in the source.</p>
+          <h2>Local by default. You decide what leaves.</h2>
+          <p class="section-sub">Your transcripts and usage data are sensitive. My Claude runs entirely on your machine and makes no calls on its own. The only data that ever leaves is what you explicitly push or share to your own GitHub. And you can verify every claim in the source.</p>
           <div class="loopback" data-testid="loopback-proof">
             <span class="g">&#10003;</span> server bind &nbsp;<span class="o">127.0.0.1:8766</span> <span style="color:var(--text-3)">(loopback only)</span><br>
-            <span class="g">&#10003;</span> outbound network calls &nbsp;<span class="b">0</span><br>
+            <span class="g">&#10003;</span> automatic outbound calls &nbsp;<span class="b">0</span><br>
             <span class="g">&#10003;</span> analytics / telemetry &nbsp;<span class="b">none</span><br>
             <span class="g">&#10003;</span> license &nbsp;<span class="o">MIT</span> · audit the code yourself
           </div>
@@ -644,7 +645,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
           </li>
           <li data-testid="privacy-nocalls">
             <span class="p-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></span>
-            <div><b>Zero external calls</b><span>No cloud sync, no CDN pings, no update checks. Unplug your network and it works the same.</span></div>
+            <div><b>No background calls</b><span>No telemetry, no cloud sync, no CDN pings, no update checks. Unplug your network and the dashboard works the same. The only outbound traffic is a GitHub push or share you trigger yourself.</span></div>
           </li>
           <li data-testid="privacy-redaction">
             <span class="p-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
