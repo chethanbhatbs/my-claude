@@ -63,7 +63,7 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
 }
 
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.wrap{max-width:1300px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 .mono{font-family:var(--font-mono)}
 .kicker{
   font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.18em;
@@ -76,7 +76,7 @@ nav{
   background:rgba(10,10,10,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--line);
 }
-.nav-inner{max-width:1120px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.nav-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
 .logo{display:flex;align-items:center;gap:10px;color:var(--text);font-family:var(--font-display);font-weight:700;font-size:17px}
 .logo-mark{
   width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--base);
@@ -101,7 +101,7 @@ nav{
 .hero{padding:130px 0 56px;text-align:left;position:relative}
 @media(min-width:768px){.hero{padding:150px 0 72px}}
 .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center}
-@media(min-width:1024px){.hero-grid{grid-template-columns:0.92fr 1.28fr;gap:44px;align-items:start}}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1.05fr 1fr;gap:40px;align-items:start}}
 .hero-glow{
   position:absolute;top:-120px;left:50%;transform:translateX(-50%);
   width:820px;height:480px;border-radius:50%;pointer-events:none;
@@ -121,7 +121,8 @@ h1 .accent{color:var(--accent)}
 .hero-sub{max-width:640px;margin-top:24px;font-size:17px}
 @media(min-width:768px){.hero-sub{font-size:19px}}
 .hero-sub strong{color:var(--text);font-weight:500}
-.badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.badges{display:flex;flex-wrap:nowrap;gap:10px;margin-top:28px}
+@media(max-width:1023px){.badges{flex-wrap:wrap}}
 .badge{
   display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;
   background:rgba(255,255,255,.04);border:1px solid var(--line);
@@ -141,18 +142,20 @@ h1 .accent{color:var(--accent)}
 .t-dot{width:11px;height:11px;border-radius:50%}
 .t-dot:nth-child(1){background:#FF5F57}.t-dot:nth-child(2){background:#FEBC2E}.t-dot:nth-child(3){background:#28C840}
 .terminal-title{margin-left:auto;margin-right:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-3);transform:translateX(-26px)}
-.terminal-body{padding:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.terminal-body{padding:18px 20px;display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
 .terminal-cmd{
-  flex:1;min-width:0;font-family:var(--font-mono);font-size:13px;line-height:1.7;color:var(--text);
-  word-break:break-all;
+  flex:1;min-width:0;font-family:var(--font-mono);font-size:12.5px;line-height:1.7;color:var(--text);
+  white-space:nowrap;overflow-x:auto;scrollbar-width:none;
 }
+.terminal-cmd::-webkit-scrollbar{display:none}
+@media(max-width:1023px){.terminal-cmd{white-space:normal;word-break:break-all}}
 .terminal-cmd .prompt{color:var(--accent);user-select:none}
 .terminal-cmd .flag{color:var(--text-3)}
 .terminal-cmd .url{color:#8AB8E8}
 .copy-btn{
-  flex-shrink:0;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
-  padding:9px 16px;border-radius:9px;border:1px solid var(--line-strong);
-  background:var(--elevated);color:var(--text);font-family:var(--font-mono);font-size:12.5px;font-weight:500;
+  flex-shrink:0;display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  padding:8px 13px;border-radius:9px;border:1px solid var(--line-strong);
+  background:var(--elevated);color:var(--text);font-family:var(--font-mono);font-size:12px;font-weight:500;
   transition:background-color .2s,border-color .2s,color .2s;
 }
 .copy-btn:hover{background:#2A2A2A;border-color:rgba(232,130,90,.5)}
@@ -191,7 +194,7 @@ h1 .accent{color:var(--accent)}
   margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--text-3);text-align:center;
 }
 @media(min-width:1024px){
-  .hero-visual{display:flex;flex-direction:column}
+  .hero-visual{display:flex;flex-direction:column;margin-top:58px}
   .hero-visual .hero-shot-frame{
     width:100%;max-width:100%;
     transition:box-shadow .4s ease;
@@ -409,9 +412,9 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
         </div>
       <div class="hero-visual reveal reveal-d2">
         <div class="hero-shot-frame" data-testid="hero-screenshot">
-          <img id="hero-shot" src="./assets/overview.png" alt="My Claude dashboard" loading="eager">
+          <img id="hero-shot" src="./assets/usage.png" alt="My Claude dashboard: token usage and cost" loading="eager">
         </div>
-        <p class="hero-shot-caption" id="hero-caption">127.0.0.1:8766/p/overview · everything at a glance, all local</p>
+        <p class="hero-shot-caption" id="hero-caption">127.0.0.1:8766/p/usage · tokens and cost by day, model, project</p>
       </div>
     </div>
   </div>
@@ -652,30 +655,7 @@ function wireCopy(btn){
 wireCopy(document.getElementById('copy-hero'));
 wireCopy(document.getElementById('copy-cta'));
 
-// hero: auto-rotating dashboard (slides), pause on hover, reduced-motion safe
-(function(){
-  const img = document.getElementById('hero-shot');
-  const cap = document.getElementById('hero-caption');
-  if(!img) return;
-  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  const views = [
-    {src:'./assets/overview.png', cap:'127.0.0.1:8766/p/overview · everything at a glance, all local'},
-    {src:'./assets/usage.png',    cap:'127.0.0.1:8766/p/usage · tokens and cost by day, model, project'},
-    {src:'./assets/history.png',  cap:'127.0.0.1:8766/p/history · every conversation, searchable'},
-    {src:'./assets/mcp.png',      cap:'127.0.0.1:8766/p/mcp · connectors with health checks'}
-  ];
-  views.forEach(v => { const p = new Image(); p.src = v.src; });
-  let i = 0, timer = null;
-  function show(n){ i = (n + views.length) % views.length;
-    img.style.opacity = '0';
-    setTimeout(() => { img.src = views[i].src; if(cap) cap.textContent = views[i].cap; img.style.opacity = '1'; }, 320);
-  }
-  function start(){ if(reduce) return; stop(); timer = setInterval(() => show(i + 1), 2000); }
-  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
-  const frame = img.closest('.hero-shot-frame');
-  if(frame){ frame.addEventListener('mouseenter', stop); frame.addEventListener('mouseleave', start); }
-  start();
-})();
+// hero dashboard is a single static shot (rotating slides live in the showcase below)
 
 // showcase tabs
 const SHOTS = {
@@ -730,14 +710,24 @@ function renderShot(key){
   scText.innerHTML = '<h3>' + s.title + '</h3><p>' + s.desc + '</p><ul>' +
     s.points.map(p => '<li>' + check + '<span>' + p + '</span></li>').join('') + '</ul>';
 }
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderShot(btn.dataset.tab);
-  });
-});
-renderShot('overview');
+// showcase: auto-rotating slides (same layout), pause on hover, reset on manual click
+(function(){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const order = ['overview','usage','history','skill','mcp'];
+  let idx = 0, timer = null;
+  function activate(key){
+    idx = Math.max(0, order.indexOf(key));
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === key));
+    renderShot(key);
+  }
+  function start(){ if(reduce) return; stop(); timer = setInterval(() => activate(order[(idx + 1) % order.length]), 3500); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+  tabBtns.forEach(btn => btn.addEventListener('click', () => { activate(btn.dataset.tab); start(); }));
+  const panel = document.getElementById('tour');
+  if(panel){ panel.addEventListener('mouseenter', stop); panel.addEventListener('mouseleave', start); }
+  activate('overview');
+  start();
+})();
 
 // scroll reveal
 const io = new IntersectionObserver(entries => {
