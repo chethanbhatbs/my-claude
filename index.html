@@ -193,6 +193,55 @@ h1 .accent{color:var(--accent)}
 .hero-shot-caption{
   margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--text-3);text-align:center;
 }
+.cap-link{
+  font:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;
+  border-bottom:1px solid transparent;transition:border-color .2s;
+}
+.cap-link:hover{border-bottom-color:var(--accent)}
+/* hero: play-to-open-demo overlay */
+.demo-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  border:0;cursor:pointer;background:transparent;transition:background-color .25s ease;
+}
+.demo-overlay .pbtn{
+  width:58px;height:58px;border-radius:50%;background:var(--accent);color:var(--base);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 10px 34px rgba(232,130,90,.5);
+  transition:transform .2s ease;
+}
+.demo-overlay .pbtn svg{width:24px;height:24px;margin-left:3px}
+.demo-overlay .plabel{
+  font-family:var(--font-mono);font-size:12.5px;color:#fff;background:rgba(0,0,0,.55);
+  padding:5px 12px;border-radius:999px;opacity:0;transform:translateY(6px);
+  transition:opacity .2s ease,transform .2s ease;
+}
+.demo-overlay:hover,.demo-overlay:focus-visible{background:rgba(8,8,8,.42);outline:none}
+.demo-overlay:hover .pbtn,.demo-overlay:focus-visible .pbtn{transform:scale(1.08)}
+.demo-overlay:hover .plabel,.demo-overlay:focus-visible .plabel{opacity:1;transform:none}
+/* demo lightbox */
+.demo-modal{
+  position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:24px;
+  background:rgba(6,6,6,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.demo-modal.open{display:flex}
+.demo-dialog{
+  width:min(1400px,95vw);height:min(880px,90vh);display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:16px;overflow:hidden;
+  box-shadow:0 40px 120px rgba(0,0,0,.7);
+}
+.demo-dialog-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;
+  border-bottom:1px solid var(--line);background:#141414;
+}
+.demo-dialog-bar .t{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12.5px;color:var(--text-2)}
+.demo-dialog-bar .t .tag{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.demo-dialog-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.demo-dialog-actions a,.demo-dialog-actions button{
+  display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:12px;
+  padding:7px 12px;border-radius:8px;border:1px solid var(--line-strong);background:var(--elevated);color:var(--text);cursor:pointer;
+  transition:border-color .2s,background-color .2s;
+}
+.demo-dialog-actions a:hover,.demo-dialog-actions button:hover{border-color:rgba(232,130,90,.5);background:#2A2A2A}
+.demo-frame{flex:1;border:0;width:100%;background:var(--base)}
 @media(min-width:1024px){
   .hero-visual{display:flex;flex-direction:column;margin-top:58px}
   .hero-visual .hero-shot-frame{
@@ -413,8 +462,12 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
       <div class="hero-visual reveal reveal-d2">
         <div class="hero-shot-frame" data-testid="hero-screenshot">
           <img id="hero-shot" src="./assets/usage.png" alt="My Claude dashboard: token usage and cost" loading="eager">
+          <button class="demo-overlay" id="open-demo" type="button" aria-label="Play interactive demo" data-testid="hero-play-demo">
+            <span class="pbtn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="plabel">Play interactive demo</span>
+          </button>
         </div>
-        <p class="hero-shot-caption" id="hero-caption">127.0.0.1:8766/p/usage · tokens and cost by day, model, project</p>
+        <p class="hero-shot-caption" id="hero-caption">127.0.0.1:8766/p/usage · tokens and cost by day, model, project · <button type="button" class="cap-link" id="open-demo-2" data-testid="hero-play-demo-link">try it live</button></p>
       </div>
     </div>
   </div>
@@ -634,6 +687,20 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
   </div>
 </footer>
 
+<!-- ============ DEMO LIGHTBOX ============ -->
+<div class="demo-modal" id="demo-modal" role="dialog" aria-modal="true" aria-label="My Claude interactive demo" data-testid="demo-modal">
+  <div class="demo-dialog">
+    <div class="demo-dialog-bar">
+      <span class="t"><span class="tag">Live demo</span> Interactive preview · sample data</span>
+      <span class="demo-dialog-actions">
+        <a href="./demo.html" target="_blank" rel="noopener" data-testid="demo-open-tab">Open in new tab</a>
+        <button type="button" id="close-demo" aria-label="Close demo" data-testid="demo-close">Close ✕</button>
+      </span>
+    </div>
+    <iframe class="demo-frame" id="demo-frame" title="My Claude interactive demo" loading="lazy"></iframe>
+  </div>
+</div>
+
 <script>
 // copy to clipboard
 const CMD = 'curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash';
@@ -656,6 +723,34 @@ wireCopy(document.getElementById('copy-hero'));
 wireCopy(document.getElementById('copy-cta'));
 
 // hero dashboard is a single static shot (rotating slides live in the showcase below)
+
+// hero: open the interactive demo in a lightbox (iframe lazy-loaded on first open)
+(function(){
+  const modal = document.getElementById('demo-modal');
+  const frame = document.getElementById('demo-frame');
+  const closeBtn = document.getElementById('close-demo');
+  if(!modal || !frame) return;
+  let lastFocus = null;
+  function open(){
+    lastFocus = document.activeElement;
+    if(!frame.getAttribute('src')) frame.setAttribute('src', './demo.html');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if(closeBtn) closeBtn.focus();
+  }
+  function close(){
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    if(lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  ['open-demo','open-demo-2'].forEach(id => {
+    const b = document.getElementById(id);
+    if(b) b.addEventListener('click', open);
+  });
+  if(closeBtn) closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', e => { if(e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && modal.classList.contains('open')) close(); });
+})();
 
 // showcase tabs
 const SHOTS = {
