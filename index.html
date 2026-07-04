@@ -222,12 +222,12 @@ h1 .accent{color:var(--accent)}
 .demo-cursor.press{transform:translate(-41%,-9%) scale(.82)}
 .demo-cursor svg{width:100%;height:100%;display:block}
 .demo-ripple{
-  position:absolute;z-index:5;width:22px;height:22px;border-radius:50%;pointer-events:none;
-  transform:translate(-50%,-50%) scale(0);background:rgba(232,130,90,.55);border:2.5px solid var(--accent);opacity:0;
-  box-shadow:0 0 20px rgba(232,130,90,.6);
+  position:absolute;z-index:5;width:32px;height:32px;border-radius:50%;pointer-events:none;
+  transform:translate(-50%,-50%) scale(0);opacity:0;
+  background:radial-gradient(circle,rgba(232,130,90,.5) 0%,rgba(232,130,90,0) 68%);
 }
-.demo-ripple.go{animation:demoRipple .72s ease-out}
-@keyframes demoRipple{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}55%{opacity:.75}100%{transform:translate(-50%,-50%) scale(4.4);opacity:0}}
+.demo-ripple.go{animation:demoTap .5s cubic-bezier(.33,0,.2,1)}
+@keyframes demoTap{0%{transform:translate(-50%,-50%) scale(.35);opacity:.85}100%{transform:translate(-50%,-50%) scale(1.85);opacity:0}}
 @media(prefers-reduced-motion:reduce){.demo-cursor,.demo-ripple{display:none!important}}
 .hero-shot-caption{
   margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--text-3);text-align:center;
