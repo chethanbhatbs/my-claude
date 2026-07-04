@@ -450,9 +450,9 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
     </div>
     <div class="hero-grid">
       <div class="hero-copy">
-        <h1 class="reveal reveal-d1" data-testid="hero-title">Your Claude Code,<br>finally <span class="accent">visible</span>.</h1>
+        <h1 class="reveal reveal-d1" data-testid="hero-title">Beyond the <span class="accent">Terminal</span>.</h1>
     <p class="hero-sub reveal reveal-d2" data-testid="hero-subtitle">
-      Claude Code quietly fills your <strong>~/.claude</strong> folder with skills, MCP connectors, plugins, token spend and every conversation you have ever had. My Claude turns all of it into <strong>one private dashboard you can actually read</strong>. Runs only on your machine. Nothing is uploaded, ever.
+      See everything Claude Code knows, uses, and remembers. My Claude reads your <strong>~/.claude</strong> folder and lays it all out in <strong>one private dashboard</strong>. Runs only on your machine. Nothing is uploaded, ever.
     </p>
     <div class="badges reveal reveal-d3" data-testid="hero-badges">
       <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>100% local</span>
@@ -794,7 +794,7 @@ wireCopy(document.getElementById('copy-cta'));
     {ix:340,  iy:200, src:'./assets/skill.png',   url:'127.0.0.1:8766/p/skills'},   // the "Skills · 214" stat card
     {ix:815,  iy:200, src:'./assets/usage.png',   url:'127.0.0.1:8766/p/usage'},    // the "Tokens · 48.2M" stat card
     {ix:430,  iy:513, src:'./assets/history.png', url:'127.0.0.1:8766/p/history'},  // a Recent-conversations row
-    {ix:1078, iy:227, src:'./assets/mcp.png',     url:'127.0.0.1:8766/p/mcp'}       // the "4 MCP · 5 plugins" line
+    {ix:1078, iy:227, src:'./assets/mcp.png',     url:'127.0.0.1:8766/p/mcp-plugins'} // the "4 MCP · 5 plugins" line
   ];
   [HUB.src].concat(steps.map(s => s.src)).forEach(src => { const p = new Image(); p.src = src; });
   let i = 0, timers = [], running = false;
