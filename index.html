@@ -63,7 +63,7 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
 }
 
-.wrap{max-width:1300px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.wrap{max-width:1360px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 .mono{font-family:var(--font-mono)}
 .kicker{
   font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.18em;
@@ -76,7 +76,7 @@ nav{
   background:rgba(10,10,10,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--line);
 }
-.nav-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.nav-inner{max-width:1360px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
 .logo{display:flex;align-items:center;gap:10px;color:var(--text);font-family:var(--font-display);font-weight:700;font-size:17px}
 .logo-mark{
   width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--base);
@@ -101,7 +101,7 @@ nav{
 .hero{padding:130px 0 56px;text-align:left;position:relative}
 @media(min-width:768px){.hero{padding:150px 0 72px}}
 .hero-grid{display:grid;grid-template-columns:1fr;gap:56px;align-items:center}
-@media(min-width:1024px){.hero-grid{grid-template-columns:1.05fr 1fr;gap:40px;align-items:start}}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1fr 1.2fr;gap:36px;align-items:start}}
 .hero-glow{
   position:absolute;top:-120px;left:50%;transform:translateX(-50%);
   width:820px;height:480px;border-radius:50%;pointer-events:none;
@@ -144,7 +144,7 @@ h1 .accent{color:var(--accent)}
 .terminal-title{margin-left:auto;margin-right:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-3);transform:translateX(-26px)}
 .terminal-body{padding:18px 20px;display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
 .terminal-cmd{
-  flex:1;min-width:0;font-family:var(--font-mono);font-size:12.5px;line-height:1.7;color:var(--text);
+  flex:1;min-width:0;font-family:var(--font-mono);font-size:11.5px;line-height:1.7;color:var(--text);
   white-space:nowrap;overflow-x:auto;scrollbar-width:none;
 }
 .terminal-cmd::-webkit-scrollbar{display:none}
@@ -153,9 +153,9 @@ h1 .accent{color:var(--accent)}
 .terminal-cmd .flag{color:var(--text-3)}
 .terminal-cmd .url{color:#8AB8E8}
 .copy-btn{
-  flex-shrink:0;display:inline-flex;align-items:center;gap:7px;cursor:pointer;
-  padding:8px 13px;border-radius:9px;border:1px solid var(--line-strong);
-  background:var(--elevated);color:var(--text);font-family:var(--font-mono);font-size:12px;font-weight:500;
+  flex-shrink:0;display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  padding:7px 11px;border-radius:9px;border:1px solid var(--line-strong);
+  background:var(--elevated);color:var(--text);font-family:var(--font-mono);font-size:11.5px;font-weight:500;
   transition:background-color .2s,border-color .2s,color .2s;
 }
 .copy-btn:hover{background:#2A2A2A;border-color:rgba(232,130,90,.5)}
@@ -213,13 +213,13 @@ h1 .accent{color:var(--accent)}
 .browser-view img{width:100%;height:auto;display:block;transition:opacity .35s ease}
 /* animated cursor + click ripple (the "video") */
 .demo-cursor{
-  position:absolute;top:41%;left:16%;width:24px;height:24px;z-index:6;pointer-events:none;
-  transform:translate(-52%,-30%);opacity:0;
+  position:absolute;top:18%;left:7%;width:30px;height:30px;z-index:6;pointer-events:none;
+  transform:translate(-34%,-8%);opacity:0;transform-origin:34% 8%;
   transition:left .9s cubic-bezier(.4,0,.2,1),top .9s cubic-bezier(.4,0,.2,1),transform .12s ease;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.65));
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));
 }
 .demo-cursor.on{opacity:1}
-.demo-cursor.press{transform:translate(-52%,-30%) scale(.78)}
+.demo-cursor.press{transform:translate(-34%,-8%) scale(.8)}
 .demo-cursor svg{width:100%;height:100%;display:block}
 .demo-ripple{
   position:absolute;z-index:5;width:22px;height:22px;border-radius:50%;pointer-events:none;
@@ -483,7 +483,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
           <div class="browser-view" id="hero-view">
             <img id="hero-shot" src="./assets/overview.png" alt="My Claude dashboard, auto-playing walkthrough" loading="eager">
             <span class="demo-ripple" id="hero-ripple"></span>
-            <span class="demo-cursor" id="hero-cursor"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round" d="M4 2l12 8.5-5.4.8 3.1 5.7-2.6 1.3-3.1-5.8L4 16.5z"/></svg></span>
+            <span class="demo-cursor" id="hero-cursor"><svg viewBox="0 0 28 28" aria-hidden="true"><path fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round" d="M9.6 2.4c-.85 0-1.5.66-1.5 1.5v8.05L6.1 9.95c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.5 0 2.1l4.5 5.05c.9 1 2.2 1.6 3.6 1.6h3.05c2.2 0 3.95-1.78 3.95-3.95v-4.8c0-.83-.67-1.5-1.5-1.5-.3 0-.58.09-.82.24-.13-.68-.72-1.19-1.43-1.19-.38 0-.72.14-.98.38-.18-.6-.73-1.03-1.39-1.03-.31 0-.6.1-.83.26V3.9c0-.84-.66-1.5-1.5-1.5z"/></svg></span>
           </div>
         </div>
         <p class="hero-shot-caption" id="hero-caption">Auto-playing preview &middot; <button type="button" class="cap-link" id="open-demo-2" data-testid="hero-play-demo-link">try the live demo</button></p>
@@ -781,13 +781,13 @@ wireCopy(document.getElementById('copy-cta'));
   if(!view || !img || !cur) return;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   if(reduce) return;
-  // targets sit over the dashboard's left sidebar nav (x,y are % of the view)
+  // targets sit exactly on the dashboard's left sidebar nav items (x,y are % of the view)
   const steps = [
-    {img:'./assets/overview.png', url:'127.0.0.1:8766/p/overview', x:15, y:41},
-    {img:'./assets/skill.png',    url:'127.0.0.1:8766/p/skills',   x:15, y:44},
-    {img:'./assets/mcp.png',      url:'127.0.0.1:8766/p/mcp',      x:15, y:47.5},
-    {img:'./assets/usage.png',    url:'127.0.0.1:8766/p/usage',    x:15, y:50.5},
-    {img:'./assets/history.png',  url:'127.0.0.1:8766/p/history',  x:15, y:54}
+    {img:'./assets/overview.png', url:'127.0.0.1:8766/p/overview', x:7, y:18},
+    {img:'./assets/skill.png',    url:'127.0.0.1:8766/p/skills',   x:7, y:22.6},
+    {img:'./assets/mcp.png',      url:'127.0.0.1:8766/p/mcp',      x:8, y:27.1},
+    {img:'./assets/usage.png',    url:'127.0.0.1:8766/p/usage',    x:7, y:31.6},
+    {img:'./assets/history.png',  url:'127.0.0.1:8766/p/history',  x:7, y:36.1}
   ];
   steps.forEach(s => { const p = new Image(); p.src = s.img; });
   let i = 1, timers = [], running = false;
@@ -811,7 +811,7 @@ wireCopy(document.getElementById('copy-cta'));
     i = (i + 1) % steps.length;
     timers.push(setTimeout(tick, 2900));
   }
-  function start(){ if(running) return; running = true; cur.style.left='15%'; cur.style.top='41%'; tick(); }
+  function start(){ if(running) return; running = true; cur.style.left='7%'; cur.style.top='18%'; tick(); }
   function stop(){ running = false; clearAll(); cur.classList.remove('on','press'); }
   view.addEventListener('mouseenter', stop);
   view.addEventListener('mouseleave', start);
