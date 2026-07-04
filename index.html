@@ -213,13 +213,13 @@ h1 .accent{color:var(--accent)}
 .browser-view img{width:100%;height:auto;display:block;transition:opacity .35s ease}
 /* animated cursor + click ripple (the "video") */
 .demo-cursor{
-  position:absolute;top:18%;left:7%;width:30px;height:30px;z-index:6;pointer-events:none;
-  transform:translate(-34%,-8%);opacity:0;transform-origin:34% 8%;
-  transition:left .9s cubic-bezier(.4,0,.2,1),top .9s cubic-bezier(.4,0,.2,1),transform .12s ease;
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));
+  position:absolute;top:0;left:0;width:34px;height:36px;z-index:6;pointer-events:none;
+  transform:translate(-41%,-9%);opacity:0;transform-origin:41% 9%;
+  transition:left .85s cubic-bezier(.4,0,.2,1),top .85s cubic-bezier(.4,0,.2,1),transform .12s ease;
+  filter:drop-shadow(0 3px 7px rgba(0,0,0,.75));
 }
 .demo-cursor.on{opacity:1}
-.demo-cursor.press{transform:translate(-34%,-8%) scale(.8)}
+.demo-cursor.press{transform:translate(-41%,-9%) scale(.82)}
 .demo-cursor svg{width:100%;height:100%;display:block}
 .demo-ripple{
   position:absolute;z-index:5;width:22px;height:22px;border-radius:50%;pointer-events:none;
@@ -263,8 +263,16 @@ h1 .accent{color:var(--accent)}
 .demo-dialog-actions a:hover,.demo-dialog-actions button:hover{border-color:rgba(232,130,90,.5);background:#2A2A2A}
 .demo-frame{flex:1;border:0;width:100%;background:var(--base)}
 @media(min-width:1024px){
-  .hero-visual{display:flex;flex-direction:column;margin-top:58px}
-  .hero-shot-caption{text-align:left}
+  .hero-grid{align-items:stretch}
+  .hero-visual{display:flex;flex-direction:column;height:100%}
+  .browser{flex:1;display:flex;flex-direction:column;min-height:0}
+  .browser-view{flex:1;min-height:0}
+  .browser-view img{position:absolute;inset:0 0 auto 0;width:100%;height:auto}
+  /* soft fade so the screenshot blends into the window base at the bottom */
+  .browser-view::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:64px;pointer-events:none;z-index:2;
+    background:linear-gradient(to bottom,transparent,var(--surface));
+  }
 }
 
 /* ---------- sections ---------- */
@@ -437,11 +445,11 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
 <header class="hero">
   <div class="hero-glow"></div>
   <div class="wrap">
+    <div class="hero-badge reveal" data-testid="hero-badge">
+      <span class="dot"></span> Open source · MIT · Built for Claude Code users
+    </div>
     <div class="hero-grid">
       <div class="hero-copy">
-        <div class="hero-badge reveal" data-testid="hero-badge">
-          <span class="dot"></span> Open source · MIT · Built for Claude Code users
-        </div>
         <h1 class="reveal reveal-d1" data-testid="hero-title">Your Claude Code,<br>finally <span class="accent">visible</span>.</h1>
     <p class="hero-sub reveal reveal-d2" data-testid="hero-subtitle">
       Claude Code quietly fills your <strong>~/.claude</strong> folder with skills, MCP connectors, plugins, token spend and every conversation you have ever had. My Claude turns all of it into <strong>one private dashboard you can actually read</strong>. Runs only on your machine. Nothing is uploaded, ever.
@@ -483,10 +491,9 @@ footer{border-top:1px solid var(--line);padding:44px 0 52px}
           <div class="browser-view" id="hero-view">
             <img id="hero-shot" src="./assets/overview.png" alt="My Claude dashboard, auto-playing walkthrough" loading="eager">
             <span class="demo-ripple" id="hero-ripple"></span>
-            <span class="demo-cursor" id="hero-cursor"><svg viewBox="0 0 28 28" aria-hidden="true"><path fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round" d="M9.6 2.4c-.85 0-1.5.66-1.5 1.5v8.05L6.1 9.95c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.5 0 2.1l4.5 5.05c.9 1 2.2 1.6 3.6 1.6h3.05c2.2 0 3.95-1.78 3.95-3.95v-4.8c0-.83-.67-1.5-1.5-1.5-.3 0-.58.09-.82.24-.13-.68-.72-1.19-1.43-1.19-.38 0-.72.14-.98.38-.18-.6-.73-1.03-1.39-1.03-.31 0-.6.1-.83.26V3.9c0-.84-.66-1.5-1.5-1.5z"/></svg></span>
+            <span class="demo-cursor" id="hero-cursor"><svg viewBox="0 0 32 34" aria-hidden="true"><path fill="#fff" stroke="#141414" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" d="M11.5 3.2c-1.16 0-2.1.94-2.1 2.1v10.9L6.05 12.85c-.86-.86-2.26-.86-3.12 0-.86.86-.86 2.26 0 3.12l6.35 6.7c1.2 1.27 2.87 2 4.62 2h3.7c2.83 0 5.12-2.29 5.12-5.12v-6.1c0-1.1-.9-2-2-2-.42 0-.8.13-1.13.35-.1-1-.94-1.78-1.97-1.78-.5 0-.96.19-1.31.5-.2-.86-.97-1.5-1.89-1.5-.44 0-.85.15-1.17.4V5.3c0-1.16-.94-2.1-2.1-2.1z"/></svg></span>
           </div>
         </div>
-        <p class="hero-shot-caption" id="hero-caption">Auto-playing preview &middot; <button type="button" class="cap-link" id="open-demo-2" data-testid="hero-play-demo-link">try the live demo</button></p>
       </div>
     </div>
   </div>
@@ -762,7 +769,7 @@ wireCopy(document.getElementById('copy-cta'));
     document.body.style.overflow = '';
     if(lastFocus && lastFocus.focus) lastFocus.focus();
   }
-  ['open-demo','open-demo-2','hero-view'].forEach(id => {
+  ['open-demo','hero-view'].forEach(id => {
     const b = document.getElementById(id);
     if(b) b.addEventListener('click', open);
   });
@@ -781,37 +788,37 @@ wireCopy(document.getElementById('copy-cta'));
   if(!view || !img || !cur) return;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   if(reduce) return;
-  // targets sit exactly on the dashboard's left sidebar nav items (x,y are % of the view)
+  const HUB = {src:'./assets/overview.png', url:'127.0.0.1:8766/p/overview'};
+  // click targets are IN-PAGE elements on the Overview screenshot (coords in the 1280x820 image)
   const steps = [
-    {img:'./assets/overview.png', url:'127.0.0.1:8766/p/overview', x:7, y:18},
-    {img:'./assets/skill.png',    url:'127.0.0.1:8766/p/skills',   x:7, y:22.6},
-    {img:'./assets/mcp.png',      url:'127.0.0.1:8766/p/mcp',      x:8, y:27.1},
-    {img:'./assets/usage.png',    url:'127.0.0.1:8766/p/usage',    x:7, y:31.6},
-    {img:'./assets/history.png',  url:'127.0.0.1:8766/p/history',  x:7, y:36.1}
+    {ix:340,  iy:200, src:'./assets/skill.png',   url:'127.0.0.1:8766/p/skills'},   // the "Skills · 214" stat card
+    {ix:815,  iy:200, src:'./assets/usage.png',   url:'127.0.0.1:8766/p/usage'},    // the "Tokens · 48.2M" stat card
+    {ix:430,  iy:513, src:'./assets/history.png', url:'127.0.0.1:8766/p/history'},  // a Recent-conversations row
+    {ix:1078, iy:227, src:'./assets/mcp.png',     url:'127.0.0.1:8766/p/mcp'}       // the "4 MCP · 5 plugins" line
   ];
-  steps.forEach(s => { const p = new Image(); p.src = s.img; });
-  let i = 1, timers = [], running = false;
-  function clearAll(){ timers.forEach(clearTimeout); timers = []; }
+  [HUB.src].concat(steps.map(s => s.src)).forEach(src => { const p = new Image(); p.src = src; });
+  let i = 0, timers = [], running = false;
+  const clearAll = () => { timers.forEach(clearTimeout); timers = []; };
+  const scale = () => view.clientWidth / 1280;
+  function moveTo(ix, iy){ const s = scale(); cur.style.left = (ix*s)+'px'; cur.style.top = (iy*s)+'px'; }
+  function setView(src, url){ img.style.opacity='0'; timers.push(setTimeout(()=>{ img.src=src; if(urlEl) urlEl.textContent=url; img.style.opacity='1'; }, 180)); }
   function tick(){
-    const s = steps[i];
-    cur.style.left = s.x + '%'; cur.style.top = s.y + '%';   // glide to the item
+    const st = steps[i];
+    setView(HUB.src, HUB.url);                                  // return to Overview
     cur.classList.add('on');
-    timers.push(setTimeout(() => {                            // arrive -> click
+    timers.push(setTimeout(()=> moveTo(st.ix, st.iy), 300));    // glide to the in-page element
+    timers.push(setTimeout(()=>{                                // arrive -> click
       cur.classList.add('press');
-      rip.style.left = s.x + '%'; rip.style.top = s.y + '%';
+      const s = scale();
+      rip.style.left = (st.ix*s)+'px'; rip.style.top = (st.iy*s)+'px';
       rip.classList.remove('go'); void rip.offsetWidth; rip.classList.add('go');
-      timers.push(setTimeout(() => cur.classList.remove('press'), 150));
-      timers.push(setTimeout(() => {                          // swap the view
-        img.style.opacity = '0';
-        timers.push(setTimeout(() => {
-          img.src = s.img; if(urlEl) urlEl.textContent = s.url; img.style.opacity = '1';
-        }, 200));
-      }, 170));
-    }, 950));
+      timers.push(setTimeout(()=> cur.classList.remove('press'), 150));
+      timers.push(setTimeout(()=> setView(st.src, st.url), 190)); // open the section it links to
+    }, 1320));
     i = (i + 1) % steps.length;
-    timers.push(setTimeout(tick, 2900));
+    timers.push(setTimeout(tick, 4000));                        // hold the section, then next
   }
-  function start(){ if(running) return; running = true; cur.style.left='7%'; cur.style.top='18%'; tick(); }
+  function start(){ if(running) return; running = true; moveTo(steps[0].ix, steps[0].iy); tick(); }
   function stop(){ running = false; clearAll(); cur.classList.remove('on','press'); }
   view.addEventListener('mouseenter', stop);
   view.addEventListener('mouseleave', start);
