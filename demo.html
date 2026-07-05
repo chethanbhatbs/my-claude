@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Claude: live demo</title>
+<script>if(window.self!==window.top){document.documentElement.classList.add('embedded');}</script>
 <meta name="description" content="An interactive demo of My Claude, a private local dashboard for Claude Code. Sample data. The real thing runs on your machine.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +31,7 @@
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   .demobar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;background:var(--surface2);border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+  html.embedded .demobar{display:none}  /* inside the site's modal iframe: hide our bar (the modal has its own Close / Open-in-new-tab), and drop the "back" link that caused a page-in-modal */
   .demobar .home{display:inline-flex;align-items:center;gap:6px}
   .tbtn{cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
   .tbtn:hover{border-color:var(--accent)}
@@ -172,7 +174,7 @@
 <body class="dark">
 <div class="demobar">
   <div class="row"><span class="tag">Live demo</span><span class="msg">Interactive preview</span></div>
-  <div class="row"><code>curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash</code><button class="tbtn" id="themeBtn" onclick="toggleTheme()">Light</button><a class="home" href="./">← back</a></div>
+  <div class="row"><code>curl -fsSL https://my-claude.pages.dev/install.sh | bash</code><button class="tbtn" id="themeBtn" onclick="toggleTheme()">Light</button><a class="home" href="./">← back</a></div>
 </div>
 <div class="dnote" id="dnote">
   <span><b>Sample data.</b> This is a preview with fictional data. The real thing runs on your machine and reads your own ~/.claude.</span>

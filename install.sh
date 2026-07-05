@@ -4,7 +4,7 @@
 # Everything runs on your machine. Nothing is uploaded automatically.
 set -e
 
-BASE="${MY_CLAUDE_BASE:-https://chethanbhatbs.github.io/my-claude}"
+BASE="${MY_CLAUDE_BASE:-https://my-claude.pages.dev}"
 DIR="$HOME/.my-claude"
 PORT="${1:-8766}"
 
@@ -23,6 +23,6 @@ mv "$TMP/my-claude-dashboard" "$DIR"
 rm -rf "$TMP"
 chmod +x "$DIR/run.sh"
 
-say "Setting up (one-time, ~20s) and launching on http://127.0.0.1:$PORT …"
-say "It reads ~/.claude on this machine only. Ctrl+C to stop."
+say "Installing and starting it up…"
+say "It reads ~/.claude on this machine only and runs on localhost. Ctrl+C to stop."
 exec "$DIR/run.sh" "$PORT"

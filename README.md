@@ -4,14 +4,14 @@ A private, **local** dashboard for everything Claude Code keeps on your machine 
 connectors, plugins, token usage and cost, and your full conversation history - in one place you can
 actually read.
 
-**Website:** https://chethanbhatbs.github.io/my-claude/ · **Live demo:** https://chethanbhatbs.github.io/my-claude/demo.html
+**Website:** https://my-claude.pages.dev/ · **Live demo:** https://my-claude.pages.dev/demo.html
 
 ![My Claude dashboard](assets/overview.png)
 
 ## Install (one command)
 
 ```bash
-curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh | bash
+curl -fsSL https://my-claude.pages.dev/install.sh | bash
 ```
 
 Paste that into your terminal. It downloads the app, sets up an isolated Python environment
@@ -48,12 +48,12 @@ copy any code block, and switch between light and dark themes.
 
 ## Try it first
 
-Open the [live demo](https://chethanbhatbs.github.io/my-claude/demo.html) - the real UI with sample
+Open the [live demo](https://my-claude.pages.dev/demo.html) - the real UI with sample
 data, nothing from your machine.
 
 ## Prefer to install manually?
 
-Download [`my-claude-dashboard.zip`](https://chethanbhatbs.github.io/my-claude/my-claude-dashboard.zip),
+Download [`my-claude-dashboard.zip`](https://my-claude.pages.dev/my-claude-dashboard.zip),
 unzip it, and run `./run.sh`.
 
 ## License
