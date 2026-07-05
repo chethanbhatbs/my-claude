@@ -23,7 +23,7 @@ if that one's busy.
 > **"This site can't be reached"**, the local server is just still starting - wait a few seconds and
 > refresh, and it will load.
 
-**Needs:** Python 3.9+ on macOS or Linux. Inspect the script first:
+**Needs:** Python 3.9+ on macOS. Inspect the script first:
 [`install.sh`](https://github.com/chethanbhatbs/my-claude/blob/main/install.sh).
 
 ## Your data never leaves your machine
