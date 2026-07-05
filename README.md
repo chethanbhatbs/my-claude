@@ -18,14 +18,19 @@ Paste that into your terminal. It downloads the app, sets up an isolated Python 
 (one-time, ~20 seconds), and opens the dashboard at `http://127.0.0.1:8766` - or the next free port
 if that one's busy.
 
+> **First launch can take a moment.** The browser opens once the server is ready, but the very first
+> run builds a Python environment and indexes your `~/.claude` folder. If your browser briefly shows
+> **"This site can't be reached"**, the local server is just still starting - wait a few seconds and
+> refresh, and it will load.
+
 **Needs:** Python 3.9+ on macOS or Linux. Inspect the script first:
 [`install.sh`](https://github.com/chethanbhatbs/my-claude/blob/main/install.sh).
 
 ## Your data never leaves your machine
 
-It binds to `127.0.0.1` only, makes **no external calls**, and reads the `~/.claude` folder on your
-own computer. Nothing is uploaded. Secrets in MCP configs are auto-redacted before they're shown.
-You share the tool, not your data.
+It binds to `127.0.0.1` only, runs entirely on your machine, and makes **no calls on its own** - no
+telemetry, no cloud. The only data that ever leaves is what you explicitly push or share to your own
+GitHub. Secrets in MCP configs are auto-redacted before they're shown. You share the tool, not your data.
 
 ## What you get
 
