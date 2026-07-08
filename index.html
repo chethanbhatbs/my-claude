@@ -137,10 +137,17 @@ h1 .accent{color:var(--accent)}
 @media(min-width:1000px){.dash{margin-top:78px;margin-left:16%;width:84%}}
 .dash::after{content:"";position:absolute;inset:0;background:rgba(20,18,14,0);transition:background .2s}
 .dash:hover::after{background:rgba(20,18,14,.05)}
-.dash img{width:100%;display:block}
-.dash .play{position:absolute;top:calc(50% + 20px);left:50%;transform:translate(-50%,-50%);z-index:3;display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.96);color:var(--ink);font-weight:600;font-size:13.5px;box-shadow:0 14px 34px -8px rgba(0,0,0,.5);transition:transform .2s;pointer-events:none}
-.dash:hover .play{transform:translate(-50%,-50%) scale(1.05)}
-.dash .play svg{width:14px;height:14px}
+.dash-view{position:relative;overflow:hidden}
+.dash-view img{width:100%;display:block;transition:opacity .35s ease}
+/* auto-playing cursor walkthrough (the "video") */
+.demo-cursor{position:absolute;top:0;left:0;width:34px;height:36px;z-index:6;pointer-events:none;transform:translate(-41%,-9%);opacity:0;transform-origin:41% 9%;transition:left .85s cubic-bezier(.4,0,.2,1),top .85s cubic-bezier(.4,0,.2,1),transform .12s ease;filter:drop-shadow(0 3px 7px rgba(0,0,0,.75))}
+.demo-cursor.on{opacity:1}
+.demo-cursor.press{transform:translate(-41%,-9%) scale(.82)}
+.demo-cursor svg{width:100%;height:100%;display:block}
+.demo-ripple{position:absolute;z-index:5;width:32px;height:32px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);opacity:0;background:radial-gradient(circle,rgba(232,130,90,.5) 0%,rgba(232,130,90,0) 68%)}
+.demo-ripple.go{animation:demoTap .5s cubic-bezier(.33,0,.2,1)}
+@keyframes demoTap{0%{transform:translate(-50%,-50%) scale(.35);opacity:.85}100%{transform:translate(-50%,-50%) scale(1.85);opacity:0}}
+@media(prefers-reduced-motion:reduce){.demo-cursor,.demo-ripple{display:none!important}}
 /* transform marker */
 .tmark{display:none}
 @media(min-width:1000px){
@@ -302,9 +309,12 @@ history.jsonl   settings.json
         </div>
 
         <div class="win dash" id="open-demo-shot" data-testid="hero-window" role="button" tabindex="0" aria-label="Open the interactive demo">
-          <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766 · my claude</div></div>
-          <div class="play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg> Open interactive demo</div>
-          <img src="./assets/overview.png" alt="My Claude dashboard overview: skills, conversations, tokens, spend and disk usage" loading="eager">
+          <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url" id="hero-url">127.0.0.1:8766/p/overview</div></div>
+          <div class="dash-view" id="hero-view">
+            <img id="hero-shot" src="./assets/overview.png" alt="My Claude dashboard, auto-playing walkthrough" loading="eager">
+            <span class="demo-ripple" id="hero-ripple"></span>
+            <span class="demo-cursor" id="hero-cursor"><svg viewBox="0 0 32 34" aria-hidden="true"><path fill="#fff" stroke="#141414" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" d="M11.5 3.2c-1.16 0-2.1.94-2.1 2.1v10.9L6.05 12.85c-.86-.86-2.26-.86-3.12 0-.86.86-.86 2.26 0 3.12l6.35 6.7c1.2 1.27 2.87 2 4.62 2h3.7c2.83 0 5.12-2.29 5.12-5.12v-6.1c0-1.1-.9-2-2-2-.42 0-.8.13-1.13.35-.1-1-.94-1.78-1.97-1.78-.5 0-.96.19-1.31.5-.2-.86-.97-1.5-1.89-1.5-.44 0-.85.15-1.17.4V5.3c0-1.16-.94-2.1-2.1-2.1z"/></svg></span>
+          </div>
         </div>
 
         <div class="tmark-m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg> my-claude reads it all</div>
@@ -523,6 +533,52 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach(en => { if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
 }, {threshold:.1, rootMargin:'0px 0px -40px 0px'});
 document.querySelectorAll('.reveal').forEach((el,i) => { el.style.transitionDelay = Math.min(i*30,150)+'ms'; io.observe(el); });
+
+/* hero: auto-playing cursor walkthrough (video-like) navigating dashboard paths, pause on hover */
+(function(){
+  const view = document.getElementById('hero-view');
+  const img = document.getElementById('hero-shot');
+  const cur = document.getElementById('hero-cursor');
+  const rip = document.getElementById('hero-ripple');
+  const urlEl = document.getElementById('hero-url');
+  if(!view || !img || !cur) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce) return;
+  const HUB = {src:'./assets/overview.png', url:'127.0.0.1:8766/p/overview'};
+  const steps = [
+    {ix:340,  iy:200, src:'./assets/skill.png',   url:'127.0.0.1:8766/p/skills'},
+    {ix:815,  iy:200, src:'./assets/usage.png',   url:'127.0.0.1:8766/p/usage'},
+    {ix:430,  iy:513, src:'./assets/history.png', url:'127.0.0.1:8766/p/history'},
+    {ix:1078, iy:227, src:'./assets/mcp.png',     url:'127.0.0.1:8766/p/mcp-plugins'}
+  ];
+  [HUB.src].concat(steps.map(s => s.src)).forEach(src => { const p = new Image(); p.src = src; });
+  let i = 0, timers = [], running = false;
+  const clearAll = () => { timers.forEach(clearTimeout); timers = []; };
+  const scale = () => view.clientWidth / 1280;
+  function moveTo(ix, iy){ const s = scale(); cur.style.left = (ix*s)+'px'; cur.style.top = (iy*s)+'px'; }
+  function setView(src, url){ img.style.opacity='0'; timers.push(setTimeout(()=>{ img.src=src; if(urlEl) urlEl.textContent=url; img.style.opacity='1'; }, 180)); }
+  function tick(){
+    const st = steps[i];
+    setView(HUB.src, HUB.url);
+    cur.classList.add('on');
+    timers.push(setTimeout(()=> moveTo(st.ix, st.iy), 300));
+    timers.push(setTimeout(()=>{
+      cur.classList.add('press');
+      const s = scale();
+      rip.style.left = (st.ix*s)+'px'; rip.style.top = (st.iy*s)+'px';
+      rip.classList.remove('go'); void rip.offsetWidth; rip.classList.add('go');
+      timers.push(setTimeout(()=> cur.classList.remove('press'), 150));
+      timers.push(setTimeout(()=> setView(st.src, st.url), 190));
+    }, 1320));
+    i = (i + 1) % steps.length;
+    timers.push(setTimeout(tick, 4000));
+  }
+  function start(){ if(running) return; running = true; moveTo(steps[0].ix, steps[0].iy); tick(); }
+  function stop(){ running = false; clearAll(); cur.classList.remove('on','press'); }
+  view.addEventListener('mouseenter', stop);
+  view.addEventListener('mouseleave', start);
+  start();
+})();
 
 /* live GitHub star count (only shown at 10+) */
 fetch('https://api.github.com/repos/chethanbhatbs/my-claude')
