@@ -23,225 +23,187 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#FAFAF7;
+  --bg:#FAF9F6;
   --bg-2:#FFFFFF;
-  --bg-sunk:#F2F1EC;
-  --ink:#181613;
-  --ink-2:#565049;
-  --ink-3:#918A80;
+  --bg-sunk:#F1EFE9;
+  --ink:#17150F;
+  --ink-2:#544F45;
+  --ink-3:#948C7E;
   --accent:#C25A2E;
   --accent-hover:#A94B23;
-  --accent-soft:#FBEDE5;
+  --accent-soft:#F8E9DF;
   --brand:#E8825A;
-  --line:rgba(24,22,19,.10);
-  --line-2:rgba(24,22,19,.16);
-  --term:#141210;
+  --line:rgba(23,21,15,.10);
+  --line-2:rgba(23,21,15,.16);
+  --term:#16130F;
+  --term-2:#1E1A15;
   --font-display:'Cabinet Grotesk','IBM Plex Sans',sans-serif;
   --font-body:'IBM Plex Sans',sans-serif;
   --font-mono:'JetBrains Mono',monospace;
-  --shadow-lg:0 40px 80px -24px rgba(24,22,19,.30),0 12px 24px -12px rgba(24,22,19,.18);
-  --shadow-sm:0 1px 2px rgba(24,22,19,.06),0 8px 24px -16px rgba(24,22,19,.20);
+  --shadow-lg:0 40px 80px -28px rgba(23,21,15,.34),0 14px 30px -14px rgba(23,21,15,.18);
+  --shadow-md:0 20px 48px -20px rgba(23,21,15,.26);
+  --shadow-sm:0 1px 2px rgba(23,21,15,.05),0 8px 24px -18px rgba(23,21,15,.22);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;overflow-x:clip}
 body{
-  background:var(--bg);
-  color:var(--ink-2);
-  font-family:var(--font-body);
-  font-size:16px;line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
+  background:var(--bg);color:var(--ink-2);
+  font-family:var(--font-body);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
 }
 ::selection{background:var(--accent);color:#fff}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 .wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 .mono{font-family:var(--font-mono)}
-.kicker{
-  font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--accent);
+.kicker{font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+
+/* faint dotted paper texture */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(23,21,15,.045) 1px,transparent 1px);
+  background-size:22px 22px;
+  mask-image:radial-gradient(ellipse 100% 70% at 50% 0%,black,transparent 72%);
+  -webkit-mask-image:radial-gradient(ellipse 100% 70% at 50% 0%,black,transparent 72%);
 }
 
 /* ---------- nav ---------- */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:50;
-  background:rgba(250,250,247,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--line);
-}
+nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(250,249,246,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .nav-inner{max-width:1120px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between}
 .logo{display:flex;align-items:center;gap:10px;color:var(--ink);font-family:var(--font-display);font-weight:700;font-size:17px}
-.logo-mark{
-  width:28px;height:28px;border-radius:8px;background:var(--brand);color:#1a1a1a;
-  display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:15px;
-}
+.logo-mark{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:15px}
 .logo-path{font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-left:2px;display:none}
 @media(min-width:640px){.logo-path{display:inline}}
 .nav-links{display:flex;align-items:center;gap:6px}
-.nav-link{
-  padding:8px 12px;border-radius:8px;font-size:14px;color:var(--ink-2);
-  transition:color .18s,background-color .18s;display:inline-flex;align-items:center;gap:7px;
-}
-.nav-link:hover{color:var(--ink);background:rgba(24,22,19,.05)}
+.nav-link{padding:8px 12px;border-radius:8px;font-size:14px;color:var(--ink-2);transition:color .18s,background-color .18s;display:inline-flex;align-items:center;gap:7px}
+.nav-link:hover{color:var(--ink);background:rgba(23,21,15,.05)}
 .nav-link svg{width:16px;height:16px}
 .star-count{font-family:var(--font-mono);font-size:12px;color:var(--ink-3)}
-.nav-cta{
-  padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;
-  background:var(--ink);color:var(--bg);transition:background-color .18s,transform .18s;
-}
+.nav-cta{padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;background:var(--ink);color:var(--bg);transition:background-color .18s,transform .18s}
 .nav-cta:hover{background:#000;transform:translateY(-1px)}
 @media(max-width:560px){.nav-link.hide-sm{display:none}}
 
 /* ---------- hero ---------- */
-.hero{padding:116px 0 40px;position:relative}
-@media(min-width:768px){.hero{padding:132px 0 56px}}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:44px;align-items:center}
-@media(min-width:980px){.hero-grid{grid-template-columns:minmax(0,1.02fr) minmax(0,1.18fr);gap:52px}}
+.hero{padding:112px 0 44px;position:relative}
+@media(min-width:768px){.hero{padding:128px 0 40px}}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:52px;align-items:center}
+@media(min-width:1000px){.hero-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1.25fr);gap:56px}}
 .hero-copy{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0}
-@media(min-width:980px){.hero-copy{align-items:flex-start;text-align:left}}
-.hero-visual{width:100%;min-width:0}
-.hero-visual .window{margin:0;max-width:none;width:100%}
-.badge{
-  display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;
-  padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2);
-  font-family:var(--font-mono);font-size:12px;color:var(--ink-2);box-shadow:var(--shadow-sm);
-}
+@media(min-width:1000px){.hero-copy{align-items:flex-start;text-align:left}}
+.badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2);font-family:var(--font-mono);font-size:12px;color:var(--ink-2);box-shadow:var(--shadow-sm)}
 .badge .dot{width:7px;height:7px;border-radius:50%;background:#4FA974;box-shadow:0 0 0 3px rgba(79,169,116,.18)}
-h1{
-  font-family:var(--font-display);font-weight:800;letter-spacing:-.025em;line-height:1.03;
-  color:var(--ink);font-size:clamp(2.3rem,4.6vw,3.8rem);margin:0;max-width:15ch;
-}
+h1{font-family:var(--font-display);font-weight:800;letter-spacing:-.025em;line-height:1.02;color:var(--ink);font-size:clamp(2.35rem,4.6vw,3.7rem);margin:0;max-width:13ch}
 h1 .accent{color:var(--accent)}
-.subhead{
-  margin:22px 0 0;max-width:520px;font-size:clamp(1.02rem,1.6vw,1.15rem);
-  color:var(--ink-2);line-height:1.6;
-}
+.subhead{margin:22px 0 0;max-width:500px;font-size:clamp(1.02rem,1.5vw,1.14rem);color:var(--ink-2);line-height:1.62}
 .subhead b{color:var(--ink);font-weight:600}
-.subhead code{font-family:var(--font-mono);font-size:.92em;background:var(--bg-sunk);padding:2px 6px;border-radius:5px;color:var(--ink)}
-
-/* install command */
+.subhead code{font-family:var(--font-mono);font-size:.9em;background:var(--bg-sunk);padding:2px 6px;border-radius:5px;color:var(--ink)}
 .cmd-row{display:flex;flex-direction:column;align-items:center;gap:14px;margin:30px 0 0;width:100%}
-@media(min-width:980px){.cmd-row{align-items:flex-start}}
-.terminal{
-  display:flex;align-items:center;gap:14px;max-width:100%;min-width:0;
-  background:var(--term);border-radius:12px;padding:14px 16px;
-  box-shadow:var(--shadow-sm);overflow-x:auto;
-}
+@media(min-width:1000px){.cmd-row{align-items:flex-start}}
+.terminal{display:flex;align-items:center;gap:14px;max-width:100%;min-width:0;background:var(--term);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm);overflow-x:auto}
 .terminal code{font-family:var(--font-mono);font-size:14px;color:#EDEBE7;white-space:nowrap}
 .terminal .prompt{color:#6f6a63}
 .terminal .flag{color:#E8A87C}
 .terminal .url{color:#9FC3A6}
-.copy-btn{
-  flex:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;
-  background:rgba(255,255,255,.08);color:#EDEBE7;border:none;border-radius:8px;
-  padding:8px 12px;font-family:var(--font-mono);font-size:12px;transition:background-color .18s;
-}
+.copy-btn{flex:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,.08);color:#EDEBE7;border:none;border-radius:8px;padding:8px 12px;font-family:var(--font-mono);font-size:12px;transition:background-color .18s}
 .copy-btn:hover{background:rgba(255,255,255,.16)}
 .copy-btn.done{background:var(--accent);color:#fff}
 .copy-btn svg{width:14px;height:14px}
-.cmd-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
-.btn-ghost{
-  display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--ink);
-  padding:10px 18px;border-radius:999px;border:1px solid var(--line-2);background:var(--bg-2);
-  transition:border-color .18s,transform .18s,box-shadow .18s;cursor:pointer;
-}
+.cmd-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--ink);padding:10px 18px;border-radius:999px;border:1px solid var(--line-2);background:var(--bg-2);transition:border-color .18s,transform .18s,box-shadow .18s;cursor:pointer}
 .btn-ghost:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .btn-ghost svg{width:16px;height:16px}
 .fineprint{margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--ink-3);letter-spacing:.02em}
-.fineprint span{white-space:nowrap}
 
-/* framed product shot */
-.window{
-  position:relative;margin:56px auto 0;max-width:960px;border-radius:14px;overflow:hidden;
-  background:var(--term);box-shadow:var(--shadow-lg);border:1px solid rgba(24,22,19,.14);cursor:pointer;
-}
-.window::after{
-  content:"";position:absolute;inset:0;background:rgba(20,18,16,0);transition:background .2s;pointer-events:none;
-}
-.window:hover::after{background:rgba(20,18,16,.06)}
-.win-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#1c1a17;border-bottom:1px solid rgba(255,255,255,.06)}
+/* hero transformation visual: raw ~/.claude  ->  dashboard */
+.hero-visual{position:relative;min-width:0}
+.transform{position:relative;padding:34px 0 0 0}
+@media(min-width:1000px){.transform{padding:44px 0 20px 34px}}
+.win{border-radius:13px;overflow:hidden;background:var(--term);border:1px solid rgba(23,21,15,.16)}
+.win-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--term-2);border-bottom:1px solid rgba(255,255,255,.06)}
 .win-dots{display:flex;gap:7px}
 .win-dots i{width:11px;height:11px;border-radius:50%;display:block}
-.win-dots i:nth-child(1){background:#ED6A5E}
-.win-dots i:nth-child(2){background:#F4BF4F}
-.win-dots i:nth-child(3){background:#62C554}
-.win-url{
-  flex:1;margin-left:6px;background:#0f0d0b;border-radius:7px;padding:6px 12px;
-  font-family:var(--font-mono);font-size:12px;color:#8a857d;text-align:center;
+.win-dots i:nth-child(1){background:#ED6A5E}.win-dots i:nth-child(2){background:#F4BF4F}.win-dots i:nth-child(3){background:#62C554}
+.win-url{flex:1;background:#0f0d0a;border-radius:7px;padding:5px 12px;font-family:var(--font-mono);font-size:11.5px;color:#867f74;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the "before" raw card */
+.raw{position:relative;z-index:1;width:100%;box-shadow:var(--shadow-md)}
+@media(min-width:1000px){.raw{position:absolute;top:0;left:0;width:60%;transform:rotate(-2.4deg)}}
+.raw .win-bar .win-url{text-align:left;color:#6f6a63}
+.raw-body{padding:16px 18px 18px;font-family:var(--font-mono);font-size:12.5px;line-height:1.85;color:#8b8478;white-space:pre;overflow:hidden}
+.raw-body .dir{color:#C9A07A}
+.raw-body .fade{color:#5c574e}
+.raw-foot{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);color:#6b655c;font-size:11.5px}
+/* the "after" dashboard card */
+.dash{position:relative;z-index:2;width:100%;box-shadow:var(--shadow-lg);cursor:pointer}
+@media(min-width:1000px){.dash{margin-top:78px;margin-left:16%;width:84%}}
+.dash::after{content:"";position:absolute;inset:0;background:rgba(20,18,14,0);transition:background .2s}
+.dash:hover::after{background:rgba(20,18,14,.05)}
+.dash img{width:100%;display:block}
+.dash .play{position:absolute;top:calc(50% + 20px);left:50%;transform:translate(-50%,-50%);z-index:3;display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.96);color:var(--ink);font-weight:600;font-size:13.5px;box-shadow:0 14px 34px -8px rgba(0,0,0,.5);transition:transform .2s;pointer-events:none}
+.dash:hover .play{transform:translate(-50%,-50%) scale(1.05)}
+.dash .play svg{width:14px;height:14px}
+/* transform marker */
+.tmark{display:none}
+@media(min-width:1000px){
+  .tmark{display:inline-flex;align-items:center;gap:8px;position:absolute;z-index:4;left:52%;top:96px;
+    padding:8px 15px;border-radius:999px;background:var(--accent);color:#fff;font-family:var(--font-mono);
+    font-size:12px;font-weight:500;box-shadow:0 10px 26px -8px rgba(194,90,46,.6);transform:rotate(-2deg)}
+  .tmark svg{width:15px;height:15px}
 }
-.win-play{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
-  display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:999px;
-  background:rgba(255,255,255,.95);color:var(--ink);font-weight:600;font-size:14px;
-  box-shadow:0 12px 32px -8px rgba(0,0,0,.5);transition:transform .2s;pointer-events:none;
-}
-.window:hover .win-play{transform:translate(-50%,-50%) scale(1.04)}
-.win-play svg{width:15px;height:15px}
-.window img{width:100%;display:block}
+.tmark-m{display:flex;align-items:center;justify-content:center;gap:9px;margin:14px 0;font-family:var(--font-mono);font-size:12.5px;color:var(--accent);font-weight:500}
+.tmark-m svg{width:16px;height:16px;transform:rotate(90deg)}
+@media(min-width:1000px){.tmark-m{display:none}}
 
 /* ---------- section shells ---------- */
-section{position:relative}
-.sec{padding:80px 0}
-@media(min-width:768px){.sec{padding:104px 0}}
-.sec-head{max-width:620px;margin:0 auto 52px;text-align:center}
-.sec-head h2{
-  font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:1.1;
-  color:var(--ink);font-size:clamp(1.9rem,4vw,2.7rem);margin:14px 0 0;
-}
+.sec{padding:76px 0;position:relative}
+@media(min-width:768px){.sec{padding:96px 0}}
+.sec-head{max-width:640px;margin:0 auto 8px;text-align:center}
+.sec-head h2{font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:1.08;color:var(--ink);font-size:clamp(1.9rem,4vw,2.7rem);margin:14px 0 0}
 .sec-head p{margin-top:16px;font-size:1.05rem;color:var(--ink-2)}
 
-/* features grid */
-.feat-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-@media(min-width:640px){.feat-grid{grid-template-columns:1fr 1fr}}
-@media(min-width:960px){.feat-grid{grid-template-columns:1fr 1fr 1fr}}
-.feat{background:var(--bg-2);padding:30px 28px;transition:background-color .2s}
-.feat:hover{background:#fff}
-.feat-ico{
-  width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
-  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+/* ---------- zig-zag showcase ---------- */
+.zz{border-top:1px solid var(--line)}
+.zz-row{display:grid;grid-template-columns:1fr;gap:34px;align-items:center;padding:64px 0}
+.zz-row + .zz-row{border-top:1px solid var(--line)}
+@media(min-width:900px){
+  .zz-row{grid-template-columns:1fr 1fr;gap:64px;padding:84px 0}
+  .zz-row.rev .zz-media{order:2}
+  .zz-row.rev .zz-body{order:1}
 }
-.feat-ico svg{width:20px;height:20px}
-.feat h3{font-family:var(--font-display);font-weight:600;font-size:1.12rem;color:var(--ink);margin-bottom:8px}
-.feat p{font-size:.95rem;color:var(--ink-2);line-height:1.55}
+.zz-media{min-width:0}
+.zz-media .win{box-shadow:var(--shadow-lg);border:1px solid rgba(23,21,15,.14)}
+.zz-media img{width:100%;display:block}
+.zz-body{min-width:0}
+.zz-num{font-family:var(--font-mono);font-size:13px;color:var(--accent);letter-spacing:.14em}
+.zz-body h3{font-family:var(--font-display);font-weight:700;font-size:clamp(1.5rem,2.6vw,2rem);letter-spacing:-.02em;color:var(--ink);margin:12px 0 12px}
+.zz-body p{font-size:1.02rem;color:var(--ink-2);line-height:1.62;max-width:46ch}
+.zz-list{list-style:none;margin:22px 0 0;display:flex;flex-direction:column;gap:12px}
+.zz-list li{display:flex;align-items:flex-start;gap:11px;font-size:.98rem;color:var(--ink-2)}
+.zz-list svg{width:19px;height:19px;flex:none;color:var(--accent);margin-top:1px}
+.zz-list b{color:var(--ink);font-weight:600}
 
-/* showcase */
-.showcase{background:var(--bg-sunk);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 auto 32px;max-width:100%}
-.tab{
-  padding:9px 16px;border-radius:999px;font-family:var(--font-mono);font-size:13px;color:var(--ink-2);
-  background:transparent;border:1px solid transparent;cursor:pointer;transition:all .18s;
-}
-.tab:hover{color:var(--ink);background:rgba(24,22,19,.05)}
-.tab.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.shot-frame{
-  max-width:940px;margin:0 auto;border-radius:14px;overflow:hidden;background:var(--term);
-  box-shadow:var(--shadow-lg);border:1px solid rgba(24,22,19,.14);
-}
-.shot-frame .win-bar{cursor:default}
-.shot-cap{margin:22px auto 0;max-width:600px;text-align:center;font-size:.98rem;color:var(--ink-2);min-height:2.6em}
-.shot-cap b{color:var(--ink);font-weight:600}
-
-/* steps */
+/* ---------- how it works ---------- */
 .steps{display:grid;grid-template-columns:1fr;gap:20px}
 @media(min-width:820px){.steps{grid-template-columns:repeat(3,1fr)}}
 .step{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;padding:28px 26px;box-shadow:var(--shadow-sm)}
 .step-n{font-family:var(--font-mono);font-size:12px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}
 .step h3{font-family:var(--font-display);font-weight:600;font-size:1.15rem;color:var(--ink);margin:12px 0 8px}
 .step p{font-size:.95rem;color:var(--ink-2);line-height:1.55}
-.step-chip{
-  display:inline-block;margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2);
-  background:var(--bg-sunk);border:1px solid var(--line);border-radius:7px;padding:6px 10px;
-}
+.step-chip{display:inline-block;margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2);background:var(--bg-sunk);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
 
-/* CTA */
+/* ---------- privacy band ---------- */
+.band{background:var(--term);color:#d9d3c8;border-radius:20px;padding:44px 34px;text-align:center;box-shadow:var(--shadow-md)}
+.band .kicker{color:var(--brand)}
+.band h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,3.4vw,2.3rem);color:#F3EEE4;letter-spacing:-.02em;margin:12px 0 14px}
+.band p{max-width:560px;margin:0 auto;color:#b3ac9f}
+.band code{font-family:var(--font-mono);color:#E8A87C}
+
+/* ---------- CTA ---------- */
 .cta{text-align:center}
-.cta-card{
-  max-width:760px;margin:0 auto;background:var(--bg-2);border:1px solid var(--line);
-  border-radius:20px;padding:52px 32px;box-shadow:var(--shadow-sm);
-}
+.cta-card{max-width:760px;margin:0 auto;background:var(--bg-2);border:1px solid var(--line);border-radius:20px;padding:52px 32px;box-shadow:var(--shadow-sm)}
 .cta-card h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4vw,2.5rem);color:var(--ink);letter-spacing:-.02em}
 .cta-card p{margin:14px auto 0;max-width:460px;color:var(--ink-2)}
 
-/* footer */
+/* ---------- footer ---------- */
 footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 .foot-inner{display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center}
 @media(min-width:720px){.foot-inner{flex-direction:row;justify-content:space-between;text-align:left}}
@@ -251,17 +213,11 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 .foot-link svg{width:15px;height:15px}
 .foot-meta{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);line-height:1.7}
 
-/* demo lightbox */
-.overlay{
-  position:fixed;inset:0;z-index:200;background:rgba(24,22,19,.55);backdrop-filter:blur(6px);
-  display:none;align-items:center;justify-content:center;padding:24px;
-}
+/* ---------- demo lightbox ---------- */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(23,21,15,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
 .overlay.open{display:flex}
-.modal{
-  width:100%;max-width:1200px;height:88vh;background:var(--term);border-radius:14px;overflow:hidden;
-  display:flex;flex-direction:column;box-shadow:0 40px 100px -20px rgba(0,0,0,.6);
-}
-.modal-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#1c1a17;border-bottom:1px solid rgba(255,255,255,.06)}
+.modal{width:100%;max-width:1200px;height:88vh;background:var(--term);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 40px 100px -20px rgba(0,0,0,.6)}
+.modal-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--term-2);border-bottom:1px solid rgba(255,255,255,.06)}
 .modal-bar .win-url{margin-left:0}
 .modal-actions{display:flex;align-items:center;gap:14px;flex:none;margin-left:14px}
 .modal-actions a{font-family:var(--font-mono);font-size:12px;color:#b7b1a8}
@@ -271,12 +227,9 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 .demo-frame{flex:1;width:100%;border:none;background:var(--term)}
 
 /* reveal */
-.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
 .reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){
-  .reveal{opacity:1;transform:none;transition:none}
-  html{scroll-behavior:auto}
-}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
 </style>
 <!-- Google Analytics (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJLBRJN8G9"></script>
@@ -292,11 +245,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 
 <nav>
   <div class="nav-inner">
-    <a class="logo" href="#top">
-      <span class="logo-mark">C</span>
-      My Claude
-      <span class="logo-path">~/.claude</span>
-    </a>
+    <a class="logo" href="#top"><span class="logo-mark">C</span> My Claude <span class="logo-path">~/.claude</span></a>
     <div class="nav-links">
       <a class="nav-link hide-sm" href="https://github.com/chethanbhatbs/my-claude" target="_blank" rel="noopener" data-testid="nav-github-link">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11 11 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5Z"/></svg>
@@ -313,154 +262,169 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 <header class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-    <div class="badge reveal"><span class="dot"></span> Open source · MIT · macOS</div>
-    <h1 class="reveal">See everything Claude&nbsp;Code <span class="accent">remembers</span></h1>
-    <p class="subhead reveal">
-      My Claude turns your <code>~/.claude</code> folder into one clean dashboard:
-      every conversation, your token spend, and the skills and MCP servers you
-      <b>actually use</b>. It runs entirely on your machine.
-    </p>
-
-    <div class="cmd-row reveal" id="install">
-      <div class="terminal" role="group" aria-label="Install command">
-        <code id="install-cmd"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code>
-        <button type="button" class="copy-btn" id="copy-hero" aria-label="Copy install command">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-          <span>Copy</span>
-        </button>
+      <div class="badge reveal"><span class="dot"></span> Open source · MIT · macOS</div>
+      <h1 class="reveal">Your <span class="accent">~/.claude</span> is a black box. Open it.</h1>
+      <p class="subhead reveal">
+        Claude Code writes everything to <code>~/.claude</code> as thousands of files you can't read.
+        My Claude turns that into <b>one clean dashboard</b>: every conversation, your token spend,
+        and the skills and MCP servers you actually use. All on your machine.
+      </p>
+      <div class="cmd-row reveal" id="install">
+        <div class="terminal" role="group" aria-label="Install command">
+          <code id="install-cmd"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code>
+          <button type="button" class="copy-btn" id="copy-hero" aria-label="Copy install command">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            <span>Copy</span>
+          </button>
+        </div>
+        <div class="cmd-actions">
+          <button type="button" class="btn-ghost" id="open-demo-hero" data-testid="hero-demo-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>
+            Try the live demo
+          </button>
+        </div>
+        <div class="fineprint">macOS &nbsp;·&nbsp; Requires Python 3.9+ &nbsp;·&nbsp; Local by default</div>
       </div>
-      <div class="cmd-actions">
-        <button type="button" class="btn-ghost" id="open-demo-hero" data-testid="hero-demo-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>
-          Try the live demo
-        </button>
-      </div>
-      <div class="fineprint">
-        <span>macOS</span> &nbsp;·&nbsp; <span>Requires Python 3.9+</span> &nbsp;·&nbsp; <span>Local by default. You decide what leaves.</span>
-      </div>
-    </div>
     </div>
 
     <div class="hero-visual reveal">
-      <div class="window" id="open-demo-shot" data-testid="hero-window" role="button" tabindex="0" aria-label="Open the interactive demo">
-        <div class="win-bar">
-          <div class="win-dots"><i></i><i></i><i></i></div>
-          <div class="win-url">127.0.0.1:8766/p/overview</div>
+      <div class="transform">
+        <span class="tmark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg> my-claude</span>
+
+        <div class="win raw" aria-hidden="true">
+          <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">~/.claude · zsh</div></div>
+          <div class="raw-body"><span class="prompt" style="color:#6f6a63">$</span> ls ~/.claude
+<span class="dir">projects/</span>   <span class="dir">todos/</span>   <span class="dir">statsig/</span>
+<span class="dir">shell-snapshots/</span>   <span class="dir">plugins/</span>
+history.jsonl   settings.json
+<span class="dir">ide/</span>   .credentials.json   <span class="fade">…</span>
+<span class="raw-foot">4,812 files · 1.1 GB of JSONL you can't read</span></div>
         </div>
-        <div class="win-play">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>
-          Open interactive demo
+
+        <div class="win dash" id="open-demo-shot" data-testid="hero-window" role="button" tabindex="0" aria-label="Open the interactive demo">
+          <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766 · my claude</div></div>
+          <div class="play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg> Open interactive demo</div>
+          <img src="./assets/overview.png" alt="My Claude dashboard overview: skills, conversations, tokens, spend and disk usage" loading="eager">
         </div>
-        <img src="./assets/overview.png" alt="My Claude dashboard overview: skills, conversations, tokens, spend and disk usage" loading="eager">
+
+        <div class="tmark-m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg> my-claude reads it all</div>
       </div>
     </div>
   </div>
 </header>
 
-<!-- what you get -->
-<section class="sec">
+<!-- zig-zag showcase -->
+<section class="zz">
   <div class="wrap">
-    <div class="sec-head reveal">
+    <div class="sec-head reveal" style="margin-bottom:40px">
       <div class="kicker">// what you get</div>
-      <h2>One place for everything Claude Code stores</h2>
-      <p>Six views built for developers. No account, no config, no cloud.</p>
+      <h2>Six views. Everything Claude Code stores.</h2>
+      <p>Real screenshots, not mockups. This is what opens at <span class="mono">127.0.0.1:8766</span>.</p>
     </div>
-    <div class="feat-grid reveal">
-      <div class="feat">
-        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
-        <h3>Full-text search</h3>
-        <p>Find any conversation you have ever had, searched across every transcript instantly.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></div>
-        <h3>Usage &amp; cost</h3>
-        <p>Token spend broken down by day, model, and project, with a running 30-day total.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
-        <h3>Skills, MCP &amp; plugins</h3>
-        <p>See what you actually use versus what you installed and forgot, sized on disk.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 3"/></svg></div>
-        <h3>History &amp; resume</h3>
-        <p>Browse past sessions and jump back into any one straight from the dashboard.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <h3>Stays on your machine</h3>
-        <p>Reads your local files and serves on loopback. Nothing leaves unless you push it yourself.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg></div>
-        <h3>One command</h3>
-        <p>Paste one line into your terminal. It installs and indexes in about twenty seconds.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- showcase -->
-<section class="sec showcase">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <div class="kicker">// the product</div>
-      <h2>Real screenshots, not mockups</h2>
-      <p>This is exactly what opens at <span class="mono">127.0.0.1:8766</span> after you install.</p>
-    </div>
-    <div class="tabs reveal" role="tablist">
-      <button class="tab active" data-shot="overview" role="tab">Overview</button>
-      <button class="tab" data-shot="usage" role="tab">Usage &amp; cost</button>
-      <button class="tab" data-shot="history" role="tab">History</button>
-      <button class="tab" data-shot="skill" role="tab">Skills</button>
-      <button class="tab" data-shot="mcp" role="tab">MCP &amp; Plugins</button>
-    </div>
-    <div class="shot-frame reveal">
-      <div class="win-bar">
-        <div class="win-dots"><i></i><i></i><i></i></div>
-        <div class="win-url" id="shot-url">127.0.0.1:8766/p/overview</div>
+    <div class="zz-row reveal">
+      <div class="zz-media"><div class="win"><div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766/p/overview</div></div><img src="./assets/overview.png" alt="Overview dashboard" loading="lazy"></div></div>
+      <div class="zz-body">
+        <div class="zz-num">01 / Overview</div>
+        <h3>The 10,000-foot view</h3>
+        <p>Skills, conversations, 30-day tokens, spend and disk, pulled straight from your local files the moment you open it.</p>
+        <ul class="zz-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Live KPIs across <b>skills, conversations and tokens</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>7-day <b>spend trend</b> and cache savings</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Busiest project and priciest day, spotted instantly</span></li>
+        </ul>
       </div>
-      <img id="shot-img" src="./assets/overview.png" alt="My Claude dashboard screenshot">
     </div>
-    <p class="shot-cap reveal" id="shot-cap"><b>Overview.</b> Skills, conversations, 30-day tokens, spend trend, busiest project and priciest day, all at a glance.</p>
+
+    <div class="zz-row rev reveal">
+      <div class="zz-media"><div class="win"><div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766/p/usage</div></div><img src="./assets/usage.png" alt="Usage and cost" loading="lazy"></div></div>
+      <div class="zz-body">
+        <div class="zz-num">02 / Usage &amp; cost</div>
+        <h3>Know exactly where your tokens go</h3>
+        <p>Every token and dollar, broken down the way you actually think about it, with the caching wins made visible.</p>
+        <ul class="zz-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Spend by <b>day, model and project</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>What <b>caching saved</b> you, in real numbers</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Projected monthly cost and custom date ranges</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="zz-row reveal">
+      <div class="zz-media"><div class="win"><div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766/p/history</div></div><img src="./assets/history.png" alt="History and search" loading="lazy"></div></div>
+      <div class="zz-body">
+        <div class="zz-num">03 / History</div>
+        <h3>Find any conversation, instantly</h3>
+        <p>Every session you have ever had, searchable in full text and ready to reopen, right down to what each one cost.</p>
+        <ul class="zz-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span><b>Full-text search</b> across every transcript</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Reopen and <b>resume</b> a session in one click</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Per-conversation message count and cost</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="zz-row rev reveal">
+      <div class="zz-media"><div class="win"><div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766/p/skills</div></div><img src="./assets/skill.png" alt="Skills" loading="lazy"></div></div>
+      <div class="zz-body">
+        <div class="zz-num">04 / Skills</div>
+        <h3>See what you actually use</h3>
+        <p>Every skill rendered readable, with the usage data that tells you which ones earn their place and which you forgot.</p>
+        <ul class="zz-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span><b>Usage counts and last-used</b> per skill</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>SKILL.md rendered like a doc, plus raw view</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Filter to the ones you <b>never touch</b></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="zz-row reveal">
+      <div class="zz-media"><div class="win"><div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">127.0.0.1:8766/p/mcp-plugins</div></div><img src="./assets/mcp.png" alt="MCP and plugins" loading="lazy"></div></div>
+      <div class="zz-body">
+        <div class="zz-num">05 / MCP &amp; Plugins</div>
+        <h3>Every connector in one list</h3>
+        <p>All your MCP servers and plugins in one place, including the per-project ones you set up months ago and forgot.</p>
+        <ul class="zz-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Global <b>and per-project</b> MCP servers, grouped</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Live <b>health check</b> on each connector</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg><span>Installed plugins alongside them</span></li>
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- how it works -->
 <section class="sec">
   <div class="wrap">
-    <div class="sec-head reveal">
+    <div class="sec-head reveal" style="margin-bottom:48px">
       <div class="kicker">// how it works</div>
       <h2>From terminal to dashboard in one step</h2>
     </div>
     <div class="steps reveal">
-      <div class="step">
-        <div class="step-n">Step 01</div>
-        <h3>Run one command</h3>
-        <p>Paste the install command into your terminal. It sets everything up for you, with no manual steps.</p>
-        <span class="step-chip">curl … install.sh | bash</span>
-      </div>
-      <div class="step">
-        <div class="step-n">Step 02</div>
-        <h3>It indexes locally</h3>
-        <p>My Claude reads your skills, MCP servers, plugins, usage logs and transcripts, all on your machine.</p>
-        <span class="step-chip">indexing ~/.claude …</span>
-      </div>
-      <div class="step">
-        <div class="step-n">Step 03</div>
-        <h3>The dashboard opens</h3>
-        <p>Your browser opens the dashboard once the server is ready, bound strictly to loopback. Only you can reach it.</p>
-        <span class="step-chip">127.0.0.1:8766</span>
-      </div>
+      <div class="step"><div class="step-n">Step 01</div><h3>Run one command</h3><p>Paste the install command into your terminal. It sets everything up for you, with no manual steps.</p><span class="step-chip">curl … install.sh | bash</span></div>
+      <div class="step"><div class="step-n">Step 02</div><h3>It indexes locally</h3><p>My Claude reads your skills, MCP servers, plugins, usage logs and transcripts, all on your machine.</p><span class="step-chip">indexing ~/.claude …</span></div>
+      <div class="step"><div class="step-n">Step 03</div><h3>The dashboard opens</h3><p>Your browser opens the dashboard once the server is ready, bound strictly to loopback. Only you can reach it.</p><span class="step-chip">127.0.0.1:8766</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- privacy band -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="band reveal">
+      <div class="kicker">// private by design</div>
+      <h2>Local by default. You decide what leaves.</h2>
+      <p>My Claude reads your <code>~/.claude</code> and serves the dashboard on <code>127.0.0.1</code>. Nothing is uploaded automatically. The only thing that ever leaves is a skill you explicitly choose to push to your own GitHub.</p>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="sec cta">
+<section class="sec cta" style="padding-top:0">
   <div class="wrap">
     <div class="cta-card reveal">
-      <h2>See your Claude Code, finally</h2>
+      <h2>Open the black box</h2>
       <p>Free and open source. One command, about twenty seconds, entirely on your machine.</p>
       <div class="cmd-row" style="margin-top:28px">
         <div class="terminal" role="group" aria-label="Install command">
@@ -487,10 +451,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 
 <footer>
   <div class="wrap foot-inner">
-    <div class="foot-meta">
-      MIT licensed · macOS · Built for Claude Code users<br>
-      Local by default. You decide what leaves your machine.
-    </div>
+    <div class="foot-meta">MIT licensed · macOS · Built for Claude Code users<br>Local by default. You decide what leaves your machine.</div>
     <div class="foot-links">
       <a class="foot-link" href="https://github.com/chethanbhatbs/my-claude" target="_blank" rel="noopener" data-testid="footer-github-link">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11 11 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5Z"/></svg>
@@ -523,7 +484,6 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 <script>
 const CMD = 'curl -fsSL https://my-claude.pages.dev/install.sh | bash';
 
-/* copy buttons */
 function wireCopy(id){
   const btn = document.getElementById(id);
   if(!btn) return;
@@ -539,39 +499,6 @@ function wireCopy(id){
 wireCopy('copy-hero');
 wireCopy('copy-cta');
 
-/* showcase tabs */
-const SHOTS = {
-  overview:{img:'./assets/overview.png', url:'127.0.0.1:8766/p/overview', cap:'<b>Overview.</b> Skills, conversations, 30-day tokens, spend trend, busiest project and priciest day, all at a glance.'},
-  usage:{img:'./assets/usage.png', url:'127.0.0.1:8766/p/usage', cap:'<b>Usage &amp; cost.</b> Token spend by day, model and project, plus what caching actually saved you.'},
-  history:{img:'./assets/history.png', url:'127.0.0.1:8766/p/history', cap:'<b>History.</b> Every conversation, full-text searchable, ready to reopen and resume.'},
-  skill:{img:'./assets/skill.png', url:'127.0.0.1:8766/p/skills', cap:'<b>Skills.</b> What each skill does, when you last used it, and how much space it takes.'},
-  mcp:{img:'./assets/mcp.png', url:'127.0.0.1:8766/p/mcp-plugins', cap:'<b>MCP &amp; Plugins.</b> Every connector and plugin you have wired up, in one list.'}
-};
-const shotImg = document.getElementById('shot-img');
-const shotUrl = document.getElementById('shot-url');
-const shotCap = document.getElementById('shot-cap');
-const tabs = Array.from(document.querySelectorAll('.tab'));
-Object.values(SHOTS).forEach(s => { const im = new Image(); im.src = s.img; }); // preload for smooth rotation
-function showShot(tab){
-  const s = SHOTS[tab.dataset.shot];
-  if(!s) return;
-  tabs.forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
-  shotImg.src = s.img;
-  shotUrl.textContent = s.url;
-  shotCap.innerHTML = s.cap;
-}
-let rotate = null;
-if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  rotate = setInterval(() => {
-    const cur = tabs.findIndex(t => t.classList.contains('active'));
-    showShot(tabs[(cur + 1) % tabs.length]);
-  }, 4500);
-}
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => { if(rotate) clearInterval(rotate); showShot(tab); });
-});
-
 /* demo lightbox */
 const overlay = document.getElementById('overlay');
 const frame = document.getElementById('demo-frame');
@@ -580,18 +507,13 @@ function openDemo(){
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-function closeDemo(){
-  overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
+function closeDemo(){ overlay.classList.remove('open'); document.body.style.overflow = ''; }
 ['open-demo-hero','open-demo-shot','open-demo-cta'].forEach(id => {
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', openDemo);
 });
 const heroWindow = document.getElementById('open-demo-shot');
-if(heroWindow) heroWindow.addEventListener('keydown', e => {
-  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDemo(); }
-});
+if(heroWindow) heroWindow.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDemo(); } });
 document.getElementById('modal-close').addEventListener('click', closeDemo);
 overlay.addEventListener('click', e => { if(e.target === overlay) closeDemo(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && overlay.classList.contains('open')) closeDemo(); });
@@ -599,21 +521,13 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && overlay.cla
 /* reveal on scroll */
 const io = new IntersectionObserver((entries) => {
   entries.forEach(en => { if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
-}, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.reveal').forEach((el,i) => {
-  el.style.transitionDelay = Math.min(i * 40, 200) + 'ms';
-  io.observe(el);
-});
+}, {threshold:.1, rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach((el,i) => { el.style.transitionDelay = Math.min(i*30,150)+'ms'; io.observe(el); });
 
-/* live GitHub star count */
+/* live GitHub star count (only shown at 10+) */
 fetch('https://api.github.com/repos/chethanbhatbs/my-claude')
   .then(r => r.ok ? r.json() : null)
-  .then(d => {
-    if(d && typeof d.stargazers_count === 'number' && d.stargazers_count >= 10){
-      const el = document.getElementById('star-count');
-      if(el) el.textContent = '★ ' + d.stargazers_count;
-    }
-  })
+  .then(d => { if(d && typeof d.stargazers_count === 'number' && d.stargazers_count >= 10){ const el = document.getElementById('star-count'); if(el) el.textContent = '★ ' + d.stargazers_count; } })
   .catch(() => {});
 </script>
 </body>
