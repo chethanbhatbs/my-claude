@@ -99,8 +99,12 @@ h1 .accent{color:var(--accent)}
 .subhead code{font-family:var(--font-mono);font-size:.9em;background:var(--bg-sunk);padding:2px 6px;border-radius:5px;color:var(--ink)}
 .cmd-row{display:flex;flex-direction:column;align-items:center;gap:14px;margin:30px 0 0;width:100%}
 @media(min-width:1000px){.cmd-row{align-items:flex-start}}
-.terminal{display:flex;align-items:center;gap:14px;max-width:100%;min-width:0;background:var(--term);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm);overflow-x:auto}
-.terminal code{font-family:var(--font-mono);font-size:14px;color:#EDEBE7;white-space:nowrap}
+.install-hint{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12.5px;color:var(--ink-2);margin-bottom:2px}
+.install-hint svg{width:15px;height:15px;color:var(--accent)}
+.terminal{display:flex;align-items:center;gap:12px;max-width:100%;min-width:0;background:var(--term);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm);overflow:hidden}
+.cmd-scroll{flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.cmd-scroll::-webkit-scrollbar{display:none}
+.terminal code{font-family:var(--font-mono);font-size:13.5px;color:#EDEBE7;white-space:nowrap}
 .terminal .prompt{color:#6f6a63}
 .terminal .flag{color:#E8A87C}
 .terminal .url{color:#9FC3A6}
@@ -233,6 +237,11 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 .modal-close:hover{color:#fff}
 .demo-frame{flex:1;width:100%;border:none;background:var(--term)}
 
+/* copy toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:300;background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;display:inline-flex;align-items:center;gap:9px;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{width:16px;height:16px;flex:none;color:#7BC79B}
+
 /* reveal */
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
 .reveal.in{opacity:1;transform:none}
@@ -259,7 +268,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
         <span class="star-count" id="star-count">Star</span>
       </a>
       <a class="nav-link" href="https://my-claude.pages.dev/demo.html" target="_blank" rel="noopener" data-testid="nav-demo-link">Live demo</a>
-      <a class="nav-cta" href="#install" data-testid="nav-install-link">Install</a>
+      <a class="nav-cta" href="#install" id="nav-install" data-testid="nav-install-link">Install</a>
     </div>
   </div>
 </nav>
@@ -277,8 +286,12 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
         and the skills and MCP servers you actually use. All on your machine.
       </p>
       <div class="cmd-row reveal" id="install">
+        <div class="install-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></svg>
+          Install on macOS. Paste this into your Terminal:
+        </div>
         <div class="terminal" role="group" aria-label="Install command">
-          <code id="install-cmd"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code>
+          <div class="cmd-scroll"><code id="install-cmd"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
           <button type="button" class="copy-btn" id="copy-hero" aria-label="Copy install command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
             <span>Copy</span>
@@ -438,7 +451,7 @@ history.jsonl   settings.json
       <p>Free and open source. One command, about twenty seconds, entirely on your machine.</p>
       <div class="cmd-row" style="margin-top:28px">
         <div class="terminal" role="group" aria-label="Install command">
-          <code><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code>
+          <div class="cmd-scroll"><code><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
           <button type="button" class="copy-btn" id="copy-cta" aria-label="Copy install command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
             <span>Copy</span>
@@ -476,6 +489,11 @@ history.jsonl   settings.json
   </div>
 </footer>
 
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>
+  <span>Copied. Now paste it into your Terminal and press Enter.</span>
+</div>
+
 <!-- demo lightbox -->
 <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="My Claude interactive demo">
   <div class="modal">
@@ -494,20 +512,41 @@ history.jsonl   settings.json
 <script>
 const CMD = 'curl -fsSL https://my-claude.pages.dev/install.sh | bash';
 
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(){
+  if(!toast) return;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+}
+async function copyCmd(){ try{ await navigator.clipboard.writeText(CMD); }catch(e){} }
+
 function wireCopy(id){
   const btn = document.getElementById(id);
   if(!btn) return;
   btn.addEventListener('click', async () => {
-    try{ await navigator.clipboard.writeText(CMD); }catch(e){}
+    await copyCmd();
     const label = btn.querySelector('span');
     const prev = label ? label.textContent : '';
     btn.classList.add('done');
     if(label) label.textContent = 'Copied';
+    showToast();
     setTimeout(() => { btn.classList.remove('done'); if(label) label.textContent = prev || 'Copy'; }, 1600);
   });
 }
 wireCopy('copy-hero');
 wireCopy('copy-cta');
+
+/* nav Install: copy the command, confirm, and bring the install block into view */
+const navInstall = document.getElementById('nav-install');
+if(navInstall) navInstall.addEventListener('click', async (e) => {
+  e.preventDefault();
+  await copyCmd();
+  showToast();
+  const target = document.getElementById('install');
+  if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+});
 
 /* demo lightbox */
 const overlay = document.getElementById('overlay');
