@@ -9,8 +9,13 @@
 <meta property="og:description" content="A private, local-first dashboard for the ~/.claude folder. Skills, MCP, plugins, usage, cost and full history in one view. Open source, MIT.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://my-claude.pages.dev/">
-<meta property="og:image" content="https://my-claude.pages.dev/assets/overview.png">
+<meta property="og:image" content="https://my-claude.pages.dev/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="My Claude · See everything Claude Code remembers">
+<meta name="twitter:description" content="A private, local-first dashboard for your ~/.claude folder. Skills, MCP, usage, cost and full history in one view. Open source, MIT.">
+<meta name="twitter:image" content="https://my-claude.pages.dev/assets/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23E8825A'/%3E%3Ctext x='16' y='22' font-family='monospace' font-weight='bold' font-size='18' fill='%230A0A0A' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -87,30 +92,37 @@ nav{
 @media(max-width:560px){.nav-link.hide-sm{display:none}}
 
 /* ---------- hero ---------- */
-.hero{padding:128px 0 48px;text-align:center;position:relative}
-@media(min-width:768px){.hero{padding:150px 0 56px}}
+.hero{padding:116px 0 40px;position:relative}
+@media(min-width:768px){.hero{padding:132px 0 56px}}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:44px;align-items:center}
+@media(min-width:980px){.hero-grid{grid-template-columns:minmax(0,1.02fr) minmax(0,1.18fr);gap:52px}}
+.hero-copy{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0}
+@media(min-width:980px){.hero-copy{align-items:flex-start;text-align:left}}
+.hero-visual{width:100%;min-width:0}
+.hero-visual .window{margin:0;max-width:none;width:100%}
 .badge{
-  display:inline-flex;align-items:center;gap:8px;margin-bottom:26px;
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;
   padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2);
   font-family:var(--font-mono);font-size:12px;color:var(--ink-2);box-shadow:var(--shadow-sm);
 }
 .badge .dot{width:7px;height:7px;border-radius:50%;background:#4FA974;box-shadow:0 0 0 3px rgba(79,169,116,.18)}
 h1{
-  font-family:var(--font-display);font-weight:800;letter-spacing:-.025em;line-height:1.04;
-  color:var(--ink);font-size:clamp(2.5rem,6vw,4.2rem);margin:0 auto;max-width:14ch;
+  font-family:var(--font-display);font-weight:800;letter-spacing:-.025em;line-height:1.03;
+  color:var(--ink);font-size:clamp(2.3rem,4.6vw,3.8rem);margin:0;max-width:15ch;
 }
 h1 .accent{color:var(--accent)}
 .subhead{
-  margin:24px auto 0;max-width:600px;font-size:clamp(1.05rem,2vw,1.2rem);
+  margin:22px 0 0;max-width:520px;font-size:clamp(1.02rem,1.6vw,1.15rem);
   color:var(--ink-2);line-height:1.6;
 }
 .subhead b{color:var(--ink);font-weight:600}
 .subhead code{font-family:var(--font-mono);font-size:.92em;background:var(--bg-sunk);padding:2px 6px;border-radius:5px;color:var(--ink)}
 
 /* install command */
-.cmd-row{display:flex;flex-direction:column;align-items:center;gap:14px;margin:34px auto 0}
+.cmd-row{display:flex;flex-direction:column;align-items:center;gap:14px;margin:30px 0 0;width:100%}
+@media(min-width:980px){.cmd-row{align-items:flex-start}}
 .terminal{
-  display:inline-flex;align-items:center;gap:14px;max-width:100%;
+  display:flex;align-items:center;gap:14px;max-width:100%;min-width:0;
   background:var(--term);border-radius:12px;padding:14px 16px;
   box-shadow:var(--shadow-sm);overflow-x:auto;
 }
@@ -299,7 +311,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 <span id="top"></span>
 
 <header class="hero">
-  <div class="wrap">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
     <div class="badge reveal"><span class="dot"></span> Open source · MIT · macOS</div>
     <h1 class="reveal">See everything Claude&nbsp;Code <span class="accent">remembers</span></h1>
     <p class="subhead reveal">
@@ -326,17 +339,20 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
         <span>macOS</span> &nbsp;·&nbsp; <span>Requires Python 3.9+</span> &nbsp;·&nbsp; <span>Local by default. You decide what leaves.</span>
       </div>
     </div>
+    </div>
 
-    <div class="window reveal" id="open-demo-shot" data-testid="hero-window">
-      <div class="win-bar">
-        <div class="win-dots"><i></i><i></i><i></i></div>
-        <div class="win-url">127.0.0.1:8766/p/overview</div>
+    <div class="hero-visual reveal">
+      <div class="window" id="open-demo-shot" data-testid="hero-window" role="button" tabindex="0" aria-label="Open the interactive demo">
+        <div class="win-bar">
+          <div class="win-dots"><i></i><i></i><i></i></div>
+          <div class="win-url">127.0.0.1:8766/p/overview</div>
+        </div>
+        <div class="win-play">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>
+          Open interactive demo
+        </div>
+        <img src="./assets/overview.png" alt="My Claude dashboard overview: skills, conversations, tokens, spend and disk usage" loading="eager">
       </div>
-      <div class="win-play">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>
-        Open interactive demo
-      </div>
-      <img src="./assets/overview.png" alt="My Claude dashboard overview: skills, conversations, tokens, spend and disk usage" loading="eager">
     </div>
   </div>
 </header>
@@ -534,16 +550,26 @@ const SHOTS = {
 const shotImg = document.getElementById('shot-img');
 const shotUrl = document.getElementById('shot-url');
 const shotCap = document.getElementById('shot-cap');
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    const s = SHOTS[tab.dataset.shot];
-    if(!s) return;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    shotImg.src = s.img;
-    shotUrl.textContent = s.url;
-    shotCap.innerHTML = s.cap;
-  });
+const tabs = Array.from(document.querySelectorAll('.tab'));
+Object.values(SHOTS).forEach(s => { const im = new Image(); im.src = s.img; }); // preload for smooth rotation
+function showShot(tab){
+  const s = SHOTS[tab.dataset.shot];
+  if(!s) return;
+  tabs.forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  shotImg.src = s.img;
+  shotUrl.textContent = s.url;
+  shotCap.innerHTML = s.cap;
+}
+let rotate = null;
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  rotate = setInterval(() => {
+    const cur = tabs.findIndex(t => t.classList.contains('active'));
+    showShot(tabs[(cur + 1) % tabs.length]);
+  }, 4500);
+}
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => { if(rotate) clearInterval(rotate); showShot(tab); });
 });
 
 /* demo lightbox */
@@ -562,6 +588,10 @@ function closeDemo(){
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', openDemo);
 });
+const heroWindow = document.getElementById('open-demo-shot');
+if(heroWindow) heroWindow.addEventListener('keydown', e => {
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDemo(); }
+});
 document.getElementById('modal-close').addEventListener('click', closeDemo);
 overlay.addEventListener('click', e => { if(e.target === overlay) closeDemo(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && overlay.classList.contains('open')) closeDemo(); });
@@ -579,7 +609,7 @@ document.querySelectorAll('.reveal').forEach((el,i) => {
 fetch('https://api.github.com/repos/chethanbhatbs/my-claude')
   .then(r => r.ok ? r.json() : null)
   .then(d => {
-    if(d && typeof d.stargazers_count === 'number' && d.stargazers_count > 0){
+    if(d && typeof d.stargazers_count === 'number' && d.stargazers_count >= 10){
       const el = document.getElementById('star-count');
       if(el) el.textContent = '★ ' + d.stargazers_count;
     }
