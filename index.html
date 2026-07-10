@@ -237,6 +237,27 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
 .modal-close:hover{color:#fff}
 .demo-frame{flex:1;width:100%;border:none;background:var(--term)}
 
+.guide-link{margin-top:14px;background:none;border:none;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:500;color:var(--accent);display:inline-flex;align-items:center;gap:4px;padding:0;transition:opacity .18s}
+.guide-link:hover{opacity:.72;text-decoration:underline;text-underline-offset:3px}
+
+/* install guide modal */
+.install-modal{width:100%;max-width:560px;background:var(--bg-2);border-radius:18px;box-shadow:0 40px 100px -20px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto}
+.install-modal-head{padding:28px 30px 20px;border-bottom:1px solid var(--line);position:relative}
+.install-modal-head h3{font-family:var(--font-display);font-weight:700;font-size:1.55rem;color:var(--ink)}
+.install-modal-head p{margin-top:6px;font-family:var(--font-mono);font-size:12px;color:var(--ink-3)}
+.install-close{position:absolute;top:22px;right:24px;background:none;border:none;font-size:24px;line-height:1;color:var(--ink-3);cursor:pointer;padding:0}
+.install-close:hover{color:var(--ink)}
+.steps-list{list-style:none;margin:0;padding:26px 30px 6px}
+.steps-list li{display:flex;gap:15px;padding-bottom:24px;position:relative}
+.steps-list li:not(:last-child)::before{content:"";position:absolute;left:13px;top:30px;bottom:2px;width:2px;background:var(--line)}
+.step-badge{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--font-mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.step-text{font-size:.98rem;color:var(--ink-2);line-height:1.55;padding-top:2px;min-width:0;flex:1}
+.step-text b{color:var(--ink);font-weight:600}
+.step-text em{font-style:normal;color:var(--ink-3);font-size:.9em}
+.kbd{font-family:var(--font-mono);font-size:.82em;background:var(--bg-sunk);border:1px solid var(--line);border-radius:5px;padding:2px 6px;color:var(--ink);white-space:nowrap}
+.install-modal .terminal{margin-top:11px}
+.install-modal-foot{padding:16px 30px 26px;display:flex;gap:12px;flex-wrap:wrap}
+
 /* copy toast */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:300;background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;display:inline-flex;align-items:center;gap:9px;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -281,9 +302,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
       <div class="badge reveal"><span class="dot"></span> Open source · MIT · macOS</div>
       <h1 class="reveal">Beyond the <span class="accent">Terminal</span></h1>
       <p class="subhead reveal">
-        Claude Code writes everything to <code>~/.claude</code> as thousands of files you can't read.
-        My Claude turns that into <b>one clean dashboard</b>: every conversation, your token spend,
-        and the skills and MCP servers you actually use. All on your machine.
+        Everything Claude Code keeps in <code>~/.claude</code>: <b>every conversation, every token, every skill</b>
+        and MCP server, in one local dashboard that runs entirely on your machine.
       </p>
       <div class="cmd-row reveal" id="install">
         <div class="install-hint">
@@ -304,6 +324,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
           </button>
         </div>
         <div class="fineprint">macOS &nbsp;·&nbsp; Requires Python 3.9+ &nbsp;·&nbsp; Local by default</div>
+        <button type="button" class="guide-link" id="open-install-guide-hero">New here? See the 3-step install guide &rarr;</button>
       </div>
     </div>
 
@@ -489,6 +510,37 @@ history.jsonl   settings.json
   </div>
 </footer>
 
+<div class="overlay" id="install-overlay" role="dialog" aria-modal="true" aria-label="How to install My Claude">
+  <div class="install-modal">
+    <div class="install-modal-head">
+      <button class="install-close" id="install-close" aria-label="Close">&times;</button>
+      <h3>Install My Claude</h3>
+      <p>macOS · Requires Python 3.9+ · About 20 seconds</p>
+    </div>
+    <ol class="steps-list">
+      <li><span class="step-badge">1</span><div class="step-text">Open your <b>Terminal</b>. <em>Press <span class="kbd">&#8984; Space</span>, type "Terminal", press Enter.</em></div></li>
+      <li><span class="step-badge">2</span><div class="step-text">Paste this command and press <b>Enter</b>:
+        <div class="terminal" role="group" aria-label="Install command">
+          <div class="cmd-scroll"><code><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
+          <button type="button" class="copy-btn" id="copy-modal" aria-label="Copy install command">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            <span>Copy</span>
+          </button>
+        </div>
+      </div></li>
+      <li><span class="step-badge">3</span><div class="step-text">It downloads, sets up and <b>indexes your ~/.claude</b> locally. Give it about twenty seconds.</div></li>
+      <li><span class="step-badge">4</span><div class="step-text">Your browser <b>opens the dashboard</b> at <span class="kbd">127.0.0.1:8766</span> automatically. That's it.</div></li>
+    </ol>
+    <div class="install-modal-foot">
+      <a class="btn-ghost" href="https://github.com/chethanbhatbs/my-claude" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11 11 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5Z"/></svg>
+        View source
+      </a>
+      <a class="btn-ghost" href="https://my-claude.pages.dev/demo.html" target="_blank" rel="noopener">Try the demo first</a>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>
   <span>Copied. Now paste it into your Terminal and press Enter.</span>
@@ -537,16 +589,16 @@ function wireCopy(id){
 }
 wireCopy('copy-hero');
 wireCopy('copy-cta');
+wireCopy('copy-modal');
 
-/* nav Install: copy the command, confirm, and bring the install block into view */
-const navInstall = document.getElementById('nav-install');
-if(navInstall) navInstall.addEventListener('click', async (e) => {
-  e.preventDefault();
-  await copyCmd();
-  showToast();
-  const target = document.getElementById('install');
-  if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
-});
+/* install guide modal */
+const installOverlay = document.getElementById('install-overlay');
+function openInstall(e){ if(e) e.preventDefault(); installOverlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeInstall(){ installOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+['nav-install','open-install-guide-hero'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('click', openInstall); });
+document.getElementById('install-close').addEventListener('click', closeInstall);
+installOverlay.addEventListener('click', e => { if(e.target === installOverlay) closeInstall(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && installOverlay.classList.contains('open')) closeInstall(); });
 
 /* demo lightbox */
 const overlay = document.getElementById('overlay');
