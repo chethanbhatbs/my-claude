@@ -26,21 +26,35 @@ if that one's busy.
 **Needs:** Python 3.9+ on macOS. Inspect the script first:
 [`install.sh`](https://github.com/chethanbhatbs/my-claude/blob/main/install.sh).
 
-## Your data never leaves your machine
+## Your transcripts never leave your machine
 
-It binds to `127.0.0.1` only, runs entirely on your machine, and makes **no calls on its own** - no
-telemetry, no cloud. The only data that ever leaves is what you explicitly push or share to your own
-GitHub. Secrets in MCP configs are auto-redacted before they're shown. You share the tool, not your data.
+It binds to `127.0.0.1` only and computes everything - skills, usage, costs, history - from files
+already on your disk. No telemetry, no cloud, no analytics.
+
+Two things do go out, both of them yours and both plainly visible in the source:
+
+- **A skill you choose to push** to your own GitHub, via your own `gh` login. Never automatic.
+- **Your plan limits**, while the Usage page is open. One request to
+  `GET https://api.anthropic.com/api/oauth/usage`, authorised with the Claude Code OAuth token
+  already in your macOS keychain (entry `Claude Code-credentials`, created by the `claude` CLI). It
+  sends that token and nothing else - no transcripts, no prompts, no filenames. The token is held in
+  memory for 10 minutes and never written to disk. Decline the keychain prompt and nothing breaks:
+  the panel falls back to the copy Claude Code already cached in `~/.claude.json` and tells you how
+  old those numbers are.
+
+Secrets in MCP configs are auto-redacted before they're shown. You share the tool, not your data.
 
 ## What you get
 
 - **Overview** - skills, conversations, token spend, and disk use at a glance.
-- **Usage** - cost and tokens by day, model, and project, with cache-savings.
+- **Usage** - your live plan limits (session, weekly, per-model) plus tokens by day, model and
+  project. API-price costs are there too, clearly marked as an estimate rather than your bill.
 - **Skills** - every skill, how often you use it, and which ones you never touch; search across all
   of them, read any `SKILL.md`, and push to GitHub or share as a `.zip`.
 - **MCP & Plugins** - your connectors (global and per-project) with a one-click health check.
-- **History** - full-text search across every transcript with per-conversation cost; resume in
-  Claude or export to Markdown.
+- **History** - every session, including ones whose transcript Claude Code has already rotated away
+  (prompts recovered from `history.jsonl`). Indexed full-text search that jumps to the matching
+  message, per-conversation cost, resume in the terminal of your choice, or export to Markdown.
 - **System** - permissions, hooks, `CLAUDE.md`, and the memory Claude carries between sessions.
 
 Connect GitHub straight from the app (device-code flow via your `gh` CLI - no tokens stored),

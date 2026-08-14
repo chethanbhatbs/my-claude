@@ -462,7 +462,8 @@ history.jsonl   settings.json
     <div class="band reveal">
       <div class="kicker">// private by design</div>
       <h2>Local by default. You decide what leaves.</h2>
-      <p>My Claude reads your <code>~/.claude</code> and serves the dashboard on <code>127.0.0.1</code>. Nothing is uploaded automatically. The only thing that ever leaves is a skill you explicitly choose to push to your own GitHub.</p>
+      <p>My Claude reads your <code>~/.claude</code> and serves the dashboard on <code>127.0.0.1</code>. Your transcripts, prompts and costs are computed on your machine and are never uploaded.</p>
+      <p>Two things do go out, both of them yours and both visible in the source. A skill you explicitly choose to push to your own GitHub. And, while the Usage page is open, one request to <code>api.anthropic.com/api/oauth/usage</code> — authorised with the Claude Code token already in your keychain — so the page can show your real plan limits. That request carries the token and nothing else; decline the keychain prompt and the page falls back to the copy Claude Code cached locally.</p>
     </div>
   </div>
 </section>
