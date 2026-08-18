@@ -21,7 +21,7 @@ trap 'rm -rf "$(dirname "$STAGE")"' EXIT
 
 # what ships
 cp "$SRC/myclaude.py" "$SRC/run.sh" "$SRC/requirements.txt" "$SRC/requirements-dev.txt" \
-   "$SRC/README.md" "$SRC/.gitignore" "$STAGE/"
+   "$SRC/README.md" "$SRC/.gitignore" "$SRC/links.json" "$STAGE/"
 cp -R "$SRC/static" "$SRC/templates" "$SRC/tests" "$STAGE/"
 chmod +x "$STAGE/run.sh"
 
