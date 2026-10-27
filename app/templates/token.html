@@ -119,7 +119,8 @@ async function loadLimits(fresh){
     <input type="date" name="to" value="{{ d_to }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()">
   </form>
   {% set q = 'win=' ~ (win|urlencode) ~ '&family=' ~ (family|urlencode) ~ '&d_from=' ~ (d_from|urlencode) ~ '&d_to=' ~ (d_to|urlencode) %}
-  <a class="btn" style="flex:0 0 auto;margin-left:auto" href="/export/usage?fmt=csv&{{ q }}">Export CSV</a>
+  <button class="btn" style="flex:0 0 auto;margin-left:auto" onclick="openDialog('/dialog/wrapped')">Year in review</button>
+  <a class="btn" style="flex:0 0 auto" href="/export/usage?fmt=csv&{{ q }}">Export CSV</a>
   <a class="btn" style="flex:0 0 auto" href="/export/usage?fmt=json&{{ q }}">Export JSON</a>
 </div>
 
@@ -210,6 +211,35 @@ async function loadLimits(fresh){
     <td class="num">{{ r.subagents }}</td><td class="num">{{ fmt_num(r.sub_tokens) }}</td><td class="num">{{ '%.0f' % (r.sub_tokens / r.tokens * 100 if r.tokens else 0) }}%</td></tr>{% endfor %}</tbody>
 </table>
 {% else %}<div class="caption">No sub-agents in this window.</div>{% endif %}
+
+<h2 class="sub">Other machines</h2>
+<div class="caption" style="margin:-4px 0 8px">On the other Mac, open My Claude, pick <strong>All time</strong> on this page and press <strong>Export JSON</strong>. Import that file here. Only per-day totals move, no conversations.</div>
+{% if machines.rows %}
+<table class="data">
+  <thead><tr><th>Machine</th><th>Data from</th><th class="num">Tokens, 30 days</th><th class="num">Tokens, all time</th><th class="num">API est</th><th></th></tr></thead>
+  <tbody>{% for m in machines.rows %}<tr><td>{{ m.name }}{% if m.imported %}<div class="caption" style="margin:0;font-size:11px">imported {{ m.imported }}</div>{% endif %}</td>
+    <td style="font-size:12px">{{ m.first }} to {{ m.last }}</td><td class="num">{{ fmt_num(m.tokens30) }}</td><td class="num">{{ fmt_num(m.tokens) }}</td><td class="num">${{ '{:,.0f}'.format(m.cost) }}</td>
+    <td style="text-align:right">{% if m.slug %}<button class="btn" onclick="openDialog('/dialog/remove-machine?slug={{ m.slug }}')">Remove</button>{% endif %}</td></tr>{% endfor %}
+    <tr><td><strong>{{ machines.total.name }}</strong></td><td></td><td class="num"><strong>{{ fmt_num(machines.total.tokens30) }}</strong></td><td class="num"><strong>{{ fmt_num(machines.total.tokens) }}</strong></td><td class="num"><strong>${{ '{:,.0f}'.format(machines.total.cost) }}</strong></td><td></td></tr></tbody>
+</table>
+{% endif %}
+<div class="row" style="margin:10px 0 0;gap:8px">
+  <input class="input" type="text" id="mName" placeholder="Work laptop" style="flex:0 0 200px" aria-label="Machine name">
+  <input type="file" id="mFile" accept=".json,application/json" style="flex:0 1 auto" aria-label="Usage export file">
+  <button class="btn" style="flex:0 0 auto" onclick="importMachine(this)">Import</button>
+  <span class="caption" id="mMsg" role="alert" style="margin:0;flex:1"></span>
+</div>
+<script>
+async function importMachine(btn){
+  const f=document.getElementById('mFile').files[0], msg=document.getElementById('mMsg');
+  if(!f){ msg.textContent='Choose the exported .json file.'; return; }
+  let rows; try{ rows=JSON.parse(await f.text()); }catch(e){ msg.textContent='That file is not JSON.'; return; }
+  btn.classList.add('loading');
+  const r=await (await fetch('/action/import-machine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('mName').value,rows})})).json();
+  btn.classList.remove('loading'); msg.textContent=r.ok?'':r.msg;
+  if(r.ok){ toast('Imported'); navigate(location.pathname+location.search,false,true); }
+}
+</script>
 
 <h2 class="sub">Share by model</h2>
 <div class="caption" style="margin:-4px 0 8px">Relative weight of each model, priced at API list rates so an Opus turn outweighs a Haiku one.</div>

@@ -533,3 +533,28 @@ mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: in
 @media (max-width: 900px) { .fold-sum { display: none; } }
 .tl-track { position: relative; height: 8px; background: var(--surface-2); border-radius: 4px; }
 .tl-bar { position: absolute; top: 0; height: 8px; background: var(--accent); border-radius: 4px; }
+/* destructive action: same shape as primary, its own colour */
+.btn.danger { background: var(--err); border-color: var(--err); color: #fff; font-weight: 600; }
+.btn.danger:hover { filter: brightness(.9); background: var(--err); }
+/* diffs (memory / CLAUDE.md history) */
+pre.diff { margin: 0; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+pre.diff .dl { display: block; padding: 0 8px; }
+pre.diff .dl.add { background: var(--ok-bg); color: var(--ok); }
+pre.diff .dl.del { background: var(--err-bg); color: var(--err); }
+pre.diff .dl.hunk { color: var(--dim); }
+/* year in review card */
+.wrapped { padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.wr-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--dim); }
+.wr-brand { font-weight: 600; color: var(--accent); }
+.wr-big { margin: 18px 0 20px; }
+.wr-n { font-size: 40px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.wr-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.wr-v { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr-l { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--dim); margin-top: 2px; }
+.wr-foot { display: flex; gap: 12px; align-items: baseline; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; flex-wrap: wrap; }
+@media (max-width: 640px) { .wr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* privacy mode: blur anything that names a person, project, path or conversation */
+body.privacy :is(.brand-sub, .ci-title, .ci-sub, .ci-meta > span:first-child, .lr-title, .lr-sub, .lr-proj, .live-title,
+  .msg-text, .mem-item summary > span:first-child, .mcp-scope, table.data td a, .pv, #convDetail .caption .mono,
+  #convDetail div[style*="font-weight:600"], #ghChipText) { filter: blur(6px); }
+

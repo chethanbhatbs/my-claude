@@ -9,6 +9,7 @@ caught them. Each test below asserts "we show everything we found", not "the cod
 Run:  .venv/bin/python -m pytest tests -q
 """
 import json
+import shutil
 import time
 import os
 import re
@@ -712,3 +713,54 @@ def test_clean_debug_moves_only_old_logs_to_trash(tmp_path, monkeypatch):
     r = mc.clean_debug(7)
     assert r["moved"] == 1 and new.exists() and not old.exists()
     assert list((home / ".Trash").rglob("old.txt"))
+
+
+def test_memory_history_records_each_change_and_removal(tmp_path, monkeypatch):
+    if not shutil.which("git"): pytest.skip("git not installed")
+    claude = tmp_path / ".claude"; mem = claude / "projects" / "-x" / "memory"; mem.mkdir(parents=True)
+    monkeypatch.setattr(mc, "CLAUDE", claude); monkeypatch.setattr(mc, "MEM_HIST", tmp_path / "hist")
+    (claude / "CLAUDE.md").write_text("one\n"); (mem / "a.md").write_text("alpha\n")
+    assert mc.snapshot_memory()["committed"] is True
+    assert mc.snapshot_memory()["committed"] is False          # nothing changed: no empty commit
+    (claude / "CLAUDE.md").write_text("one\ntwo\n"); (mem / "a.md").unlink()
+    assert mc.snapshot_memory()["committed"] is True
+    v = mc.memory_versions("CLAUDE.md")
+    assert len(v) == 2 and (v[0]["added"], v[0]["removed"]) == (1, 0)
+    assert [r["text"] for r in v[0]["rows"] if r["cls"] == "add"] == ["+two"]
+    assert mc.memory_versions("projects/-x/memory/a.md")[0]["removed"] == 1
+
+
+def test_machine_import_validates_and_sums(tmp_path, monkeypatch):
+    import pandas as pd
+    monkeypatch.setattr(mc, "MACHINES_DIR", tmp_path / "m")
+    today = datetime.now().date()
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: pd.DataFrame([{"date": today, "label": "opus 5.5", "model": "m",
+        "input_tokens": 1, "cache_creation": 0, "cache_read": 9, "output_tokens": 0, "cost": 1.0}]))
+    assert mc.machines_summary() == {"rows": [], "total": None}
+    row = {"date": str(today), "model": "opus 5.5", "turns": 1, "input_tokens": 5, "cache_write_tokens": 5, "cache_read_tokens": 80,
+           "output_tokens": 10, "cost_usd_est": 2.5}
+    old = dict(row, date=str(today - timedelta(days=60)))
+    mc.import_machine("Work laptop", [row, old])
+    s = mc.machines_summary()
+    assert [r["name"] for r in s["rows"]] == ["This Mac", "Work laptop"]
+    assert (s["rows"][1]["tokens"], s["rows"][1]["tokens30"]) == (200, 100)
+    assert (s["total"]["tokens"], s["total"]["tokens30"], s["total"]["cost"]) == (210, 110, 6.0)
+    for bad in ([], [{"date": "x"}], "nope", [dict(row, date="not-a-date")]):
+        with pytest.raises(ValueError):
+            mc.import_machine("X", bad)
+    with pytest.raises(ValueError):
+        mc.import_machine("  ", [row])
+
+
+def test_year_review_counts_streak_and_busiest_day(monkeypatch):
+    import pandas as pd
+    from datetime import date
+    rows = []
+    for d, tok in ((date(2026, 3, 1), 10), (date(2026, 3, 2), 50), (date(2026, 3, 3), 10), (date(2026, 3, 10), 5), (date(2025, 12, 31), 999)):
+        rows.append({"date": d, "ts": f"{d}T12:00:00Z", "label": "opus 5.5", "model": "m", "input_tokens": 0, "cache_creation": 0,
+                     "cache_read": tok, "output_tokens": 0, "cost": 0.1})
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: pd.DataFrame(rows))
+    monkeypatch.setattr(mc, "conversation_index", lambda: [])
+    w = mc.year_review(2026)
+    assert (w["tokens"], w["active_days"], w["streak"], w["busiest_day"], w["top_model_share"]) == (75, 4, 3, "2 Mar", 100)
+    assert mc.year_review(2024)["empty"] is True

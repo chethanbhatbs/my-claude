@@ -2464,7 +2464,7 @@ def render_system(request):
     tab = request.query_params.get("tab", "config")
     proj = request.query_params.get("proj") or str(HOME)
     ctx = {"tab": tab, "cfg": load_config_detail(), "mem": load_memory(), "proj": proj,
-           "projects": _project_choices(), "home": str(HOME)}
+           "projects": _project_choices(), "home": str(HOME), "claude_dir": str(CLAUDE)}
     if tab == "settings": ctx["layers"] = settings_layers(proj); ctx["eff"] = effective_settings(proj)
     if tab == "hooks": ctx["hooks"] = hook_audit(proj)
     if tab == "disk": ctx["disk"] = disk_report()
@@ -2639,7 +2639,7 @@ def render_token(request):
                   pie=json.dumps(pie), price_rows=price_rows,
                   heat=json.dumps(heat), heat_win=json.dumps(heat_win), models=["All"] + model_list,
                   insights=token_insights(), rebuild=cache_rebuilds(df), sub_heavy=sub_heavy, SUB_FLAG=SUB_FLAG,
-                  alerts_on=bool(data_settings().get("limit_alerts")))
+                  alerts_on=bool(data_settings().get("limit_alerts")), machines=machines_summary())
 
 def render_sunburst(request):
     rows = []
@@ -2892,6 +2892,120 @@ def backup_status():
     return {"auto": bool(d.get("auto_backup")), "last": last, "last_h": fmt_rel(last["at"]) if last.get("at") else "",
             "kept": kept, "dir": str(BACKUP_DIR).replace(str(HOME), "~")}
 
+# ---------- memory + CLAUDE.md history: a private git repo under DATA_DIR, never inside ~/.claude ----------
+MEM_HIST = DATA_DIR / "memory-history"
+_mem_lock = threading.Lock()
+
+def _mem_sources():
+    out = {}
+    if (CLAUDE / "CLAUDE.md").exists(): out["CLAUDE.md"] = CLAUDE / "CLAUDE.md"
+    for md in (CLAUDE / "projects").glob("*/memory/*.md") if (CLAUDE / "projects").exists() else []:
+        out[str(md.relative_to(CLAUDE))] = md
+    return out
+
+def _git(*args):
+    return subprocess.run(["git", "-C", str(MEM_HIST), *args], capture_output=True, text=True, timeout=30)
+
+def snapshot_memory():
+    """Mirror CLAUDE.md and every memory file into MEM_HIST and commit if anything changed."""
+    if not shutil.which("git"): return {"ok": False, "msg": "git is not installed"}
+    with _mem_lock:
+        if not (MEM_HIST / ".git").exists():
+            MEM_HIST.mkdir(parents=True, exist_ok=True)
+            _git("init", "-q"); _git("config", "user.name", "My Claude"); _git("config", "user.email", "my-claude@localhost")
+        src = _mem_sources()
+        for rel, path in src.items():
+            dst = MEM_HIST / rel; dst.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                if not dst.exists() or dst.read_bytes() != path.read_bytes(): shutil.copy2(path, dst)
+            except OSError: pass
+        for f in MEM_HIST.rglob("*.md"):           # a file removed upstream is recorded as removed
+            if ".git" not in f.parts and str(f.relative_to(MEM_HIST)) not in src: f.unlink()
+        _git("add", "-A")
+        if _git("diff", "--cached", "--quiet").returncode == 0: return {"ok": True, "committed": False}
+        _git("commit", "-q", "-m", f"Snapshot {datetime.now():%Y-%m-%d %H:%M}")
+        return {"ok": True, "committed": True}
+
+def memory_versions(rel, limit=30):
+    if not (MEM_HIST / ".git").exists(): return []
+    r = _git("log", f"-{limit}", "--format=%H%x1f%at", "--", rel)
+    out = []
+    for line in r.stdout.splitlines():
+        sha, at = line.split("\x1f")
+        diff = _git("show", "--format=", "--no-color", "-U2", sha, "--", rel).stdout
+        rows = [{"cls": "add" if l.startswith("+") and not l.startswith("+++") else "del" if l.startswith("-") and not l.startswith("---")
+                 else "hunk" if l.startswith("@@") else "", "text": l} for l in diff.splitlines()
+                if not l.startswith(("diff --git", "index ", "--- ", "+++ ", "new file mode", "deleted file mode"))]
+        out.append({"sha": sha, "when": datetime.fromtimestamp(int(at)).strftime("%-d %b %Y %H:%M"), "ago": fmt_rel(int(at)), "rows": rows,
+                    "added": sum(1 for x in rows if x["cls"] == "add"), "removed": sum(1 for x in rows if x["cls"] == "del")})
+    return out
+
+# ---------- other machines: imported usage exports (the JSON from Usage > Export JSON) ----------
+MACHINES_DIR = DATA_DIR / "machines"
+_EXPORT_KEYS = {"date", "model", "turns", "input_tokens", "cache_write_tokens", "cache_read_tokens", "output_tokens", "cost_usd_est"}
+
+def import_machine(name, rows):
+    name = re.sub(r"\s+", " ", str(name or "")).strip()[:60]
+    if not name: raise ValueError("Give the machine a name.")
+    if not isinstance(rows, list) or not rows: raise ValueError("That file has no usage rows. Export it with Usage > All time > Export JSON.")
+    clean = []
+    for r in rows:
+        if not isinstance(r, dict) or not _EXPORT_KEYS <= set(r): raise ValueError("That isn't a My Claude usage export.")
+        try: datetime.fromisoformat(str(r["date"]))
+        except ValueError: raise ValueError(f"Bad date in the file: {r['date']!r}")
+        clean.append({k: r[k] for k in _EXPORT_KEYS})
+    slug = re.sub(r"[^\w-]+", "-", name.lower()).strip("-") or "machine"
+    MACHINES_DIR.mkdir(parents=True, exist_ok=True)
+    (MACHINES_DIR / f"{slug}.json").write_text(json.dumps({"name": name, "imported_at": time.time(), "rows": clean}))
+    return slug
+
+def machines_summary():
+    """This machine plus every imported one: tokens and API estimate, all time and last 30 days."""
+    cut = (datetime.now() - timedelta(days=30)).date()
+    def summ(name, rows, slug=None, imported=""):
+        tok = lambda r: r["input_tokens"] + r["cache_write_tokens"] + r["cache_read_tokens"] + r["output_tokens"]
+        dates = sorted({str(r["date"]) for r in rows})
+        return {"name": name, "slug": slug, "imported": imported, "days": len(dates), "first": dates[0] if dates else "", "last": dates[-1] if dates else "",
+                "tokens": sum(tok(r) for r in rows), "tokens30": sum(tok(r) for r in rows if datetime.fromisoformat(str(r["date"])).date() >= cut),
+                "cost": sum(r["cost_usd_est"] for r in rows)}
+    others = []
+    for f in sorted(MACHINES_DIR.glob("*.json")) if MACHINES_DIR.exists() else []:
+        try: d = json.loads(f.read_text())
+        except Exception: continue
+        others.append(summ(d.get("name") or f.stem, d.get("rows") or [], f.stem, fmt_rel(d.get("imported_at") or 0)))
+    if not others: return {"rows": [], "total": None}
+    here = summ("This Mac", json.loads(export_usage(fmt="json").body))
+    rows = [here] + others
+    total = {"name": "All machines", "tokens": sum(r["tokens"] for r in rows), "tokens30": sum(r["tokens30"] for r in rows),
+             "cost": sum(r["cost"] for r in rows)}
+    return {"rows": rows, "total": total}
+
+# ---------- year in review ----------
+def year_review(year):
+    df = aggregate_usage()
+    out = {"year": year, "empty": True}
+    if df.empty: return out
+    d = df.dropna(subset=["date"]); d = d[d["date"].apply(lambda x: x.year == year)]
+    if d.empty: return out
+    d = d.assign(b=d["input_tokens"] + d["cache_creation"] + d["cache_read"] + d["output_tokens"])
+    days = sorted(set(d["date"])); best = run = 1
+    for a, b in zip(days, days[1:]):
+        run = run + 1 if (b - a).days == 1 else 1; best = max(best, run)
+    per_day = d.groupby("date")["b"].sum(); per_model = d.groupby("label")["b"].sum().sort_values(ascending=False)
+    convs = [c for c in conversation_index() if c.get("last_ts") and datetime.fromtimestamp(c["last_ts"]).year == year]
+    longest = max(convs, key=lambda c: c["n"]) if convs else None
+    hours = pd.to_datetime(d["ts"], errors="coerce", utc=True, format="mixed").dt.tz_convert(datetime.now().astimezone().tzinfo).dt.hour
+    projects = {}
+    for c in convs: projects[project_label(c["project"])] = projects.get(project_label(c["project"]), 0) + c["n"]
+    top_proj = max(projects.items(), key=lambda x: x[1]) if projects else ("", 0)
+    out.update({"empty": False, "tokens": int(d["b"].sum()), "cost": float(d["cost"].sum()), "turns": int(len(d)),
+                "active_days": len(days), "streak": best, "busiest_day": per_day.idxmax().strftime("%-d %b"), "busiest_tokens": int(per_day.max()),
+                "top_model": per_model.index[0], "top_model_share": round(per_model.iloc[0] / per_model.sum() * 100),
+                "conversations": len(convs), "messages": sum(c["n"] for c in convs),
+                "longest": (longest.get("title") or longest["preview"])[:60] if longest else "", "longest_n": longest["n"] if longest else 0,
+                "top_project": top_proj[0], "late_share": round(float((hours >= 22).mean() + (hours < 5).mean()) * 100)})
+    return out
+
 ALERT_LEVELS = (80, 95)
 
 def notify_desktop(title, text):
@@ -2929,6 +3043,8 @@ def _auto_backup_loop():
         try:
             if data_settings().get("auto_backup"): backup_transcripts()
         except Exception: pass
+        try: snapshot_memory()
+        except Exception: pass
         time.sleep(3600)
 
 @app.get("/dialog/retention", response_class=HTMLResponse)
@@ -2953,6 +3069,27 @@ def dialog_mcp_toggle(request: Request, server: str, project: str, off: int = 1)
     return templates.TemplateResponse(request, "_dlg_mcp_toggle.html", {"request": request, "theme": theme_of(request),
         "server": server, "project": project, "off": bool(off), "now": mcp_disabled(project),
         "proj_h": "~ (home)" if project == str(HOME) else project.replace(str(HOME), "~")})
+
+@app.get("/dialog/mem-history", response_class=HTMLResponse)
+def dialog_mem_history(request: Request, path: str):
+    p = Path(path).resolve()
+    try: rel = str(p.relative_to(CLAUDE.resolve()))
+    except ValueError: return HTMLResponse('<div class="alert err">Not a file under ~/.claude.</div>')
+    try: snapshot_memory()
+    except Exception: pass
+    return templates.TemplateResponse(request, "_dlg_mem_history.html", {"request": request, "theme": theme_of(request),
+        "rel": rel, "versions": memory_versions(rel), "store": str(MEM_HIST).replace(str(HOME), "~"), "git": bool(shutil.which("git"))})
+
+@app.get("/dialog/wrapped", response_class=HTMLResponse)
+def dialog_wrapped(request: Request, year: int = 0):
+    year = year or datetime.now().year
+    return templates.TemplateResponse(request, "_dlg_wrapped.html", {"request": request, "theme": theme_of(request),
+        "w": year_review(year), "years": sorted({d.year for d in aggregate_usage()["date"].dropna()}, reverse=True) if not aggregate_usage().empty else [year]})
+
+@app.get("/dialog/remove-machine", response_class=HTMLResponse)
+def dialog_remove_machine(request: Request, slug: str):
+    m = next((r for r in machines_summary()["rows"] if r.get("slug") == slug), None)
+    return templates.TemplateResponse(request, "_dlg_remove_machine.html", {"request": request, "theme": theme_of(request), "m": m, "slug": slug})
 
 @app.get("/dialog/install", response_class=HTMLResponse)
 def dialog_install(request: Request):
@@ -2985,7 +3122,11 @@ async def action_save_claudemd(request: Request):
     cm = CLAUDE / "CLAUDE.md"
     try:
         if cm.exists(): shutil.copy2(str(cm), str(cm) + ".bak")  # keep a backup before overwriting
+        try: snapshot_memory()                                     # history: the version being replaced
+        except Exception: pass
         cm.write_text(content)
+        try: snapshot_memory()
+        except Exception: pass
         clear_cache()
         return {"ok": True, "msg": "Saved. Previous version backed up to CLAUDE.md.bak"}
     except Exception as e:
@@ -3027,6 +3168,21 @@ async def action_clean_debug(request: Request):
         return {"ok": True, "msg": msg}
     except Exception as e:
         return {"ok": False, "msg": str(e)}
+
+@app.post("/action/import-machine")
+async def action_import_machine(request: Request):
+    d = await request.json()
+    try:
+        import_machine(d.get("name"), d.get("rows")); return {"ok": True, "msg": "Imported."}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
+@app.post("/action/remove-machine")
+async def action_remove_machine(request: Request):
+    d = await request.json(); slug = str(d.get("slug") or "")
+    f = MACHINES_DIR / f"{slug}.json"
+    if not re.fullmatch(r"[\w-]+", slug) or not f.exists(): return {"ok": False, "msg": "Unknown machine."}
+    f.unlink(); return {"ok": True, "msg": "Removed."}
 
 @app.post("/action/retention")
 async def action_retention(request: Request):

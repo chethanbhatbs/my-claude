@@ -1,0 +1,16 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>History</h3>
+<div class="caption mono" style="font-size:12px">{{ rel }}</div>
+{% if not git %}
+<div class="alert info" style="margin-top:12px">History needs <code>git</code>, which isn't installed.</div>
+{% elif not versions %}
+<div class="caption" style="margin-top:12px">No versions yet.</div>
+{% else %}
+<div class="caption" style="margin:8px 0 12px">My Claude saves a copy whenever this file changes, checked every hour while it runs and when you open this. Kept in <code>{{ store }}</code>.</div>
+{% for v in versions %}
+<details class="exp" {{ 'open' if loop.first }}><summary><span>{{ v.when }} <span class="caption" style="display:inline">· {{ v.ago }}</span></span>
+  <span class="mono" style="font-size:12px"><span style="color:var(--ok)">+{{ v.added }}</span> <span style="color:var(--err)">−{{ v.removed }}</span></span></summary>
+  <div class="exp-body"><pre class="diff">{% for r in v.rows %}<span class="dl {{ r.cls }}">{{ r.text }}</span>
+{% endfor %}</pre></div></details>
+{% endfor %}
+{% endif %}

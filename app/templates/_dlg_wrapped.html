@@ -1,0 +1,36 @@
+<button class="close" onclick="closeDialog()">×</button>
+<div class="row" style="gap:10px;margin-bottom:12px">
+  <h3 style="margin:0;flex:0 0 auto">Your year with Claude Code</h3>
+  <div class="seg" style="flex:0 0 auto">{% for y in years %}<a href="#" class="{{ 'active' if y == w.year }}" onclick="openDialog('/dialog/wrapped?year={{ y }}');return false">{{ y }}</a>{% endfor %}</div>
+</div>
+{% if w.empty %}
+<div class="caption">Nothing logged on this machine in {{ w.year }}.</div>
+{% else %}
+<div class="wrapped" id="wrappedCard">
+  <div class="wr-head"><span class="wr-brand">My Claude</span><span class="mono">{{ w.year }}</span></div>
+  <div class="wr-big"><div class="wr-n">{{ fmt_num(w.tokens) }}</div><div class="wr-l">tokens</div></div>
+  <div class="wr-grid">
+    <div><div class="wr-v">{{ w.conversations }}</div><div class="wr-l">conversations</div></div>
+    <div><div class="wr-v">{{ w.active_days }}</div><div class="wr-l">days active</div></div>
+    <div><div class="wr-v">{{ w.streak }}</div><div class="wr-l">day streak</div></div>
+    <div><div class="wr-v">{{ fmt_num(w.turns) }}</div><div class="wr-l">turns</div></div>
+    <div><div class="wr-v">{{ w.top_model }}</div><div class="wr-l">top model · {{ w.top_model_share }}%</div></div>
+    <div><div class="wr-v">{{ w.busiest_day }}</div><div class="wr-l">busiest day · {{ fmt_num(w.busiest_tokens) }}</div></div>
+    <div><div class="wr-v pv">{{ w.top_project or '–' }}</div><div class="wr-l">busiest project</div></div>
+    <div><div class="wr-v">{{ w.late_share }}%</div><div class="wr-l">after 10 PM</div></div>
+  </div>
+  {% if w.longest %}<div class="wr-foot"><span class="wr-l">Longest conversation</span><span class="pv">{{ w.longest }}</span><span class="mono">{{ w.longest_n }} messages</span></div>{% endif %}
+</div>
+<div class="caption" style="margin:10px 0">This machine only. API-price estimate for the year: ${{ '{:,.0f}'.format(w.cost) }} (not shown on the card). Turn on <strong>Hide names</strong> first if you'll share it.</div>
+<button class="btn primary" onclick="saveWrapped(this)">Download image</button>
+<script>
+async function saveWrapped(btn){
+  btn.classList.add('loading');
+  if(!window.html2canvas){ await new Promise((ok,bad)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload=ok; s.onerror=bad; document.head.appendChild(s); }).catch(()=>{}); }
+  if(!window.html2canvas){ btn.classList.remove('loading'); toast('Could not load the image library'); return; }
+  const c=await html2canvas(document.getElementById('wrappedCard'),{scale:2,backgroundColor:null});
+  const a=document.createElement('a'); a.download='claude-code-{{ w.year }}.png'; a.href=c.toDataURL('image/png'); a.click();
+  btn.classList.remove('loading');
+}
+</script>
+{% endif %}
