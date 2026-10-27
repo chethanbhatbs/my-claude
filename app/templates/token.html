@@ -129,7 +129,7 @@ async function loadLimits(fresh){
 </script>
 <hr class="divider">
 {% endif %}
-<h2 class="sub">Measured usage <span class="caption" style="display:inline;font-weight:400;margin:0">· {{ win if not (d_from or d_to) else 'custom range' }}{% if family != 'All' %} · {{ family }}{% endif %}</span></h2>
+<h2 class="sub" id="measured" style="scroll-margin-top:16px">Measured usage <span class="caption" style="display:inline;font-weight:400;margin:0">· {{ win if not (d_from or d_to) else 'custom range' }}{% if family != 'All' %} · {{ family }}{% endif %}</span></h2>
 <div class="metrics">
   {% for label, value in metrics1 %}<div class="metric"><div class="m-label">{{ label }}</div><div class="m-value">{{ value }}</div></div>{% endfor %}
 </div>

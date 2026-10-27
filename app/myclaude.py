@@ -802,9 +802,13 @@ def mcp_check(name, cfg):
     if not isinstance(cfg, dict): return ("unknown", "config not a dict")
     if "url" in cfg:
         try:
-            import urllib.request
+            import urllib.request, urllib.error
             req = urllib.request.Request(cfg["url"], method="GET")
             with urllib.request.urlopen(req, timeout=2) as resp: return ("ok", f"HTTP {resp.status}")
+        except urllib.error.HTTPError as e:
+            # MCP servers answer a bare GET with 401/403/405 (no auth, wrong method): the server is up.
+            if e.code < 500: return ("ok", f"HTTP {e.code}, server answered")
+            return ("fail", f"HTTP {e.code}")
         except Exception as e: return ("fail", f"{type(e).__name__}: {str(e)[:80]}")
     cmd = cfg.get("command")
     if cmd:
@@ -1889,7 +1893,7 @@ def render_overview(request):
     kpis = [
         {"label": "Skills", "value": str(len(skills)), "sub": fmt_size(sizes["Skills"]), "href": "/p/skills"},
         {"label": "Conversations", "value": str(len(convs)), "sub": f"{sum(c['n'] for c in convs)} messages", "href": "/p/history"},
-        {"label": "Tokens · 30d", "value": tokens30, "sub": cost30, "href": "/p/usage"},
+        {"label": "Tokens · 30d", "value": tokens30, "sub": cost30, "href": "/p/usage?win=30+days#measured"},
         {"label": "On disk", "value": fmt_size(total), "sub": f"{n_mcp} MCP · {len(plugins)} plugins", "href": "/p/mcp-plugins"},
     ]
     recent_convs = [{"preview": c["preview"], "project": c["project"].split("/")[-1] or c["project"],
@@ -2127,7 +2131,7 @@ def render_history(request):
     cache = load_cache()
     for r in cache: r["path_q"] = r["path"]
     return render(request, "history.html", "History", convs=shown, conv_total=len(convs),
-                  total_msgs=total_msgs, win=win, year=year, years=years, q=request.query_params.get("q", ""),
+                  total_msgs=total_msgs, win=win, year=year, years=years, q=request.query_params.get("q", ""), ret=retention_info(),
                   content_hits=content_hits, cache=cache, sub_n=sub_n, include_sub=include_sub,
                   arch_n=arch_n, show_arch=show_arch, search_capped=search_capped)
 
@@ -2440,6 +2444,32 @@ def dialog_settings(request: Request):
     return templates.TemplateResponse(request, "_dlg_settings.html", {"request": request, "theme": theme_of(request),
         "cfg": cfg, "auth": auth, "config_path": str(CONFIG_PATH), "config_json": json.dumps(cfg, indent=2)})
 
+# Claude Code deletes transcripts older than cleanupPeriodDays (default 30, minimum 1) in a
+# background sweep after a session starts: code.claude.com/docs/en/settings-reference#cleanupperioddays
+RETENTION_DEFAULT = 30
+def retention_info():
+    sp = CLAUDE / "settings.json"
+    try: d = json.loads(sp.read_text()) if sp.exists() else {}
+    except Exception: return {"days": None, "set": False, "error": "~/.claude/settings.json is not valid JSON, so it can't be read or changed here."}
+    v = d.get("cleanupPeriodDays") if isinstance(d, dict) else None
+    ok = isinstance(v, int) and not isinstance(v, bool)
+    return {"days": v if ok else RETENTION_DEFAULT, "set": ok, "error": None}
+
+def set_retention(days):
+    if isinstance(days, bool) or not isinstance(days, int) or days < 1:
+        raise ValueError("Enter a whole number of days, 1 or more.")
+    sp = CLAUDE / "settings.json"
+    d = json.loads(sp.read_text()) if sp.exists() else {}
+    if not isinstance(d, dict): raise ValueError("~/.claude/settings.json is not a JSON object.")
+    if sp.exists(): shutil.copy2(str(sp), str(sp) + ".my-claude.bak")  # own name: never clobber another tool's .bak
+    d["cleanupPeriodDays"] = days
+    sp.write_text(json.dumps(d, indent=2) + "\n")
+
+@app.get("/dialog/retention", response_class=HTMLResponse)
+def dialog_retention(request: Request):
+    return templates.TemplateResponse(request, "_dlg_retention.html", {"request": request, "theme": theme_of(request),
+        "ret": retention_info(), "default": RETENTION_DEFAULT})
+
 @app.get("/dialog/install", response_class=HTMLResponse)
 def dialog_install(request: Request):
     return templates.TemplateResponse(request, "_dlg_install.html", {"request": request, "theme": theme_of(request)})
@@ -2474,6 +2504,15 @@ async def action_save_claudemd(request: Request):
         cm.write_text(content)
         clear_cache()
         return {"ok": True, "msg": "Saved. Previous version backed up to CLAUDE.md.bak"}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
+@app.post("/action/retention")
+async def action_retention(request: Request):
+    d = await request.json()
+    try:
+        set_retention(d.get("days"))
+        return {"ok": True, "msg": f"Saved. Claude Code now keeps conversations for {d.get('days')} days. Previous file backed up to settings.json.my-claude.bak"}
     except Exception as e:
         return {"ok": False, "msg": str(e)}
 

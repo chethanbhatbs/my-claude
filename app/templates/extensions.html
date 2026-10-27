@@ -8,7 +8,7 @@
     <a class="{{ 'active' if tab=='plugins' }}" href="?tab=plugins">Plugins · {{ n_plug }}</a>
   </div>
   <input class="input" type="text" id="extSearch" value="{{ q }}" placeholder="Search by name" oninput="extFilter(this.value)" style="flex:1">
-  {% if tab == 'mcp' %}<button class="btn" style="flex:0 0 auto" id="healthBtn" onclick="checkHealth()">Check health</button>{% endif %}
+  {% if tab == 'mcp' %}<span class="mono" id="mcpCount" role="status" style="flex:0 0 auto;color:var(--dim);font-size:13px"></span><button class="btn" style="flex:0 0 auto" id="healthBtn" onclick="checkHealth()">Check health</button>{% endif %}
 </div>
 
 {% if tab == 'mcp' %}
@@ -36,9 +36,12 @@ async function checkHealth(){
       document.querySelectorAll('.mcp-dot[data-key="'+CSS.escape(r.key)+'"]').forEach(d=>{ d.className='mcp-dot '+r.status; });
       document.querySelectorAll('.mcp-status-text[data-status="'+CSS.escape(r.key)+'"]').forEach(t=>{ t.textContent=r.status+' · '+r.detail; });
     });
+    const cnt=document.getElementById('mcpCount');
+    if(cnt) cnt.textContent=res.filter(r=>r.status==='ok').length+' of '+res.length+' reachable';
   }catch(e){ toast('Health check failed'); }
   if(btn){ btn.textContent='Re-check health'; btn.classList.remove('disabled'); }
 }
+checkHealth();
 </script>
 
 {% else %}

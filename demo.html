@@ -183,7 +183,7 @@
 <body class="dark">
 <div class="demobar">
   <div class="row"><span class="tag">Live demo</span><span class="msg">Interactive preview</span></div>
-  <div class="row"><code>curl -fsSL https://my-claude.pages.dev/install.sh | bash</code><button class="tbtn" id="themeBtn" onclick="toggleTheme()">Light</button><a class="home" href="./">← back</a></div>
+  <div class="row"><code>curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash</code><button class="tbtn" id="themeBtn" onclick="toggleTheme()">Light</button><a class="home" href="./">← back</a></div>
 </div>
 <div class="dnote" id="dnote">
   <span><b>Sample data.</b> This is a preview with fictional data. The real thing runs on your machine and reads your own ~/.claude.</span>

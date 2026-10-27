@@ -314,7 +314,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--bg)}
           Install on macOS. Paste this into your Terminal:
         </div>
         <div class="terminal" role="group" aria-label="Install command">
-          <div class="cmd-scroll"><code id="install-cmd"><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
+          <div class="cmd-scroll"><code id="install-cmd"><span class="prompt">$ </span>curl <span class="flag">-fsSL --retry 5 --retry-all-errors</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
           <button type="button" class="copy-btn" id="copy-hero" aria-label="Copy install command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
             <span>Copy</span>
@@ -476,7 +476,7 @@ history.jsonl   settings.json
       <p>Free and open source. One command, about twenty seconds, entirely on your machine.</p>
       <div class="cmd-row" style="margin-top:28px">
         <div class="terminal" role="group" aria-label="Install command">
-          <div class="cmd-scroll"><code><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
+          <div class="cmd-scroll"><code><span class="prompt">$ </span>curl <span class="flag">-fsSL --retry 5 --retry-all-errors</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
           <button type="button" class="copy-btn" id="copy-cta" aria-label="Copy install command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
             <span>Copy</span>
@@ -525,7 +525,7 @@ history.jsonl   settings.json
       <li><span class="step-badge">1</span><div class="step-text">Open your <b>Terminal</b>. <em>Press <span class="kbd">&#8984; Space</span>, type "Terminal", press Enter.</em></div></li>
       <li><span class="step-badge">2</span><div class="step-text">Paste this command and press <b>Enter</b>:
         <div class="terminal" role="group" aria-label="Install command">
-          <div class="cmd-scroll"><code><span class="prompt">$ </span>curl <span class="flag">-fsSL</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
+          <div class="cmd-scroll"><code><span class="prompt">$ </span>curl <span class="flag">-fsSL --retry 5 --retry-all-errors</span> <span class="url">https://my-claude.pages.dev/install.sh</span> | bash</code></div>
           <button type="button" class="copy-btn" id="copy-modal" aria-label="Copy install command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
             <span>Copy</span>
@@ -566,7 +566,7 @@ history.jsonl   settings.json
 </div>
 
 <script>
-const CMD = 'curl -fsSL https://my-claude.pages.dev/install.sh | bash';
+const CMD = 'curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash';
 
 const toast = document.getElementById('toast');
 let toastTimer = null;

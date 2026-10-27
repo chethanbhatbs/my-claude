@@ -26,6 +26,7 @@
     <input type="checkbox" {{ 'checked' if show_arch }} onchange="histToggle('arch', this.checked)"><span class="track"></span>Archived ({{ arch_n }})</label>
   <label class="toggle" style="flex:0 0 auto" title="Sub-agent and workflow transcripts spawned inside your conversations">
     <input type="checkbox" {{ 'checked' if include_sub }} onchange="histToggle('sub', this.checked)"><span class="track"></span>Sub-agents ({{ sub_n }})</label>
+  <button class="btn" style="flex:0 0 auto;margin-left:auto" onclick="openDialog('/dialog/retention')">{% if ret.error %}Keep conversations: unreadable{% else %}Keep conversations: {{ '10 years' if ret.days == 3650 else (ret.days|string + ' days') }}{% endif %}</button>
 </div>
 <div class="caption"><strong>{{ conv_total }}</strong> conversations · {{ total_msgs }} messages{% if content_hits is not none %} · {{ content_hits }} with text matches{% endif %}{% if sub_n and not include_sub and content_hits is none %} · <span title="Sub-agent and workflow transcripts spawned inside your conversations, not separate chats.">+{{ sub_n }} sub-agent / workflow transcripts hidden</span>{% endif %}{% if not show_arch and arch_n %} · {{ arch_n }} archived hidden{% endif %}</div>
 {% if search_capped %}<div class="alert info" style="margin:8px 0 0">Full-text search stopped at its 500-match cap, so there may be more matches than listed. Narrow the query to see the rest.</div>{% endif %}

@@ -429,3 +429,42 @@ def test_only_typed_messages_are_labelled_user():
     assert r({"type": "user"}, "<bash-stdout>ok</bash-stdout>") == "output"
     assert r({"type": "user"}, "[Request interrupted by user]") == "system"
     assert r({"type": "user", "entrypoint": "sdk-ts"}, "Condense the tool payload") == "script"
+
+
+def test_retention_reads_default_and_saves_only_that_key(tmp_path, monkeypatch):
+    """The History "Keep conversations" setting writes cleanupPeriodDays into ~/.claude/settings.json.
+    It must leave every other key alone, back the file up, and refuse values Claude Code rejects (0)."""
+    monkeypatch.setattr(mc, "CLAUDE", tmp_path)
+    assert mc.retention_info() == {"days": 30, "set": False, "error": None}
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps({"model": "opus", "permissions": {"allow": ["Bash(ls)"]}}))
+    mc.set_retention(3650)
+    saved = json.loads(sp.read_text())
+    assert saved == {"model": "opus", "permissions": {"allow": ["Bash(ls)"]}, "cleanupPeriodDays": 3650}
+    assert json.loads((tmp_path / "settings.json.my-claude.bak").read_text()) == {"model": "opus", "permissions": {"allow": ["Bash(ls)"]}}
+    assert mc.retention_info() == {"days": 3650, "set": True, "error": None}
+    for bad in (0, -5, "90", 1.5, True, None):
+        with pytest.raises(ValueError):
+            mc.set_retention(bad)
+    assert json.loads(sp.read_text())["cleanupPeriodDays"] == 3650
+    sp.write_text("{not json")
+    assert mc.retention_info()["error"]
+
+
+def test_overview_tokens_card_opens_usage_on_the_same_30_day_window():
+    """The card says 30d; clicking it must land on Usage with 30 days picked, at Measured usage."""
+    src = Path(mc.__file__).read_text()
+    assert '"label": "Tokens · 30d", "value": tokens30, "sub": cost30, "href": "/p/usage?win=30+days#measured"' in src
+    assert 'id="measured"' in (Path(mc.__file__).parent / "templates" / "token.html").read_text()
+
+
+def test_mcp_check_counts_a_server_that_answers_4xx_as_reachable(monkeypatch):
+    """A remote MCP server answers a plain GET with 401/403/405. That server is up; only 5xx and
+    timeouts mean it is down. Counting 4xx as down made "2 of 10 reachable" when 5 answered."""
+    import urllib.request, urllib.error
+    def fake(code):
+        def _open(req, timeout=0): raise urllib.error.HTTPError(req.full_url, code, "x", {}, None)
+        return _open
+    for code, want in ((401, "ok"), (403, "ok"), (405, "ok"), (502, "fail"), (503, "fail")):
+        monkeypatch.setattr(urllib.request, "urlopen", fake(code))
+        assert mc.mcp_check("s", {"url": "https://example.invalid/mcp"})[0] == want, code

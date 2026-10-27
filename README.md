@@ -11,7 +11,7 @@ actually read.
 ## Install (one command)
 
 ```bash
-curl -fsSL https://my-claude.pages.dev/install.sh | bash
+curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash
 ```
 
 Paste that into your terminal. It downloads the app, sets up an isolated Python environment

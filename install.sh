@@ -16,7 +16,11 @@ command -v unzip   >/dev/null 2>&1 || { echo "unzip is required."; exit 1; }
 
 say "Downloading My Claude…"
 TMP="$(mktemp -d)"
-curl -fsSL "$BASE/my-claude-dashboard.zip" -o "$TMP/app.zip"
+# Some networks reset connections to *.pages.dev now and then, so retry, then use the GitHub Pages copy.
+FALLBACK="https://chethanbhatbs.github.io/my-claude"
+fetch(){ curl -fsSL --retry 5 --retry-all-errors --retry-delay 1 "$1/my-claude-dashboard.zip" -o "$TMP/app.zip"; }
+fetch "$BASE" || { [ "$BASE" != "$FALLBACK" ] && say "Retrying from GitHub Pages…" && fetch "$FALLBACK"; } \
+  || { echo "Download failed. Check your connection and re-run."; rm -rf "$TMP"; exit 1; }
 unzip -oq "$TMP/app.zip" -d "$TMP"
 rm -rf "$DIR"
 mv "$TMP/my-claude-dashboard" "$DIR"

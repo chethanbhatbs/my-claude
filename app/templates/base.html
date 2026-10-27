@@ -183,7 +183,7 @@ async function navigate(url, push=true, keepScroll=false){
     document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('active', a.getAttribute('href')===path));
     runScripts(main); highlightMain();
     if(window._refocusSearch){ window._refocusSearch=false; const si=main.querySelector('#skf input[name=q]'); if(si){ si.focus(); const v=si.value; try{ si.setSelectionRange(v.length, v.length); }catch(_){} } }
-    else if(!keepScroll){ window.scrollTo(0,0); }
+    else if(!keepScroll){ const h=new URL(url, location.origin).hash, t=h && main.querySelector(h); if(t) t.scrollIntoView({block:'start'}); else window.scrollTo(0,0); }
     if(push) history.pushState({}, '', url);
   }catch(e){ location.href=url; }
   finally{ main.classList.remove('nav-busy'); doneProg(); }

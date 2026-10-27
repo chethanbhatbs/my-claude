@@ -316,11 +316,13 @@ body.dark .mono { color: inherit; }
 .alert.err { background: var(--err-bg); color: var(--err); }
 
 /* ---------- inputs ---------- */
-.input, input[type=text], input[type=number], select, textarea {
+.input, input[type=text], input[type=number], input[type=date], select, textarea {
   width: 100%; padding: 9px 13px; font-size: 13.5px; border-radius: var(--radius); border: 1px solid var(--line);
   background: var(--surface); color: var(--text); font-family: inherit; transition: border-color .13s; }
 .input:focus, input:focus, select:focus { border-color: var(--accent); outline: none; }
 .input::placeholder { color: var(--faint); }
+input[type=date] { color-scheme: light; }
+body.dark input[type=date] { color-scheme: dark; }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .row > * { flex: 1; }
 .row .grow2 { flex: 2; }
