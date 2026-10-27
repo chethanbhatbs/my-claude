@@ -54,7 +54,7 @@
 {% for r in cache %}
 <div class="card">
   <div class="c-head">
-    <div class="c-title">{{ r.name }}{% if r.items %} <span class="caption" style="display:inline;font-weight:400">· {{ r.items }} items</span>{% endif %}</div>
+    <div class="c-title">{{ r.name }}{% if r['items'] %} <span class="caption" style="display:inline;font-weight:400">· {{ r['items'] }} items</span>{% endif %}</div>
     <div class="c-size">{{ r.size_human }}</div>
   </div>
   <div class="c-btns">

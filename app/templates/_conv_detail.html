@@ -34,6 +34,18 @@ function resumeHere(btn){
   act('claude',{path:'{{ project_real }}',resume:'{{ session }}',term:(sel?sel.value:'')});
 }
 </script>
+{% if subs and subs.rows %}
+<details class="exp" style="margin:0 0 12px"><summary><span>Sub-agents ({{ subs.rows|length }}) · {{ fmt_num(subs.tokens) }} tokens</span></summary><div class="exp-body">
+  <table class="data sub-tl">
+    <thead><tr><th>Started</th><th style="width:50%">When it ran</th><th class="num">Took</th><th class="num">Tokens</th><th>Model</th></tr></thead>
+    <tbody>{% for g in subs.groups %}<tr><td colspan="5" style="font-weight:600;font-size:12px">{{ g.label }} · {{ fmt_num(g.tokens) }} tokens</td></tr>
+    {% for r in g.runs %}<tr title="{{ r.kind }} {{ r.id }}">
+      <td class="mono" style="font-size:12px">{{ r.start_h }}</td>
+      <td><div class="tl-track"><div class="tl-bar" style="left:{{ r.left }}%;width:{{ r.width }}%"></div></div></td>
+      <td class="num" style="white-space:nowrap">{{ r.dur_h }}</td><td class="num">{{ fmt_num(r.tokens) }}</td><td style="white-space:nowrap">{{ r.model }}</td></tr>{% endfor %}{% endfor %}</tbody>
+  </table>
+</div></details>
+{% endif %}
 {% if capped %}<div class="alert info" style="margin:0 0 12px">Showing the first {{ cap }} messages — this transcript is longer. Use <strong>Export .md</strong> for the whole thing.</div>{% endif %}
 {% if not messages %}
 <div class="alert info">No readable messages (may be empty, tool-only, or corrupted).</div>
