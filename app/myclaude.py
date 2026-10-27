@@ -1002,6 +1002,233 @@ def load_config_detail():
     return {"allow": perms.get("allow") or [], "deny": perms.get("deny") or [], "ask": perms.get("ask") or [],
             "hook_events": hook_events, "claude_md": claude_md, "settings_keys": settings_keys}
 
+# ---- per-file hook runs + MCP tool names/calls, memoised on disk by (mtime, size) like usage ----
+SIG_CACHE_FILE = SKILL_DIR / ".mc_signals_cache.json"
+_SIG_V = 1
+_sig = None; _sig_dirty = False; _sig_lock = threading.Lock()
+_CALL_RE = re.compile(r'"type":"tool_use","id":"[^"]*","name":"mcp__([^"_]+(?:_[^"_]+)*)__')
+
+def _scan_signals(path):
+    hooks = {}; calls = {}; tools = []
+    with open(path, "r", errors="ignore") as f:
+        for line in f:
+            if "mcp__" in line:
+                if '"deferred_tools_delta"' in line:
+                    try: tools += [n for n in (json.loads(line).get("attachment") or {}).get("addedNames") or [] if n.startswith("mcp__")]
+                    except Exception: pass
+                for m in _CALL_RE.finditer(line): calls[m.group(1)] = calls.get(m.group(1), 0) + 1
+            if '"hook_' in line and '"command"' in line:
+                try: d = json.loads(line)
+                except Exception: continue
+                a = d.get("attachment")
+                if not isinstance(a, dict) or not str(a.get("type", "")).startswith("hook_") or not a.get("command"): continue
+                h = hooks.setdefault(a["command"], {"runs": 0, "fails": 0, "last": 0, "ms": 0, "n_ms": 0, "event": a.get("hookEvent") or ""})
+                h["runs"] += 1; h["last"] = max(h["last"], ts_epoch(d.get("timestamp")) or 0)
+                if str(a.get("exitCode", "0")) not in ("0", "None") or a["type"] != "hook_success": h["fails"] += 1
+                if isinstance(a.get("durationMs"), (int, float)): h["ms"] += a["durationMs"]; h["n_ms"] += 1
+    return {"hooks": hooks, "calls": calls, "tools": sorted(set(tools))}
+
+def file_signals(path):
+    global _sig, _sig_dirty
+    with _sig_lock:
+        if _sig is None:
+            try: _sig = json.loads(SIG_CACHE_FILE.read_text())
+            except Exception: _sig = {}
+            if _sig.get("_v") != _SIG_V: _sig = {"_v": _SIG_V}
+    st = os.stat(path); c = _sig.get(path)
+    if c and c["mt"] == st.st_mtime and c["sz"] == st.st_size: return c["v"]
+    v = _scan_signals(path)
+    with _sig_lock: _sig[path] = {"mt": st.st_mtime, "sz": st.st_size, "v": v}; _sig_dirty = True
+    return v
+
+def _sig_flush():
+    global _sig_dirty
+    with _sig_lock:
+        if _sig_dirty and _sig is not None:
+            try: SIG_CACHE_FILE.write_text(json.dumps(_sig)); _sig_dirty = False
+            except Exception: pass
+
+def _recent_transcripts(days):
+    cutoff = time.time() - days * 86400; pdir = CLAUDE / "projects"; out = []
+    if not pdir.exists(): return out
+    for p in pdir.rglob("*.jsonl"):
+        try:
+            mt = p.stat().st_mtime
+            if mt >= cutoff: out.append((mt, p))
+        except OSError: pass
+    return [p for _, p in sorted(out, key=lambda x: -x[0])]
+
+# ---------- effective settings + hooks (precedence from code.claude.com/docs/en/settings#settings-precedence) ----------
+def settings_layers(project=None):
+    """Settings files lowest precedence first: user, shared project, project local, managed."""
+    layers = [("user", CLAUDE / "settings.json")]
+    if project and Path(project) != HOME:
+        layers += [("project", Path(project) / ".claude" / "settings.json"), ("local", Path(project) / ".claude" / "settings.local.json")]
+    elif project:
+        layers += [("local", CLAUDE / "settings.local.json")]
+    layers.append(("managed", MANAGED_SETTINGS))
+    out = []
+    for name, path in layers:
+        try: d = json.loads(path.read_text())
+        except FileNotFoundError: continue
+        except Exception: out.append({"level": name, "path": str(path).replace(str(HOME), "~"), "data": {}, "error": "not valid JSON"}); continue
+        if isinstance(d, dict): out.append({"level": name, "path": str(path).replace(str(HOME), "~"), "data": d, "error": None})
+    return out
+
+def _flatten(d, prefix=""):
+    for k, v in d.items():
+        key = f"{prefix}.{k}" if prefix else k
+        if isinstance(v, dict) and v and k not in ("hooks", "env"): yield from _flatten(v, key)
+        else: yield key, v
+
+def effective_settings(project=None):
+    """Each key with the value Claude Code uses and the file it came from. Scalars: the highest file
+    wins. Lists: combined across files (with the files listed). A few keys have their own rules;
+    the docs list them, this view does not model them."""
+    eff = {}
+    for layer in settings_layers(project):
+        for key, val in _flatten(layer["data"]):
+            if key == "hooks": continue
+            if isinstance(val, list) and isinstance((eff.get(key) or {}).get("value"), list):
+                cur = eff[key]; cur["value"] = cur["value"] + [x for x in val if x not in cur["value"]]
+                cur["from"].append(layer["path"]); cur["overrides"] = []
+            else:
+                prev = eff.get(key)
+                eff[key] = {"key": key, "value": val, "from": [layer["path"]], "overrides": (prev["from"] if prev else []),
+                            "list": isinstance(val, list)}
+    rows = sorted(eff.values(), key=lambda r: r["key"])
+    for r in rows: r["shown"] = json.dumps(redact_secrets(r["value"]) if isinstance(r["value"], dict) else r["value"])[:300]
+    return rows
+
+_PATH_RE = re.compile(r"""(?:~|\$HOME|/)[\w./@-]+\.(?:sh|py|js|mjs|ts|rb|pl)\b""")
+
+def _hook_definitions(project=None):
+    out = []
+    for layer in settings_layers(project):
+        hooks = layer["data"].get("hooks") or {}
+        if not isinstance(hooks, dict): continue
+        for event, groups in hooks.items():
+            for g in groups or []:
+                for h in (g.get("hooks") or []) if isinstance(g, dict) else []:
+                    cmd = h.get("command") or h.get("url") or h.get("prompt") or ""
+                    out.append({"event": event, "matcher": g.get("matcher") or "", "type": h.get("type") or "command",
+                                "command": cmd, "source": layer["path"]})
+    return out
+
+@ttl_cache(900)
+def hook_runs(days=30):
+    """Hook runs recorded in transcripts (hook_* attachments): count, failures, last run, per command.
+    A file's runs are counted when the file was written in the window; last run comes from the records."""
+    runs = {}
+    for jf in _recent_transcripts(days):
+        try: hs = file_signals(str(jf))["hooks"]
+        except OSError: continue
+        for cmd, h in hs.items():
+            r = runs.setdefault(cmd, {"runs": 0, "fails": 0, "last": 0, "ms": [], "event": h["event"]})
+            r["runs"] += h["runs"]; r["fails"] += h["fails"]; r["last"] = max(r["last"], h["last"])
+            if h["n_ms"]: r["ms"] += [h["ms"] / h["n_ms"]] * h["n_ms"]
+    _sig_flush()
+    return runs
+
+def hook_audit(project=None):
+    runs = hook_runs(); defs = _hook_definitions(project); seen = set(); rows = []
+    for h in defs:
+        r = runs.get(h["command"]) or {}
+        missing = [p for p in _PATH_RE.findall(h["command"]) if "${" not in p
+                   and not Path(p.replace("$HOME", str(HOME)).replace("~", str(HOME), 1)).exists()]
+        rows.append(dict(h, runs=r.get("runs", 0), fails=r.get("fails", 0), last_h=fmt_rel(r["last"]) if r.get("last") else "",
+                         avg_ms=int(sum(r["ms"]) / len(r["ms"])) if r.get("ms") else None, missing=missing))
+        seen.add(h["command"])
+    # hooks that ran but are not in these settings files: plugins and other projects
+    for cmd, r in sorted(runs.items(), key=lambda x: -x[1]["last"]):
+        if cmd in seen: continue
+        rows.append({"event": r["event"], "matcher": "", "type": "command", "command": cmd,
+                     "source": "plugin" if "CLAUDE_PLUGIN_ROOT" in cmd else "another project or plugin",
+                     "runs": r["runs"], "fails": r["fails"], "last_h": fmt_rel(r["last"]), "missing": [],
+                     "avg_ms": int(sum(r["ms"]) / len(r["ms"])) if r["ms"] else None})
+    return rows
+
+# ---------- MCP: tools per server, calls, per-project on/off (code.claude.com/docs/en/mcp#disable-a-server-without-removing-it) ----------
+@ttl_cache(900)
+def mcp_tool_stats(days=30):
+    """Tool names per server from the 40 newest transcripts' deferred-tool lists, and calls per server."""
+    tools = {}; calls = {}
+    for i, jf in enumerate(_recent_transcripts(days)):
+        try: sg = file_signals(str(jf))
+        except OSError: continue
+        for srv, n in sg["calls"].items(): calls[srv] = calls.get(srv, 0) + n
+        if i < 40:
+            for n in sg["tools"]: tools.setdefault(n.split("__")[1], set()).add(n)
+    _sig_flush()
+    return {"tools": {k: sorted(v) for k, v in tools.items()}, "calls": calls}
+
+def _mcp_key(name):
+    """Tool names use the server name with non-word characters as underscores."""
+    return re.sub(r"[^\w-]", "_", name)
+
+def mcp_projects():
+    try: d = json.loads((HOME / ".claude.json").read_text())
+    except Exception: return []
+    return sorted((d.get("projects") or {}).keys())
+
+def mcp_disabled(project):
+    try: d = json.loads((HOME / ".claude.json").read_text())
+    except Exception: return []
+    return ((d.get("projects") or {}).get(project) or {}).get("disabledMcpServers") or []
+
+def set_mcp_disabled(project, server, off):
+    """Edit only projects[project].disabledMcpServers in ~/.claude.json, the list /mcp writes. Re-read
+    right before writing (Claude Code rewrites this file too), back it up, replace atomically."""
+    path = HOME / ".claude.json"
+    d = json.loads(path.read_text())
+    projects = d.get("projects") or {}
+    if project not in projects: raise ValueError("Unknown project.")
+    lst = list(projects[project].get("disabledMcpServers") or [])
+    if off and server not in lst: lst.append(server)
+    if not off: lst = [x for x in lst if x != server]
+    projects[project]["disabledMcpServers"] = lst
+    shutil.copy2(str(path), str(path) + ".my-claude.bak")
+    tmp = path.with_name(".claude.json.my-claude.tmp"); tmp.write_text(json.dumps(d, indent=2)); tmp.replace(path)
+    return lst
+
+# ---------- disk ----------
+CLAUDE_DIR_NOTES = {
+    "projects": ("Conversation transcripts", None), "debug": ("Debug logs Claude Code writes; never cleaned up automatically", "debug"),
+    "file-history": ("Copies of files before Claude edited them, for undo", None), "shell-snapshots": ("Shell environment snapshots", None),
+    "paste-cache": ("Large pastes", None), "telemetry": ("Telemetry Claude Code has not sent yet", None),
+    "plugins": ("Installed plugins", None), "skills": ("Your skills", None), "todos": ("Task lists", None),
+    "statsig": ("Feature-flag cache", None), "image-cache": ("Pasted images", None)}
+
+@ttl_cache(900)
+def disk_report():
+    rows = []
+    if not CLAUDE.exists(): return rows
+    for p in CLAUDE.iterdir():
+        if not p.is_dir(): continue
+        size = files = 0
+        for root, _, fs in os.walk(p):
+            for f in fs:
+                try: size += os.lstat(os.path.join(root, f)).st_size; files += 1
+                except OSError: pass
+        note, clean = CLAUDE_DIR_NOTES.get(p.name, ("", None))
+        rows.append({"name": p.name, "size": size, "size_h": fmt_size(size), "files": files, "note": note, "clean": clean})
+    rows.sort(key=lambda r: -r["size"])
+    return rows
+
+def clean_debug(older_than_days=7):
+    """Move debug logs older than N days to the macOS Trash (recoverable), never delete outright."""
+    d = CLAUDE / "debug"; trash = HOME / ".Trash" / f"claude-debug-{datetime.now():%Y%m%d-%H%M%S}"
+    if not d.exists(): return {"moved": 0, "bytes": 0, "to": ""}
+    cutoff = time.time() - older_than_days * 86400; moved = nbytes = 0
+    for f in d.iterdir():
+        try:
+            st = f.lstat()
+            if st.st_mtime >= cutoff or not f.is_file(): continue
+            trash.mkdir(parents=True, exist_ok=True); shutil.move(str(f), str(trash / f.name)); moved += 1; nbytes += st.st_size
+        except OSError: pass
+    for k in [k for k in list(_CACHE) if k[0] == "disk_report"]: _CACHE.pop(k, None)
+    return {"moved": moved, "bytes": nbytes, "to": str(trash).replace(str(HOME), "~") if moved else ""}
+
 @ttl_cache(900)
 def load_connectors():
     """All MCP servers from every config source: global (settings.json / .claude.json)
@@ -1859,6 +2086,7 @@ def warm_caches():
         archived_sessions(); archived_slash_commands(); skill_usage(); token_insights()
         aggregate_usage(); usage_stats(); load_cache(); load_memory()
         available_terminals(); gh_auth_status(); build_search_index()
+        hook_runs(); mcp_tool_stats(); disk_report()
     except Exception: pass
 
 def rebuild_caches():
@@ -1874,7 +2102,8 @@ def rebuild_caches():
     for fn, args in ((conversation_index, ()), (conversation_index, (True,)),
                      (load_skills, ()), (archived_sessions, ()), (archived_slash_commands, ()),
                      (skill_usage, ()), (aggregate_usage, ()), (usage_stats, ()), (token_insights, ()),
-                     (load_cache, ()), (load_memory, ()), (_sizes, ())):
+                     (load_cache, ()), (load_memory, ()), (_sizes, ()),
+                     (hook_runs, ()), (mcp_tool_stats, ()), (disk_report, ())):
         try: refresh_entry(fn, *args)
         except Exception: pass
     try: build_search_index()
@@ -1979,20 +2208,28 @@ def _mcp_groups():
 def render_extensions(request):
     tab = request.query_params.get("tab", "mcp")
     q = request.query_params.get("q", "").lower()
-    plugins = load_plugins(); groups = _mcp_groups()
+    plugins = load_plugins(); groups = _mcp_groups(); stats = mcp_tool_stats()
+    proj = request.query_params.get("proj") or str(HOME)
+    disabled = set(mcp_disabled(proj)); projects = [p for p in mcp_projects() if os.path.isdir(p)]
+    if str(HOME) in projects: projects.remove(str(HOME))
+    projects = [str(HOME)] + projects
     conn_shown = []
     for name, g in groups.items():
         if q and q not in name.lower(): continue
         has_global = "global" in g["scopes"]
         nproj = len([s for s in g["scopes"] if s != "global"])
         parts = (["global"] if has_global else []) + ([f"{nproj} project" + ("s" if nproj != 1 else "")] if nproj else [])
+        names = stats["tools"].get(_mcp_key(name)) or []
         conn_shown.append({"name": name, "scope_label": " · ".join(parts) or g["scopes"][0],
                            "scopes": g["scopes"], "source": g["source"], "key": name,
-                           "config": json.dumps(g["config"], indent=2)})
+                           "config": json.dumps(g["config"], indent=2), "n_tools": len(names) if names else None,
+                           "name_tokens": sum(len(n) for n in names) // 4 if names else None,
+                           "calls": stats["calls"].get(_mcp_key(name), 0), "off": name in disabled})
     plug_shown = [{"name": p["name"], "info": json.dumps(p["info"], indent=2)}
                   for p in plugins if not q or q in p["name"].lower()]
     return render(request, "extensions.html", "MCP & Plugins", tab=tab, q=request.query_params.get("q", ""),
-                  connectors=conn_shown, plugins=plug_shown, n_conn=len(groups), n_plug=len(plugins))
+                  connectors=conn_shown, plugins=plug_shown, n_conn=len(groups), n_plug=len(plugins),
+                  proj=proj, projects=projects, home=str(HOME))
 
 @app.get("/api/mcp-health")
 def api_mcp_health():
@@ -2218,9 +2455,20 @@ def api_conversation(request: Request, path: str):
         "capped": len(messages) >= MSG_CAP, "cap": MSG_CAP, "tags": lab.get("tags") or [], "custom_name": lab.get("name") or "",
         "compactions": [i for i, m in enumerate(messages) if m["role"] == "compact"], "subs": _sub_rows(p.stem)})
 
+def _project_choices():
+    """Folders Claude Code has run in that still exist, home first."""
+    dirs = [d for d in set(mcp_projects()) | set(known_project_dirs()) if os.path.isdir(d)]
+    return [str(HOME)] + sorted(d for d in dirs if d != str(HOME))
+
 def render_system(request):
     tab = request.query_params.get("tab", "config")
-    return render(request, "system.html", "System", tab=tab, cfg=load_config_detail(), mem=load_memory())
+    proj = request.query_params.get("proj") or str(HOME)
+    ctx = {"tab": tab, "cfg": load_config_detail(), "mem": load_memory(), "proj": proj,
+           "projects": _project_choices(), "home": str(HOME)}
+    if tab == "settings": ctx["layers"] = settings_layers(proj); ctx["eff"] = effective_settings(proj)
+    if tab == "hooks": ctx["hooks"] = hook_audit(proj)
+    if tab == "disk": ctx["disk"] = disk_report()
+    return render(request, "system.html", "System", **ctx)
 
 @app.get("/api/memory", response_class=PlainTextResponse)
 def api_memory(path: str):
@@ -2695,6 +2943,17 @@ def dialog_label(request: Request, path: str):
         "session": sid, "name": lab.get("name") or "", "tags": " ".join("#" + t for t in lab.get("tags") or []),
         "claude_title": _conv_meta(path).get("title") or "", "path": path, "store": str(LABELS_PATH).replace(str(HOME), "~")})
 
+@app.get("/dialog/clean-debug", response_class=HTMLResponse)
+def dialog_clean_debug(request: Request):
+    d = next((r for r in disk_report() if r["name"] == "debug"), {"size_h": "0 B", "files": 0})
+    return templates.TemplateResponse(request, "_dlg_clean_debug.html", {"request": request, "theme": theme_of(request), "d": d})
+
+@app.get("/dialog/mcp-toggle", response_class=HTMLResponse)
+def dialog_mcp_toggle(request: Request, server: str, project: str, off: int = 1):
+    return templates.TemplateResponse(request, "_dlg_mcp_toggle.html", {"request": request, "theme": theme_of(request),
+        "server": server, "project": project, "off": bool(off), "now": mcp_disabled(project),
+        "proj_h": "~ (home)" if project == str(HOME) else project.replace(str(HOME), "~")})
+
 @app.get("/dialog/install", response_class=HTMLResponse)
 def dialog_install(request: Request):
     return templates.TemplateResponse(request, "_dlg_install.html", {"request": request, "theme": theme_of(request)})
@@ -2749,6 +3008,25 @@ async def action_limit_alerts(request: Request):
     d = await request.json(); on = bool(d.get("on"))
     set_data_setting("limit_alerts", on)
     return {"ok": True, "msg": "Alerts on: checked every 10 minutes while My Claude runs." if on else "Alerts off."}
+
+@app.post("/action/mcp-toggle")
+async def action_mcp_toggle(request: Request):
+    d = await request.json()
+    try:
+        lst = set_mcp_disabled(d.get("project"), d.get("server"), bool(d.get("off")))
+        return {"ok": True, "msg": ("Off" if d.get("off") else "On") + " for this project from the next Claude Code session. ~/.claude.json backed up to ~/.claude.json.my-claude.bak", "disabled": lst}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
+@app.post("/action/clean-debug")
+async def action_clean_debug(request: Request):
+    d = await request.json()
+    try:
+        r = clean_debug(int(d.get("days", 7)))
+        msg = f"Moved {r['moved']} debug logs ({fmt_size(r['bytes'])}) to {r['to']}." if r["moved"] else "No debug logs older than that."
+        return {"ok": True, "msg": msg}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
 
 @app.post("/action/retention")
 async def action_retention(request: Request):

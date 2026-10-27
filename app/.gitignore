@@ -8,3 +8,4 @@ config.json
 .mc_search.db
 .mc_search.db-wal
 .mc_search.db-shm
+.mc_signals_cache.json

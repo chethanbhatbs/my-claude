@@ -4,10 +4,58 @@
 
 <div class="seg" style="margin-bottom:16px">
   <a class="{{ 'active' if tab=='config' }}" href="?tab=config">Config</a>
+  <a class="{{ 'active' if tab=='settings' }}" href="?tab=settings">Effective settings</a>
+  <a class="{{ 'active' if tab=='hooks' }}" href="?tab=hooks">Hooks</a>
+  <a class="{{ 'active' if tab=='disk' }}" href="?tab=disk">Disk</a>
   <a class="{{ 'active' if tab=='memory' }}" href="?tab=memory">Memory · {{ mem|length }}</a>
 </div>
 
-{% if tab == 'memory' %}
+{% if tab in ['settings', 'hooks'] %}
+<form method="get" class="row" style="margin-bottom:12px;gap:8px">
+  <input type="hidden" name="tab" value="{{ tab }}">
+  <label class="fld" for="projSel" style="margin:0;flex:0 0 auto">Project</label>
+  <select class="input" id="projSel" name="proj" style="flex:0 1 auto;width:auto;max-width:100%" onchange="this.form.requestSubmit()">
+    {% for p in projects %}<option value="{{ p }}" {{ 'selected' if p == proj }}>{{ '~ (home)' if p == home else p.replace(home, '~') }}</option>{% endfor %}
+  </select>
+</form>
+{% endif %}
+
+{% if tab == 'settings' %}
+<div class="caption">What Claude Code uses in this project. The highest file wins (managed, then project local, then project, then user); lists are combined across files. <a href="https://code.claude.com/docs/en/settings#settings-precedence" target="_blank" rel="noopener">A few keys follow their own rules.</a></div>
+<div class="caption mono" style="margin:6px 0 12px;font-size:12px">{% for l in layers %}{{ l.level }}: {{ l.path }}{% if l.error %} ({{ l.error }}){% endif %}{% if not loop.last %} · {% endif %}{% else %}No settings files found.{% endfor %}</div>
+<table class="data">
+  <thead><tr><th>Key</th><th>Value</th><th>From</th></tr></thead>
+  <tbody>{% for r in eff %}<tr>
+    <td class="mono" style="font-size:12px;white-space:nowrap">{{ r.key }}</td>
+    <td class="mono" style="font-size:12px;word-break:break-all">{{ r.shown }}</td>
+    <td style="font-size:12px">{{ r['from']|join(' + ') }}{% if r.overrides %}<div class="caption" style="margin:2px 0 0;font-size:11px">overrides {{ r.overrides|join(', ') }}</div>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="3">No settings set.</td></tr>{% endfor %}</tbody>
+</table>
+
+{% elif tab == 'hooks' %}
+<div class="caption">Hooks set in this project's settings files, plus every hook recorded in conversations active in the last 30 days. Last run is the time on that record.</div>
+<table class="data">
+  <thead><tr><th>Event</th><th>Command</th><th>From</th><th class="num">Runs</th><th class="num">Failed</th><th>Last run</th></tr></thead>
+  <tbody>{% for h in hooks %}<tr>
+    <td style="white-space:nowrap">{{ h.event }}{% if h.matcher %}<div class="caption mono" style="margin:0;font-size:11px">{{ h.matcher }}</div>{% endif %}</td>
+    <td class="mono" style="font-size:11.5px;word-break:break-all">{{ h.command[:220] }}{% if h.missing %}<div style="color:var(--err);font-family:inherit;font-size:12px">Script not found: {{ h.missing|join(', ') }}</div>{% endif %}</td>
+    <td style="font-size:12px">{{ h.source }}</td>
+    <td class="num">{{ h.runs }}</td><td class="num">{{ h.fails or '' }}</td>
+    <td style="white-space:nowrap;font-size:12px">{{ h.last_h or 'not in 30 days' }}{% if h.avg_ms is not none %}<div class="caption" style="margin:0;font-size:11px">avg {{ h.avg_ms }} ms</div>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6">No hooks found.</td></tr>{% endfor %}</tbody>
+</table>
+
+{% elif tab == 'disk' %}
+<div class="caption">What each folder in <code>~/.claude</code> holds and how big it is.</div>
+<table class="data">
+  <thead><tr><th>Folder</th><th>What it is</th><th class="num">Files</th><th class="num">Size</th><th></th></tr></thead>
+  <tbody>{% for d in disk %}<tr>
+    <td class="mono" style="font-size:12px">{{ d.name }}</td><td style="font-size:12px">{{ d.note }}</td>
+    <td class="num">{{ d.files }}</td><td class="num">{{ d.size_h }}</td>
+    <td style="text-align:right">{% if d.clean == 'debug' %}<button class="btn" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</td></tr>{% endfor %}</tbody>
+</table>
+
+{% elif tab == 'memory' %}
 <div class="caption">Persistent notes Claude carries between sessions, from <code>~/.claude/projects/*/memory/</code>.</div>
 <div id="memList">
 {% for m in mem %}

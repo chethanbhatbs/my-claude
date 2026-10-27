@@ -9,6 +9,7 @@ caught them. Each test below asserts "we show everything we found", not "the cod
 Run:  .venv/bin/python -m pytest tests -q
 """
 import json
+import time
 import os
 import re
 import sys
@@ -636,3 +637,78 @@ def test_subagent_runs_far_apart_get_their_own_time_axis(monkeypatch):
 
 def test_pause_lengths_read_in_days_and_hours():
     assert [mc.fmt_minutes(m) for m in (7, 60, 95, 19590)] == ["7 min", "1 h", "1 h 35 min", "13 d 14 h"]
+
+
+def _cfg_home(tmp_path, monkeypatch):
+    home = tmp_path / "home"; claude = home / ".claude"; claude.mkdir(parents=True)
+    monkeypatch.setattr(mc, "HOME", home); monkeypatch.setattr(mc, "CLAUDE", claude)
+    monkeypatch.setattr(mc, "MANAGED_SETTINGS", tmp_path / "managed.json")
+    for f in ("hook_runs", "mcp_tool_stats"):
+        for k in [k for k in list(mc._CACHE) if k[0] == f]: mc._CACHE.pop(k, None)
+    return home, claude
+
+
+def test_effective_settings_highest_file_wins_and_lists_combine(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    proj = tmp_path / "proj"; (proj / ".claude").mkdir(parents=True)
+    (claude / "settings.json").write_text(json.dumps({"model": "opus", "permissions": {"allow": ["Bash(ls)"]}, "cleanupPeriodDays": 90}))
+    (proj / ".claude" / "settings.json").write_text(json.dumps({"model": "sonnet", "permissions": {"allow": ["Bash(git status)"]}}))
+    (proj / ".claude" / "settings.local.json").write_text(json.dumps({"permissions": {"allow": ["Bash(ls)", "Read"]}}))
+    (tmp_path / "managed.json").write_text(json.dumps({"cleanupPeriodDays": 30}))
+    eff = {r["key"]: r for r in mc.effective_settings(str(proj))}
+    assert eff["model"]["value"] == "sonnet" and eff["model"]["from"] == [str(proj / ".claude" / "settings.json")]
+    assert eff["model"]["overrides"] == ["~/.claude/settings.json"]
+    assert eff["permissions.allow"]["value"] == ["Bash(ls)", "Bash(git status)", "Read"]
+    assert len(eff["permissions.allow"]["from"]) == 3
+    assert eff["cleanupPeriodDays"]["value"] == 30          # managed beats everything
+
+
+def test_hook_audit_finds_missing_scripts_and_counts_runs(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    ok = home / "ok.sh"; ok.write_text("echo hi")
+    (claude / "settings.json").write_text(json.dumps({"hooks": {"Stop": [{"hooks": [
+        {"type": "command", "command": f"bash {ok}"}, {"type": "command", "command": "~/gone/missing.sh --flag"}]}]}}))
+    pj = claude / "projects" / "-x"; pj.mkdir(parents=True)
+    now = datetime.now().isoformat() + "Z"
+    rows = [{"type": "attachment", "timestamp": now, "attachment": {"type": "hook_success", "command": f"bash {ok}", "hookEvent": "Stop", "exitCode": 0, "durationMs": 10}},
+            {"type": "attachment", "timestamp": now, "attachment": {"type": "hook_non_blocking_error", "command": f"bash {ok}", "hookEvent": "Stop", "exitCode": 1}},
+            {"type": "attachment", "timestamp": now, "attachment": {"type": "hook_success", "command": "${CLAUDE_PLUGIN_ROOT}/x", "hookEvent": "SessionStart", "exitCode": 0}}]
+    (pj / "s.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
+    audit = {h["command"]: h for h in mc.hook_audit(str(home))}
+    assert (audit[f"bash {ok}"]["runs"], audit[f"bash {ok}"]["fails"], audit[f"bash {ok}"]["missing"]) == (2, 1, [])
+    assert audit["~/gone/missing.sh --flag"]["missing"] == ["~/gone/missing.sh"] and audit["~/gone/missing.sh --flag"]["runs"] == 0
+    assert audit["${CLAUDE_PLUGIN_ROOT}/x"]["source"] == "plugin"
+
+
+def test_mcp_toggle_changes_only_the_project_list(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    cfg = {"oauthAccount": {"x": 1}, "projects": {"/p": {"allowedTools": [], "disabledMcpServers": ["a"]}, "/q": {}}}
+    (home / ".claude.json").write_text(json.dumps(cfg))
+    assert mc.set_mcp_disabled("/p", "doit", True) == ["a", "doit"]
+    assert mc.set_mcp_disabled("/p", "a", False) == ["doit"]
+    after = json.loads((home / ".claude.json").read_text())
+    assert after["oauthAccount"] == {"x": 1} and after["projects"]["/q"] == {} and after["projects"]["/p"]["allowedTools"] == []
+    assert json.loads((home / ".claude.json.my-claude.bak").read_text())["projects"]["/p"]["disabledMcpServers"] == ["a", "doit"]
+    with pytest.raises(ValueError):
+        mc.set_mcp_disabled("/nope", "x", True)
+
+
+def test_mcp_stats_count_tools_and_calls(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    pj = claude / "projects" / "-x"; pj.mkdir(parents=True)
+    rows = [{"type": "attachment", "attachment": {"type": "deferred_tools_delta", "addedNames": ["mcp__doit__a", "mcp__doit__b", "mcp__my_srv__c", "Read"]}},
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "t1", "name": "mcp__doit__a", "input": {}}]}}]
+    (pj / "s.jsonl").write_text("\n".join(json.dumps(r, separators=(",", ":")) for r in rows))
+    st = mc.mcp_tool_stats()
+    assert st["tools"] == {"doit": ["mcp__doit__a", "mcp__doit__b"], "my_srv": ["mcp__my_srv__c"]}
+    assert st["calls"] == {"doit": 1}
+
+
+def test_clean_debug_moves_only_old_logs_to_trash(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    d = claude / "debug"; d.mkdir(); old = d / "old.txt"; new = d / "new.txt"
+    old.write_text("x" * 10); new.write_text("y")
+    t = time.time() - 10 * 86400; os.utime(old, (t, t))
+    r = mc.clean_debug(7)
+    assert r["moved"] == 1 and new.exists() and not old.exists()
+    assert list((home / ".Trash").rglob("old.txt"))
