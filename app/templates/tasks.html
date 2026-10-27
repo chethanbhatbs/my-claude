@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block heading %}Tasks &amp; Plans{% endblock %}
+{% block content %}
+<ul class="list list-card">
+  {% for i in items %}
+  <li class="list-row">
+    <div class="list-main">
+      <div class="list-title">{{ i.name }}</div>
+      <div class="list-sub"><code>{{ i.path }}</code></div>
+    </div>
+    <div class="list-meta">{{ i.size }}</div>
+  </li>
+  {% else %}
+  <li class="list-empty">No tasks or plans.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

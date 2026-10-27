@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block heading %}Search transcripts{% endblock %}
+{% block content %}
+<div class="caption">Full-text search across every conversation; transcripts are plaintext.</div>
+<form method="get"><input class="input" type="text" name="q" value="{{ q }}" placeholder="e.g. redash key, expo keyboard, eval report" autofocus></form>
+{% if hits is none %}
+<div class="alert info" style="margin-top:12px">Type a phrase above and press Enter to start.</div>
+{% elif hits == 0 %}
+<div class="alert warn" style="margin-top:12px">No matches.</div>
+{% else %}
+<div class="caption">{{ hits }} hits across {{ session_count }} sessions</div>
+{% for g in groups %}
+<details class="exp">
+  <summary><span>{{ g.project }}&nbsp; · &nbsp;session {{ g.sid_short }}…&nbsp; · &nbsp;{{ g.count }} matches</span></summary>
+  <div class="exp-body">
+    <div class="c-btns" style="margin-top:0">
+      <button class="btn view" onclick="act('editor',{path:'{{ g.path }}'})">Open in {{ editor }}</button>
+      <button class="btn" onclick="act('reveal',{path:'{{ g.path }}'})">Reveal in Finder</button>
+      <button class="btn push" onclick="act('claude',{path:'{{ g.project }}',resume:'{{ g.sid }}'})">Resume in Claude</button>
+    </div>
+    {% for m in g.matches %}<div class="caption" style="margin:4px 0"><code>line {{ m.line }}</code> · {{ m.snippet }}</div>{% endfor %}
+    {% if g.more %}<div class="caption">… {{ g.more }} more matches</div>{% endif %}
+  </div>
+</details>
+{% endfor %}
+{% endif %}
+{% endblock %}

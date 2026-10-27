@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">The configuration and memory that shape how Claude behaves on this machine.</div>
+
+<div class="seg" style="margin-bottom:16px">
+  <a class="{{ 'active' if tab=='config' }}" href="?tab=config">Config</a>
+  <a class="{{ 'active' if tab=='memory' }}" href="?tab=memory">Memory · {{ mem|length }}</a>
+</div>
+
+{% if tab == 'memory' %}
+<div class="caption">Persistent notes Claude carries between sessions, from <code>~/.claude/projects/*/memory/</code>.</div>
+<div id="memList">
+{% for m in mem %}
+<details class="exp mem-item" ontoggle="if(this.open)loadMem(this)" data-path="{{ m.path }}">
+  <summary><span style="flex:1">{{ m.title }}{% if m.is_index %}<span class="tag">index</span>{% endif %}</span><span class="mcp-scope">{{ m.project }}</span></summary>
+  <div class="exp-body">
+    {% if m.desc %}<div class="caption" style="margin:4px 0 10px">{{ m.desc }}</div>{% endif %}
+    <div class="md-doc mem-slot"><div class="caption">Loading…</div></div>
+  </div>
+</details>
+{% else %}
+<div class="alert info">No memory files found.</div>
+{% endfor %}
+</div>
+<div id="memPager" class="pager"></div>
+<script>
+async function loadMem(det){
+  const slot=det.querySelector('.mem-slot'); if(slot.dataset.loaded) return; slot.dataset.loaded=1;
+  const r=await fetch('/api/memory?path='+encodeURIComponent(det.dataset.path));
+  let text=await r.text(); let tag='';
+  const fm=text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if(fm){ text=text.slice(fm[0].length);
+    const t=(fm[1].match(/(?:^|\n)\s*type:\s*(.+)/)||[])[1];
+    if(t) tag='<span class="tag" style="margin-bottom:8px;display:inline-block">'+t.trim()+'</span>';
+  }
+  renderMarkdown(slot, text);
+  if(tag) slot.insertAdjacentHTML('afterbegin', tag);
+}
+(function(){
+  const items=[...document.querySelectorAll('#memList .mem-item')]; const per=12; let page=0;
+  const pager=document.getElementById('memPager'); if(items.length<=per){ return; }
+  function render(){ const pages=Math.ceil(items.length/per);
+    items.forEach((el,i)=>{ el.style.display=(i>=page*per && i<(page+1)*per)?'':'none'; });
+    pager.innerHTML='<button class="btn" '+(page===0?'disabled':'')+' id="mp">← Prev</button>'
+      +'<span class="pager-info">'+(page*per+1)+'-'+Math.min(items.length,(page+1)*per)+' of '+items.length+'</span>'
+      +'<button class="btn" '+(page>=pages-1?'disabled':'')+' id="mn">Next →</button>';
+    document.getElementById('mp').onclick=()=>{ if(page>0){page--;render(); window.scrollTo(0,0);} };
+    document.getElementById('mn').onclick=()=>{ if(page<pages-1){page++;render(); window.scrollTo(0,0);} };
+  }
+  render();
+})();
+</script>
+
+{% else %}
+<div class="grid-2">
+  <div class="panel" style="display:flex;flex-direction:column;max-height:520px">
+    <div class="panel-head"><h3>Permissions</h3><span class="mcp-scope">settings.json</span></div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="c-meta" style="margin:0 0 10px"><span><strong>{{ cfg.allow|length }}</strong> allow</span><span>·</span><span><strong>{{ cfg.ask|length }}</strong> ask</span><span>·</span><span><strong>{{ cfg.deny|length }}</strong> deny</span></div>
+      {% if cfg.deny %}<label class="fld">Deny</label><div style="margin-bottom:10px">{% for r in cfg.deny %}<div class="mono" style="font-size:11.5px;color:var(--err)">{{ r }}</div>{% endfor %}</div>{% endif %}
+      {% if cfg.ask %}<label class="fld">Ask</label><div style="margin-bottom:10px">{% for r in cfg.ask %}<div class="mono" style="font-size:11.5px;color:var(--warn)">{{ r }}</div>{% endfor %}</div>{% endif %}
+      {% if cfg.allow %}<label class="fld">Allow ({{ cfg.allow|length }})</label><div style="flex:1;min-height:0;overflow:auto">{% for r in cfg.allow %}<div class="mono" style="font-size:11.5px;color:var(--dim)">{{ r }}</div>{% endfor %}</div>{% endif %}
+      {% if not cfg.allow and not cfg.deny and not cfg.ask %}<div class="caption">No explicit permission rules.</div>{% endif %}
+    </div>
+  </div>
+  <div class="panel" style="display:flex;flex-direction:column;max-height:520px">
+    <div class="panel-head"><h3>Hooks &amp; settings</h3></div>
+    <div style="padding:14px 16px;flex:1;min-height:0;overflow-y:auto">
+      <label class="fld">Hook events</label>
+      <div class="deflist" style="margin-bottom:14px">
+        {% for h in cfg.hook_events %}<div class="defrow"><span class="defn">{{ h.name }}</span><span class="defd">{{ h.desc or 'A configured lifecycle hook.' }}</span></div>
+        {% else %}<span class="caption">None configured.</span>{% endfor %}
+      </div>
+      <label class="fld">settings.json keys</label>
+      <div class="deflist">
+        {% for k in cfg.settings_keys %}<div class="defrow"><span class="defn">{{ k.name }}</span><span class="defd">{{ k.desc or 'A custom setting in settings.json.' }}</span></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-head" style="margin-top:8px"><h2 class="sub" style="margin:0">CLAUDE.md</h2></div>
+{% if cfg.claude_md %}
+<div class="card cm-card" id="cmView"><div class="md-doc" id="claudeMd"></div>
+  <button class="btn cm-edit-fab" id="cmEditBtn" onclick="editClaudeMd()">Edit</button></div>
+{% else %}
+<div class="alert info" id="cmView">No global CLAUDE.md found. <button class="btn" id="cmEditBtn" onclick="editClaudeMd()" style="margin-left:8px">Create one</button></div>
+{% endif %}
+<div id="cmEdit" style="display:none">
+  <textarea id="cmText" class="input" spellcheck="false" style="width:100%;min-height:340px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;line-height:1.6"></textarea>
+  <div class="caption" style="margin:6px 0 8px">Saving overwrites <code>~/.claude/CLAUDE.md</code>. A backup (<code>CLAUDE.md.bak</code>) is kept, and you'll be asked to confirm first.</div>
+  <div class="c-btns"><button class="btn primary" onclick="saveClaudeMd()">Save changes</button><button class="btn" onclick="cancelClaudeMd()">Cancel</button></div>
+</div>
+<script>
+(function(){ var src={{ cfg.claude_md | tojson }}; window._cmSrc=src;
+  (function go(){ if(window.renderMarkdown){ if(src) renderMarkdown(document.getElementById('claudeMd'), src); } else setTimeout(go, 20); })();
+})();
+function editClaudeMd(){ document.getElementById('cmText').value=window._cmSrc||''; document.getElementById('cmView').style.display='none'; document.getElementById('cmEditBtn').style.display='none'; document.getElementById('cmEdit').style.display='block'; }
+function cancelClaudeMd(){ document.getElementById('cmEdit').style.display='none'; document.getElementById('cmView').style.display=''; document.getElementById('cmEditBtn').style.display=''; }
+async function saveClaudeMd(){
+  if(!confirm('Overwrite your global ~/.claude/CLAUDE.md with these changes? A backup (CLAUDE.md.bak) will be kept.')) return;
+  var content=document.getElementById('cmText').value;
+  var j=await (await fetch('/action/save-claudemd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:content})})).json();
+  toast(j.ok?'CLAUDE.md saved':('Failed: '+(j.msg||'')));
+  if(j.ok){ window._cmSrc=content; var el=document.getElementById('claudeMd'); if(el&&window.renderMarkdown) renderMarkdown(el, content); cancelClaudeMd(); }
+}
+</script>
+{% endif %}
+{% endblock %}

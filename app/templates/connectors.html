@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">External tools wired into Claude via the Model Context Protocol.</div>
+<form method="get" id="cf">
+  <label class="toggle" style="margin-bottom:10px"><input type="checkbox" name="health" value="1" {{ 'checked' if health }} onchange="cf.submit()"><span class="track"></span>Run health check</label>
+  <input class="input" type="text" name="q" value="{{ q }}" placeholder="connector name" onchange="cf.submit()">
+</form>
+<div class="caption">{{ total }} connector(s) · sensitive values redacted</div>
+{% for c in items %}
+<details class="exp">
+  <summary><span>{{ c.name }} · {{ c.source }}{% if c.status %} · <span style="color:{{ c.status_color }};font-weight:700">{{ c.status }}</span> <span class="caption" style="display:inline">{{ c.detail }}</span>{% endif %}</span></summary>
+  <div class="exp-body"><pre class="code-json"><code class="language-json">{{ c.config }}</code></pre></div>
+</details>
+{% else %}
+<div class="alert info">No MCP connectors configured. Add via <code>claude mcp add</code>.</div>
+{% endfor %}
+{% endblock %}

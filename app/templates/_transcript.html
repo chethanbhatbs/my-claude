@@ -1,0 +1,15 @@
+<div class="transcript-meta">
+  <span><strong>{{ count }}</strong> messages</span>
+  <input type="search" placeholder="Filter messages…" class="input input-sm"
+         oninput="document.querySelectorAll('.msg').forEach(m=>m.style.display=m.textContent.toLowerCase().includes(this.value.toLowerCase())?'block':'none')">
+</div>
+<div class="transcript">
+  {% for m in msgs %}
+  <div class="msg msg-{{ m.role }}">
+    <div class="msg-role">{{ m.role }}</div>
+    <div class="msg-text">{{ m.text }}</div>
+  </div>
+  {% else %}
+  <div class="empty">No readable messages (transcript may be empty or tool-only).</div>
+  {% endfor %}
+</div>

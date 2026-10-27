@@ -1,0 +1,111 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Settings</h3>
+<div class="caption">This app uses your existing <code>gh</code> CLI session; no tokens are stored.</div>
+{% if not auth.gh_present %}
+<div class="alert err"><code>gh</code> CLI not installed. Install via: <code>brew install gh</code></div>
+{% elif auth.logged_in %}
+<div class="alert ok" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <span>Connected as <b>{{ auth.user or 'unknown' }}</b> at <b>{{ auth.host or 'github.com' }}</b> (via gh CLI)</span>
+  <button class="btn" style="flex:none" onclick="ghLogout('{{ auth.host or 'github.com' }}','{{ auth.user or '' }}')">Disconnect</button>
+</div>
+<div class="caption" style="margin:-4px 0 6px">Disconnect runs <code>gh auth logout</code> for this account (affects the gh CLI everywhere, not just here). If you have more than one gh account, the next one becomes active, disconnect again to fully sign out.</div>
+{% else %}
+<div class="alert warn" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <span>Not connected to GitHub.</span>
+  <button class="btn primary" style="flex:none" onclick="ghLogin(this)">Connect GitHub</button>
+</div>
+<div class="caption" style="margin:-4px 0 6px">Connect gets a one-time code from the <code>gh</code> CLI; enter it at github.com to sign in. No tokens are stored.</div>
+<div id="ghDevice" style="display:none"></div>
+{% endif %}
+<div style="margin:14px 0 6px;padding:12px 0;border-top:1px solid var(--line)">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div style="font-weight:600;font-size:13px">Auto-refresh</div>
+    <select id="arSel" class="input" style="flex:0 0 auto;width:auto;min-width:120px" onchange="setAutoRefresh(this.value)">
+      <option value="0">Off</option><option value="60">Every 1 min</option><option value="300">Every 5 min</option>
+      <option value="900">Every 15 min</option><option value="1800">Every 30 min</option><option value="3600">Every 1 hour</option>
+    </select>
+  </div>
+  <div class="caption" style="margin:6px 0 0">Re-reads your files on a timer. Works only while this tab is open and your laptop is awake.</div>
+</div>
+{% if auth.logged_in %}
+<div class="caption" style="margin:10px 0 4px">You can set the repo name and visibility each time you push, these are just the defaults.</div>
+<details class="exp" open style="margin-top:6px"><summary><span>Push defaults (optional)</span></summary><div class="exp-body">
+<form id="setform" onsubmit="return saveSettings(event)">
+  <label class="fld">Default GitHub owner / org</label>
+  <input class="input" name="github_owner" value="{{ cfg.github_owner }}" placeholder="{{ auth.user or 'your-github-username' }}" style="margin-bottom:4px">
+  <div class="caption" style="margin-bottom:10px">Leave blank to push to your connected account (<b>{{ auth.user or 'unknown' }}</b>). Set this only to push to an org or a different owner.</div>
+  <label class="fld">Repo name prefix</label>
+  <input class="input" name="repo_prefix" value="{{ cfg.repo_prefix }}" style="margin-bottom:10px">
+  <label class="fld">Default visibility</label>
+  <div class="seg" style="margin-bottom:10px">
+    <a href="#" id="sPriv" class="{{ 'active' if cfg.default_visibility=='private' }}" onclick="setSV('private');return false">private</a>
+    <a href="#" id="sPub" class="{{ 'active' if cfg.default_visibility=='public' }}" onclick="setSV('public');return false">public</a>
+  </div>
+  <input type="hidden" name="default_visibility" id="sVis" value="{{ cfg.default_visibility }}">
+  <label class="fld">Commit message template</label>
+  <input class="input" name="commit_message_template" value="{{ cfg.commit_message_template }}" style="margin-bottom:12px">
+  <button class="btn primary full" type="submit">Save defaults</button>
+</form>
+<div id="setOut"></div>
+</div></details>
+{% else %}
+<div class="caption" style="margin:10px 0 4px">Connect GitHub above to set push defaults (owner, repo prefix, visibility).</div>
+{% endif %}
+<details class="exp" ontoggle="if(this.open&&window.hljs)this.querySelectorAll('pre code').forEach(b=>{try{hljs.highlightElement(b)}catch(e){}})"><summary><span>Config file</span></summary><div class="exp-body"><div class="caption mono">{{ config_path }}</div><pre><code class="language-json">{{ config_json }}</code></pre></div></details>
+<script>
+function setSV(v){ document.getElementById('sVis').value=v; document.getElementById('sPriv').classList.toggle('active',v=='private'); document.getElementById('sPub').classList.toggle('active',v=='public'); }
+(function(){ var ar=document.getElementById('arSel'); if(ar && window.autoRefreshSeconds) ar.value=String(autoRefreshSeconds()); })();
+
+async function ghLogin(btn){
+  const box=document.getElementById('ghDevice'); if(!box) return;
+  if(btn) btn.disabled=true;
+  box.style.display='block';
+  box.innerHTML='<div class="caption">Requesting a code from gh…</div>';
+  let j;
+  try{ j=await (await fetch('/action/gh-login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json(); }
+  catch(e){ j={ok:false,error:'Request failed.'}; }
+  if(!j.ok){ box.innerHTML='<div class="alert err" style="margin:0">'+((j.error||'Could not start login.').replace(/</g,'&lt;'))+'</div>'; if(btn) btn.disabled=false; return; }
+  box.innerHTML=''
+    +'<div class="gh-device">'
+    +'  <div class="caption" style="margin:0 0 6px">1. Copy this one-time code</div>'
+    +'  <div class="gh-code-row"><code class="gh-code" id="ghCode">'+j.code+'</code>'
+    +'    <button class="btn" onclick="ghCopy()">Copy</button></div>'
+    +'  <div class="caption" style="margin:10px 0 6px">2. GitHub opens in a moment. Enter the code there and authorize.</div>'
+    +'  <a class="btn primary" href="'+j.url+'" target="_blank" rel="noopener">Open github.com/login/device now</a>'
+    +'  <div class="caption gh-wait" id="ghWait" style="margin:12px 0 0">Waiting for you to authorize…</div>'
+    +'</div>';
+  if(window._ghPoll) clearInterval(window._ghPoll);
+  window._ghPoll=setInterval(ghPoll, 3000);
+}
+function ghCopy(){ const c=document.getElementById('ghCode'); if(c){ navigator.clipboard.writeText(c.textContent).then(()=>toast('Code copied')); } }
+function ghSetChip(connected, user){ const chip=document.getElementById('ghChip'), t=document.getElementById('ghChipText'); if(!chip||!t) return;
+  chip.classList.toggle('warn', !connected); t.textContent = connected ? ('GitHub: '+(user||'connected')) : 'GitHub not connected'; }
+async function ghPoll(){
+  let s; try{ s=await (await fetch('/action/gh-login-status')).json(); }catch(e){ return; }
+  if(!s) return;
+  if(s.logged_in){ clearInterval(window._ghPoll); window._ghPoll=null;
+    const w=document.getElementById('ghWait'); if(w){ w.className='caption'; w.textContent='Connected as '+(s.user||'')+'. Refreshing…'; }
+    ghSetChip(true, s.user); toast('Connected to GitHub');
+    if(typeof navigate==='function') navigate(location.pathname+location.search, false);  // re-render page so Push enables
+    setTimeout(()=>openDialog('/dialog/settings'), 900);
+    return;
+  }
+  if(s.state==='closed'){ clearInterval(window._ghPoll); window._ghPoll=null;
+    const box=document.getElementById('ghDevice');
+    if(box) box.innerHTML='<div class="alert warn" style="margin:0">That code expired before it was authorized. <button class="btn" style="margin-left:8px" onclick="ghLogin(this)">Get a new code</button></div>';
+  }
+}
+async function ghLogout(host, user){
+  if(!confirm('Sign out of the gh CLI'+(user?(' for '+user):'')+' on '+host+'? This affects gh everywhere on this machine, not just this app.')) return;
+  const j=await (await fetch('/action/gh-logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:host,user:user})})).json();
+  const box=document.getElementById('modalBody');
+  if(j.ok){ toast('Disconnected successfully'); ghSetChip(false);
+    if(box) box.insertAdjacentHTML('afterbegin','<div class="alert ok" style="margin:0 0 10px">Disconnected'+(user?(' '+user):'')+' successfully. Refreshing…</div>');
+    if(typeof navigate==='function') navigate(location.pathname+location.search, false);  // re-render page so Push disables
+    setTimeout(()=>openDialog('/dialog/settings'),1000);
+  } else { toast('Disconnect failed'); if(box) box.insertAdjacentHTML('afterbegin','<div class="alert err" style="margin:0 0 10px">Disconnect failed: '+((j.msg||'').replace(/</g,'&lt;'))+'</div>'); }
+}
+async function saveSettings(e){ e.preventDefault(); const fd=new FormData(document.getElementById('setform'));
+  const j=await (await fetch('/settings/save',{method:'POST',body:fd})).json();
+  document.getElementById('setOut').innerHTML='<div class="alert ok">Push defaults saved.</div>'; toast('Settings saved'); return false; }
+</script>

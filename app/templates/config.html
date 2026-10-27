@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block heading %}Config <span class="heading-sub">{{ files|length }}</span>{% endblock %}
+{% block content %}
+<ul class="list list-card">
+  {% for f in files %}
+  <li class="list-row">
+    <div class="list-main">
+      <div class="list-title">{{ f.name }}</div>
+      <div class="list-sub"><code>{{ f.path }}</code></div>
+    </div>
+    <div class="list-meta">{{ f.size }}</div>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

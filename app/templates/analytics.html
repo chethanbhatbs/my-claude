@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Analytics · My Claude{% endblock %}
+{% block heading %}Analytics{% endblock %}
+{% block content %}
+
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-label">Skills</div><div class="kpi-value">{{ total }}</div><div class="kpi-sub">{{ total_size }} on disk</div></div>
+  <div class="kpi"><div class="kpi-label">Categories</div><div class="kpi-value">{{ cat_count }}</div><div class="kpi-sub">&nbsp;</div></div>
+  <div class="kpi kpi-accent"><div class="kpi-label">Created by me</div><div class="kpi-value">{{ mine }}</div><div class="kpi-sub"><a href="/skills?source=mine">view →</a></div></div>
+  <div class="kpi"><div class="kpi-label">User-invocable</div><div class="kpi-value">{{ invocable }}</div><div class="kpi-sub">/commands</div></div>
+</div>
+
+<section class="card">
+  <div class="card-head"><h2>Skill footprint by category</h2><span class="card-link">by skill count</span></div>
+  <div id="treemap" style="padding:12px"></div>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Skills per category</h2></div>
+  <div style="padding:14px 16px">
+    {% for c in cat_list %}
+    <a href="/skills?q=" class="bar-row" title="{{ c.size_human }}">
+      <span class="bar-label">{{ c.name }}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:{{ (c.count / max_count * 100)|round(1) }}%;background:{{ c.color }}"></span></span>
+      <span class="bar-num">{{ c.count }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const DATA = {{ treemap_json|safe }};
+function drawTreemap(){
+  const wrap = document.getElementById('treemap');
+  wrap.innerHTML = '';
+  const W = wrap.clientWidth || 800, H = 420;
+  const root = d3.hierarchy(DATA).sum(d => d.value).sort((a,b)=>b.value-a.value);
+  d3.treemap().size([W,H]).paddingInner(3).round(true)(root);
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H)
+    .style('font','12px -apple-system,Segoe UI,sans-serif');
+  const node = svg.selectAll('g').data(root.leaves()).join('g')
+    .attr('transform', d => `translate(${d.x0},${d.y0})`);
+  node.append('rect')
+    .attr('width', d => d.x1-d.x0).attr('height', d => d.y1-d.y0)
+    .attr('rx',5).attr('fill', d => d.data.color).attr('fill-opacity',0.85)
+    .style('cursor','pointer')
+    .on('mouseover', function(){ d3.select(this).attr('fill-opacity',1); })
+    .on('mouseout',  function(){ d3.select(this).attr('fill-opacity',0.85); })
+    .on('click', (e,d)=>{ location.href='/skills'; });
+  node.append('title').text(d => `${d.data.name}\n${d.data.count} skills · ${d.data.size_human}`);
+  node.append('text').attr('x',8).attr('y',20)
+    .attr('fill','#1a1a1a').attr('font-weight',700)
+    .text(d => (d.x1-d.x0 > 70 && d.y1-d.y0 > 28) ? d.data.name : '');
+  node.append('text').attr('x',8).attr('y',38)
+    .attr('fill','#1a1a1a').attr('fill-opacity',0.7)
+    .text(d => (d.x1-d.x0 > 70 && d.y1-d.y0 > 46) ? d.data.count + ' skills' : '');
+}
+drawTreemap();
+window.addEventListener('resize', drawTreemap);
+</script>
+
+<style>
+.bar-row { display:flex; align-items:center; gap:12px; padding:6px 0; color:var(--text); }
+.bar-row:hover { text-decoration:none; }
+.bar-label { width:190px; font-size:13px; flex-shrink:0; }
+.bar-track { flex:1; height:14px; background:var(--bg-2); border-radius:7px; overflow:hidden; }
+.bar-fill { display:block; height:100%; border-radius:7px; }
+.bar-num { width:44px; text-align:right; font-size:13px; color:var(--text-mute); font-variant-numeric:tabular-nums; }
+</style>
+
+{% endblock %}

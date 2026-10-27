@@ -1,0 +1,17 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Share skill</h3>
+<div style="font-weight:600">{{ name }}</div>
+<div class="caption mono">{{ path }}</div>
+{% if pushed_url %}
+<div class="alert ok">Last pushed: <a href="{{ pushed_url }}" target="_blank">{{ pushed_url }}</a></div>
+<div class="c-btns">
+  <button class="btn" onclick="act('copy',{text:'{{ pushed_url }}'})">Copy GitHub URL</button>
+  <a class="btn" href="{{ pushed_url }}" target="_blank">Open on GitHub</a>
+</div>
+<hr class="divider">
+{% endif %}
+<div class="c-btns">
+  <button class="btn" onclick="act('copyfile',{path:'{{ path }}/SKILL.md'})">Copy SKILL.md to clipboard</button>
+  <a class="btn primary" href="/download/skill/{{ name }}.zip">Download skill as .zip</a>
+</div>
+<div class="caption">The .zip is portable; drop it into any ~/.claude/skills/ folder.</div>

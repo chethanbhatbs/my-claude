@@ -1,0 +1,53 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Push skill to GitHub</h3>
+{% if not auth.gh_present %}
+<div class="alert err"><code>gh</code> CLI not found. Install with: <code>brew install gh</code></div>
+{% elif not auth.logged_in %}
+<div class="alert err">GitHub not connected. Open Settings and click Connect GitHub.</div>
+{% elif not owner %}
+<div class="alert warn">Set a default GitHub owner in <b>Settings</b> first.</div>
+{% else %}
+<div class="alert ok">Signed in as <b>{{ auth.user or 'unknown' }}</b> at <b>{{ auth.host or 'github.com' }}</b> (via gh CLI)</div>
+<div class="row" style="align-items:flex-start">
+  <div style="flex:1"><label class="fld">Owner / org</label><input class="input" id="pushOwner" type="text" value="{{ owner }}" oninput="updTarget()"></div>
+  <div style="flex:1"><label class="fld">Repo name</label><input class="input" id="pushRepo" type="text" value="{{ repo }}" oninput="updTarget()"></div>
+  <div style="flex:0 0 auto"><label class="fld">Visibility</label>
+    <div class="seg"><a href="#" id="visPriv" class="{{ 'active' if visibility=='private' }}" onclick="setVis('private');return false">private</a><a href="#" id="visPub" class="{{ 'active' if visibility=='public' }}" onclick="setVis('public');return false">public</a></div>
+  </div>
+</div>
+<div class="caption" id="pushTarget">Target: <b>{{ owner }}/{{ repo }}</b> · {{ 'exists, will force-push update' if exists else 'will be created' }}</div>
+<div class="caption" id="pushOwnerHint" style="margin-top:4px;color:var(--warn);{{ 'display:none' if owner==auth.user else '' }}">Owner differs from your account. To push to <b id="hintOwner">{{ owner }}</b> you need create access there (an org you belong to). <a href="#" onclick="useMyAccount();return false">Push to {{ auth.user }} instead</a></div>
+{% if secrets %}
+<div class="alert err" id="secretWarn" style="margin-top:10px">
+  <b>Possible credentials found in this skill ({{ secrets|length }}).</b> Review before pushing, and do <b>not</b> push public with these present:
+  <div class="mono" style="font-size:11.5px;margin-top:8px;max-height:160px;overflow:auto">
+    {% for s in secrets %}<div>{{ s.file }}{% if s.line %}:{{ s.line }}{% endif %} · <b>{{ s.type }}</b> · {{ s.snippet }}</div>{% endfor %}
+  </div>
+</div>
+{% endif %}
+<label class="toggle" style="margin:8px 0"><input type="checkbox" id="pushConfirm" onchange="document.getElementById('pushGo').disabled=!this.checked"><span class="track"></span>I understand this will publish skill files to GitHub</label>
+<button class="btn primary full" id="pushGo" disabled onclick="doPush()">Push to GitHub</button>
+<div id="pushOut"></div>
+<script>
+let _vis='{{ visibility }}';
+const _hasSecrets={{ 'true' if secrets else 'false' }};
+const _me='{{ auth.user }}';
+function setVis(v){ _vis=v; document.getElementById('visPriv').classList.toggle('active',v=='private'); document.getElementById('visPub').classList.toggle('active',v=='public'); }
+function updTarget(){ var o=document.getElementById('pushOwner').value.trim(), r=document.getElementById('pushRepo').value.trim();
+  document.getElementById('pushTarget').innerHTML='Target: <b>'+(o||'?')+'/'+(r||'?')+'</b>';
+  var hint=document.getElementById('pushOwnerHint'); if(hint){ hint.style.display=(o===_me||!o)?'none':''; var ho=document.getElementById('hintOwner'); if(ho)ho.textContent=o; } }
+function useMyAccount(){ document.getElementById('pushOwner').value=_me; updTarget(); }
+async function doPush(){
+  if(_vis==='public' && _hasSecrets){
+    if(!confirm('This skill contains possible credentials and you are pushing it PUBLIC. Anyone will be able to read them. Push anyway?')) return;
+  }
+  const out=document.getElementById('pushOut'); out.innerHTML='<div class="caption">Pushing…</div>';
+  const j=await (await fetch('/action/push',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:'{{ name }}',owner:document.getElementById('pushOwner').value.trim(),repo:document.getElementById('pushRepo').value.trim(),visibility:_vis})})).json();
+  if(j.ok){ out.innerHTML='<div class="alert ok">Pushed: <a href="'+j.url+'" target="_blank">'+j.url+'</a> (URL copied)</div>'; toast('Pushed'); }
+  else { out.innerHTML='<div class="alert err">Push failed.</div>'; }
+  out.innerHTML+='<details class="exp" open><summary><span>Log</span></summary><div class="exp-body"><pre>'+(j.log||'').replace(/</g,'&lt;')+'</pre></div></details>';
+  if(window.addCopyButtons) addCopyButtons(out);
+}
+</script>
+{% endif %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">Hierarchical disk usage. Click any slice to drill in or zoom out.</div>
+<div style="display:flex;gap:20px;align-items:flex-start">
+  <div id="sb" class="chart" style="flex:3;height:640px"></div>
+  <div style="flex:1;min-width:220px">
+    <h3 class="sub">Selected</h3>
+    <div id="sel" class="caption">Click any slice to see details and actions.</div>
+  </div>
+</div>
+<script>
+(function(){
+  const d={{ data|safe }};
+  const dark=document.body.classList.contains('dark');
+  Plotly.newPlot('sb', [{
+    type:'sunburst', labels:d.labels, parents:d.parents, values:d.values, branchvalues:'total',
+    marker:{colors:d.colors, line:{width:1.5, color: dark?'#14110D':'#F7F4EE'}},
+    customdata:d.customdata, insidetextorientation:'radial',
+    hovertemplate:'<b>%{label}</b><br>%{customdata[0]}<br>%{customdata[1]}<extra></extra>'
+  }], {height:640,margin:{l:0,r:0,t:10,b:0},paper_bgcolor:'rgba(0,0,0,0)',font:{color:dark?'#ECE6DC':'#211D18',family:'Inter, sans-serif',size:12}},
+  {displayModeBar:false,responsive:true});
+  document.getElementById('sb').on('plotly_sunburstclick', function(e){
+    const p=e.points[0]; const sel=document.getElementById('sel');
+    const path=p.customdata&&p.customdata[1]; const size=p.customdata&&p.customdata[0];
+    if(path){ sel.innerHTML='<div style="font-weight:600">'+p.label+'</div><div class="caption">'+size+'</div>'+
+      '<pre style="white-space:pre-wrap">'+path+'</pre>'+
+      '<div class="c-btns"><button class="btn primary" onclick="act(\'finder\',{path:'+JSON.stringify(path)+'})">Open in Finder</button>'+
+      '<button class="btn" onclick="act(\'terminal\',{path:'+JSON.stringify(path)+'})">Open in Terminal</button>'+
+      '<button class="btn" onclick="act(\'copy\',{text:'+JSON.stringify(path)+'})">Copy path</button></div>'; }
+    else { sel.innerHTML='<div style="font-weight:600">'+p.label+'</div><div class="caption">'+(size||'')+'</div>'; }
+  });
+})();
+</script>
+{% endblock %}

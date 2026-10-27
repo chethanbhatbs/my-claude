@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}My Claude{% endblock %}
+{% block heading %}Overview{% endblock %}
+{% block content %}
+
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-label">Skills</div><div class="kpi-value">{{ k.skills_count }}</div><div class="kpi-sub">{{ k.skills_size }}{% if mine %} · {{ mine }} mine{% endif %}</div></div>
+  <div class="kpi"><div class="kpi-label">Projects</div><div class="kpi-value">{{ k.projects_count }}</div><div class="kpi-sub">{{ k.sessions_count }} sessions</div></div>
+  <div class="kpi"><div class="kpi-label">MCP Connectors</div><div class="kpi-value">{{ k.connectors_count }}</div><div class="kpi-sub">&nbsp;</div></div>
+  <div class="kpi"><div class="kpi-label">Plugins</div><div class="kpi-value">{{ k.plugins_count }}</div><div class="kpi-sub">&nbsp;</div></div>
+  <div class="kpi kpi-accent"><div class="kpi-label">Sessions size</div><div class="kpi-value">{{ k.sessions_size }}</div><div class="kpi-sub">plaintext transcripts</div></div>
+  <div class="kpi kpi-accent"><div class="kpi-label">Total on disk</div><div class="kpi-value">{{ k.claude_total }}</div><div class="kpi-sub">~/.claude/</div></div>
+</div>
+
+{% if usage.grand %}
+<section class="card">
+  <div class="card-head"><h2>Token usage</h2><a href="/analytics" class="card-link">Analytics →</a></div>
+  <div class="kpi-grid" style="padding:14px 16px 4px">
+    <div class="kpi"><div class="kpi-label">Total tokens</div><div class="kpi-value">{{ usage.grand_h }}</div><div class="kpi-sub">across all sessions</div></div>
+    <div class="kpi"><div class="kpi-label">Input</div><div class="kpi-value">{{ usage.input_h }}</div><div class="kpi-sub">&nbsp;</div></div>
+    <div class="kpi"><div class="kpi-label">Output</div><div class="kpi-value">{{ usage.output_h }}</div><div class="kpi-sub">&nbsp;</div></div>
+    <div class="kpi"><div class="kpi-label">Cache read</div><div class="kpi-value">{{ usage.cache_h }}</div><div class="kpi-sub">{{ usage.turns_h }} turns</div></div>
+  </div>
+  <div style="padding:6px 16px 14px">
+    {% for m in usage.models %}
+    <div class="bar-row" title="{{ m.total_h }} tokens">
+      <span class="bar-label">{{ m.model_short }}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:{{ (m.total / usage.model_max * 100)|round(1) }}%;background:#c89968"></span></span>
+      <span class="bar-num">{{ m.total_h }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Skills by category</h2><a href="/skills" class="card-link">See all →</a></div>
+    <div style="padding:14px 16px">
+      {% for c in cat_list %}
+      <a href="/skills" class="bar-row" title="{{ c.size_human }}">
+        <span class="bar-label">{{ c.name }}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:{{ (c.count / max_count * 100)|round(1) }}%;background:{{ c.color }}"></span></span>
+        <span class="bar-num">{{ c.count }}</span>
+      </a>
+      {% else %}
+      <div class="list-empty">No skills installed.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Recent projects</h2><a href="/sessions" class="card-link">See all →</a></div>
+    <ul class="list">
+      {% for p in recent_projects %}
+      <li class="list-row">
+        <a href="/sessions/{{ p.slug }}" class="list-main list-link">
+          <div class="list-title">{{ p.project }}</div>
+          <div class="list-sub">{{ p.transcripts }} transcripts · last active {{ p.last_active_human }}</div>
+        </a>
+        <div class="list-meta">{{ p.size_human }}</div>
+      </li>
+      {% else %}
+      <li class="list-empty">No projects yet.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+<div class="banner banner-warn">
+  <strong>Sensitive:</strong> <code>~/.claude/projects/</code> stores full conversation transcripts in plaintext. Don't share that folder without redacting.
+</div>
+
+<style>
+.bar-row { display:flex; align-items:center; gap:12px; padding:6px 0; color:var(--text); }
+.bar-row:hover { text-decoration:none; }
+.bar-label { width:190px; font-size:13px; flex-shrink:0; }
+.bar-track { flex:1; height:14px; background:var(--bg-2); border-radius:7px; overflow:hidden; }
+.bar-fill { display:block; height:100%; border-radius:7px; }
+.bar-num { width:60px; text-align:right; font-size:13px; color:var(--text-mute); font-variant-numeric:tabular-nums; }
+</style>
+
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block heading %}History &amp; Cache{% endblock %}
+{% block content %}
+<p class="page-intro">Local cache: shell snapshots, paste cache, file history, image cache.</p>
+<ul class="list list-card">
+  {% for i in items %}
+  <li class="list-row">
+    <div class="list-main">
+      <div class="list-title">{{ i.name }}</div>
+      <div class="list-sub"><code>{{ i.path }}</code></div>
+    </div>
+    <div class="list-meta">{{ i.size }}</div>
+  </li>
+  {% else %}
+  <li class="list-empty">No cache folders.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

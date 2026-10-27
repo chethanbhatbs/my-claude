@@ -1,0 +1,51 @@
+{
+  "_comment": "Curated reference links shown on the Help page. Edit freely — the app reads this file, and every URL here was checked to return HTTP 200 on the date below. Star counts are a snapshot, not live.",
+  "checked": "2026-08-18",
+  "sections": [
+    {
+      "title": "Claude Code docs",
+      "note": "The pages worth having open while you tune your setup.",
+      "links": [
+        {"url": "https://docs.claude.com/en/docs/claude-code/overview", "title": "Claude Code overview", "note": "What the tool is and how the pieces fit."},
+        {"url": "https://docs.claude.com/en/docs/claude-code/costs", "title": "Managing costs", "note": "Anthropic's own guidance on what drives token spend."},
+        {"url": "https://docs.claude.com/en/docs/claude-code/skills", "title": "Agent Skills", "note": "How skills load, and why the catalogue rides in every request."},
+        {"url": "https://docs.claude.com/en/docs/claude-code/memory", "title": "Memory & CLAUDE.md", "note": "Precedence rules for the instructions loaded before you type."},
+        {"url": "https://docs.claude.com/en/docs/claude-code/settings", "title": "Settings reference", "note": "Every settings.json key, including cleanup and permissions."},
+        {"url": "https://docs.claude.com/en/docs/claude-code/hooks", "title": "Hooks", "note": "Run your own commands on tool events."},
+        {"url": "https://docs.claude.com/en/docs/claude-code/mcp", "title": "MCP in Claude Code", "note": "Wiring external tool servers, and their scopes."}
+      ]
+    },
+    {
+      "title": "Token & context mechanics",
+      "note": "Read these before trying to cut usage — they explain what you are actually paying for.",
+      "links": [
+        {"url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching", "title": "Prompt caching", "note": "Why a stable context prefix is the whole game."},
+        {"url": "https://docs.claude.com/en/docs/build-with-claude/context-windows", "title": "Context windows", "note": "How context accumulates turn over turn."},
+        {"url": "https://support.claude.com/articles/12429409", "title": "Usage limits explained", "note": "The session and weekly windows the Usage panel shows."}
+      ]
+    },
+    {
+      "title": "Anthropic engineering articles",
+      "note": "Primary sources, not summaries of summaries.",
+      "links": [
+        {"url": "https://www.anthropic.com/engineering/claude-code-best-practices", "title": "Best practices for Claude Code", "note": "The canonical workflow article."},
+        {"url": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents", "title": "Effective context engineering for AI agents", "note": "Directly relevant to the long-session cost on this page."},
+        {"url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills", "title": "Equipping agents with Agent Skills", "note": "The thinking behind skills."},
+        {"url": "https://www.anthropic.com/engineering/writing-tools-for-agents", "title": "Writing effective tools for AI agents", "note": "Applies to your MCP servers too."},
+        {"url": "https://www.anthropic.com/engineering/building-effective-agents", "title": "Building effective AI agents", "note": "Patterns: workflows vs agents, and when each pays."}
+      ]
+    },
+    {
+      "title": "GitHub repositories",
+      "note": "Star counts are a 2026-08-18 snapshot.",
+      "links": [
+        {"url": "https://github.com/anthropics/claude-code", "title": "anthropics/claude-code", "stars": 141829, "note": "The tool itself: issues, changelog, and where to report bugs."},
+        {"url": "https://github.com/anthropics/skills", "title": "anthropics/skills", "stars": 170135, "note": "Public repository for Agent Skills — read these before writing your own."},
+        {"url": "https://github.com/anthropics/claude-cookbooks", "title": "anthropics/claude-cookbooks", "stars": 51766, "note": "Notebooks and recipes for using Claude effectively."},
+        {"url": "https://github.com/hesreallyhim/awesome-claude-code", "title": "hesreallyhim/awesome-claude-code", "stars": 52515, "note": "Hand-picked community skills, status lines, tooling and plugins."},
+        {"url": "https://github.com/modelcontextprotocol/servers", "title": "modelcontextprotocol/servers", "stars": 89653, "note": "Reference MCP servers, useful as templates."},
+        {"url": "https://modelcontextprotocol.io", "title": "modelcontextprotocol.io", "note": "The MCP spec, for when a connector misbehaves."}
+      ]
+    }
+  ]
+}

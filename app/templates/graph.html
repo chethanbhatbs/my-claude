@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block heading %}Graph view{% endblock %}
+{% block content %}
+<div class="caption">Network: root → categories → items. Drag, scroll to zoom, hover for details.</div>
+<form method="get" class="row" style="max-width:420px;margin-bottom:12px">
+  <label class="fld" style="flex:0 0 auto;margin:0">Items per category</label>
+  <input type="range" name="top_n" min="5" max="50" value="{{ top_n }}" oninput="tnv.textContent=this.value" onchange="this.form.submit()">
+  <span id="tnv" style="flex:0 0 auto">{{ top_n }}</span>
+</form>
+<div id="net" style="height:720px;border:1px solid var(--border);border-radius:10px"></div>
+<script>
+(function(){
+  const g={{ graph|safe }};
+  const nodes=new vis.DataSet(g.nodes.map(n=>({id:n.id,label:n.label,color:n.color,value:n.size,title:n.title,shape:'dot'})));
+  const edges=new vis.DataSet(g.edges.map(e=>({from:e.from,to:e.to,color:e.color,width:e.width})));
+  new vis.Network(document.getElementById('net'),{nodes,edges},{
+    physics:{barnesHut:{gravitationalConstant:-12000,centralGravity:0.25,springLength:120,springConstant:0.02,damping:0.3}},
+    nodes:{font:{color:g.font}}, interaction:{hover:true,zoomView:true,dragView:true}
+  });
+  document.getElementById('net').style.background=g.bg;
+})();
+</script>
+{% endblock %}

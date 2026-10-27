@@ -1,0 +1,21 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Install skill from GitHub</h3>
+<div class="caption">Clone a public GitHub repo into ~/.claude/skills/. The repo should contain a SKILL.md at the root.</div>
+<label class="fld">GitHub URL</label>
+<input class="input" id="instUrl" type="text" placeholder="https://github.com/owner/repo" style="margin-bottom:10px">
+<label class="fld">Local skill name (optional)</label>
+<input class="input" id="instName" type="text" placeholder="defaults to repo name" style="margin-bottom:12px">
+<button class="btn primary full" onclick="doInstall()">Install</button>
+<div id="instOut"></div>
+<script>
+async function doInstall(){
+  const out=document.getElementById('instOut'); out.innerHTML='<div class="caption">Cloning…</div>';
+  const j=await (await fetch('/action/install',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({url:document.getElementById('instUrl').value,name:document.getElementById('instName').value})})).json();
+  out.innerHTML = j.ok ? '<div class="alert ok">Installed as <code>'+j.name+'</code>. Refresh Skills to see it.</div>'
+    : '<div class="alert err">Install failed.</div>';
+  out.innerHTML+='<details class="exp" open><summary><span>Log</span></summary><div class="exp-body"><pre>'+(j.log||'').replace(/</g,'&lt;')+'</pre></div></details>';
+  if(window.addCopyButtons) addCopyButtons(out);
+  toast(j.ok ? ('Installed '+j.name) : 'Install failed');
+}
+</script>

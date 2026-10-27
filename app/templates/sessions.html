@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">Each row is a project where you've used Claude Code. Expand to see individual conversation transcripts.</div>
+<div class="alert warn">Sensitive: transcripts are full conversation logs in plaintext. Don't share without redacting.</div>
+<form method="get"><input class="input" type="text" name="q" value="{{ q }}" placeholder="Search by project path" onchange="this.form.submit()"></form>
+<div class="caption"><strong>{{ count }} of {{ total }}</strong> projects · {{ filt_size }}</div>
+{% for p in projects %}
+<details class="exp" data-slug="{{ p.slug }}" ontoggle="if(this.open)loadTranscripts(this)">
+  <summary><span>{{ p.project }}&nbsp; · &nbsp;{{ p.transcripts }} transcripts&nbsp; · &nbsp;{{ p.size_human }}&nbsp; · &nbsp;last active {{ p.last_active_h }}</span></summary>
+  <div class="exp-body">
+    <div class="c-btns">
+      <button class="btn primary {{ 'disabled' if not p.exists }}" {{ 'disabled' if not p.exists }} onclick="act('claude',{path:'{{ p.project }}'})">Start Claude here</button>
+      <button class="btn {{ 'disabled' if not p.exists }}" {{ 'disabled' if not p.exists }} onclick="act('terminal',{path:'{{ p.project }}'})">Open Terminal</button>
+      <button class="btn {{ 'disabled' if not p.exists }}" {{ 'disabled' if not p.exists }} onclick="act('finder',{path:'{{ p.project }}'})">Open in Finder</button>
+      <button class="btn" onclick="act('finder',{path:'{{ p.path }}'})">Transcripts folder</button>
+      <button class="btn" onclick="act('copy',{text:'{{ p.project }}'})">Copy path</button>
+    </div>
+    {% if not p.exists %}<div class="caption">Note: original project directory no longer exists on disk; terminal/Finder buttons disabled.</div>{% endif %}
+    <div class="tx-slot"><div class="caption">Loading transcripts…</div></div>
+  </div>
+</details>
+{% else %}
+<div class="alert info">No projects found.</div>
+{% endfor %}
+<script>
+async function loadTranscripts(det){
+  const slot=det.querySelector('.tx-slot'); if(slot.dataset.loaded)return; slot.dataset.loaded=1;
+  const r=await fetch('/p/sessions/'+det.dataset.slug+'/transcripts'); slot.innerHTML=await r.text();
+}
+</script>
+{% endblock %}

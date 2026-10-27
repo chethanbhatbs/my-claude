@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">Bundles of skills, slash commands, and config installed from a marketplace via /plugin.</div>
+{% for p in items %}
+<details class="exp"><summary><span>{{ p.name }}</span></summary><div class="exp-body"><pre class="code-json"><code class="language-json">{{ p.info }}</code></pre></div></details>
+{% else %}
+<div class="alert info">No plugins installed.</div>
+{% endfor %}
+{% endblock %}

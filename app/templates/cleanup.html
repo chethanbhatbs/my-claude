@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block heading %}Cleanup advisor{% endblock %}
+{% block content %}
+<div class="caption">Stale projects and oversized caches; suggestions only, review before acting.</div>
+
+<h2 class="sub">Stale projects (>90 days inactive) · {{ stale|length }}</h2>
+{% if not stale %}
+<div class="alert ok">No stale projects.</div>
+{% else %}
+<div class="caption">Reclaimable: <strong>{{ recoverable }}</strong></div>
+<table class="data">
+  <thead><tr><th>project</th><th>transcripts</th><th>size</th><th>age (days)</th></tr></thead>
+  <tbody>{% for s in stale %}<tr><td>{{ s.project }}</td><td>{{ s.transcripts }}</td><td>{{ s.size_human }}</td><td>{{ s.age_days }}</td></tr>{% endfor %}</tbody>
+</table>
+<div class="c-btns">
+  <button class="btn" onclick="act('finder',{path:'{{ projects_dir }}'})">Open ~/.claude/projects/ in Finder</button>
+</div>
+<div class="caption">Tip: drag stale folders to Trash from Finder; or back them up first.</div>
+{% endif %}
+
+<hr class="divider">
+<h2 class="sub">Largest cache buckets</h2>
+{% if not big %}
+<div class="alert info">No cache data.</div>
+{% else %}
+<table class="data">
+  <thead><tr><th>name</th><th>items</th><th>size</th><th>path</th></tr></thead>
+  <tbody>{% for b in big %}<tr><td>{{ b.name }}</td><td>{{ b.items }}</td><td>{{ b.size_human }}</td><td class="mono" style="font-size:11px">{{ b.path }}</td></tr>{% endfor %}</tbody>
+</table>
+<div class="caption">These are safe to clear in most cases (Claude rebuilds them as needed).</div>
+{% endif %}
+{% endblock %}

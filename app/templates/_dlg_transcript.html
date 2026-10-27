@@ -1,0 +1,20 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Conversation transcript</h3>
+<div class="caption">{{ label }}</div>
+<div class="caption mono">Source: {{ path }}</div>
+{% if not messages %}
+<div class="alert info">No readable messages in this transcript (may be empty, tool-only, or corrupted).</div>
+{% else %}
+<div class="caption"><strong>{{ count }}</strong> message(s)</div>
+<input class="input" type="text" placeholder="Filter messages…" oninput="filterMsgs(this.value)" style="margin-bottom:10px">
+<div id="txmsgs" style="max-height:56vh;overflow:auto">
+{% for m in messages %}
+<div class="msg-{{ m.role if m.role in ['user','assistant'] else 'system' }} txm" data-t="{{ m.text|lower }}">
+  <div class="msg-role">{{ m.role }}</div><div class="msg-text">{{ m.text }}</div>
+</div>
+{% endfor %}
+</div>
+<script>
+function filterMsgs(q){ q=q.toLowerCase(); document.querySelectorAll('#txmsgs .txm').forEach(e=>{ e.style.display = e.dataset.t.includes(q)?'':'none'; }); }
+</script>
+{% endif %}
