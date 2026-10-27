@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+{% set ns = namespace(catqs='') %}{% for c in cats_sel %}{% set ns.catqs = ns.catqs + '&cat=' + (c|urlencode) %}{% endfor %}
+<div class="page-head"><div class="caption" style="margin:0">Capabilities loaded into Claude; usage counts come from your transcripts.</div>
+  <button type="button" class="btn primary" style="flex:none" onclick="openDialog('/dialog/install')">+ Install skill</button></div>
+
+<form method="get" id="skf">
+  <input class="input" type="text" name="q" value="{{ q }}" placeholder="Search all skills by name or description (e.g. testing, security, react)" oninput="skSearch(this.value)" autocomplete="off" style="margin-bottom:10px">
+  <div class="row" style="margin-bottom:16px">
+    <div class="ms" id="catMs" style="flex:1.4">
+      <button type="button" class="input ms-btn" onclick="toggleCatMenu(event)" aria-label="Category">
+        <span id="catLabel">{% if not cats_sel %}All categories{% elif cats_sel|length==1 %}{{ cats_sel[0] }}{% else %}{{ cats_sel|length }} categories{% endif %}</span><span class="ms-caret">▾</span>
+      </button>
+      <div class="ms-menu" id="catMenu" style="display:none">
+        {% for c in cats %}<label class="ms-opt"><input type="checkbox" name="cat" value="{{ c }}" {{ 'checked' if c in cats_sel }} onchange="onCatChange()"> <span>{{ c }}</span></label>{% endfor %}
+      </div>
+    </div>
+    <select name="source" onchange="skf.requestSubmit()" style="flex:1" aria-label="Source">
+      <option value="All" {{ 'selected' if source=='All' }}>All sources</option>
+      {% for o in ["Local","Plugin","Unused"] %}<option {{ 'selected' if source==o }}>{{ o }}{% if o=='Unused' %} ({{ unused_n }}){% endif %}</option>{% endfor %}
+    </select>
+    <select name="sort" onchange="skf.requestSubmit()" style="flex:1">
+      {% for o in ["Recently used","Name (A-Z)","Most used","Size (high to low)","Recently modified"] %}<option {{ 'selected' if sort==o }}>{{ o }}</option>{% endfor %}
+    </select>
+    <select name="edited" onchange="skf.requestSubmit()" style="flex:1" aria-label="Edit date" title="Filter by when the skill's files last changed">
+      {% for o in edited_opts %}<option {{ 'selected' if edited==o }}>{{ o }}</option>{% endfor %}
+    </select>
+  </div>
+</form>
+
+<div class="row" style="justify-content:space-between;margin:0 0 14px">
+  <div class="caption" style="margin:0"><strong>{{ count }}</strong>{% if count != total %} of {{ total }}{% endif %} skills · {{ filt_size }} · {{ user_n }} local · {{ plugin_n }} plugin</div>
+  {% if total_pages > 1 %}
+  <div style="flex:0 0 auto;display:flex;gap:8px;align-items:center">
+    {% if page_n > 1 %}<a class="btn" href="?q={{q}}&source={{source}}&sort={{sort|urlencode}}&edited={{ edited|urlencode }}{{ ns.catqs }}&page={{ page_n-1 }}">‹</a>{% endif %}
+    <span class="caption" style="margin:0">Page {{ page_n }} of {{ total_pages }}</span>
+    {% if page_n < total_pages %}<a class="btn" href="?q={{q}}&source={{source}}&sort={{sort|urlencode}}&edited={{ edited|urlencode }}{{ ns.catqs }}&page={{ page_n+1 }}">›</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if push_msg %}<div class="alert info">{{ push_msg }} <a href="#" onclick="openDialog('/dialog/settings');return false" style="color:var(--accent);font-weight:600">Open Settings &rarr;</a></div>{% endif %}
+
+<div class="skill-grid">
+{% for s in skills %}
+  <div class="card">
+    <div class="c-head">
+      {# no "edited 7d" badge: it read as "edited 7 days ago" while the card said today, and it put
+         accent colour on every card. The exact edited date below says it better. #}
+      <div class="c-title"><span class="c-name">{{ s.name }}</span>{% if s.uses == 0 %}<span class="tag">unused</span>{% endif %}{% if s.pushed_url %}<span class="tag pushed">pushed</span>{% endif %}</div>
+      <div class="c-size">{{ s.size_human }}</div>
+    </div>
+    {% if s.description %}<div class="c-desc">{{ s.description }}</div>{% endif %}
+    <div class="c-meta"><span>{{ s.cat }}</span><span>·</span><span{% if s.uses_hist %} title="{{ s.uses - s.uses_hist }} in transcripts on disk + {{ s.uses_hist }} recovered from sessions Claude Code has since deleted"{% endif %}>{{ s.uses }} use{{ '' if s.uses==1 else 's' }}</span></div>
+    <div class="c-meta c-dates"><span title="Last time this skill was invoked">used {{ s.last_used_h }}</span><span>·</span><span class="{{ 'fresh' if s.is_recent }}" title="When this skill's files last changed{{ ' — within the last 7 days' if s.is_recent }}">edited {{ s.edited_h }}</span></div>
+    <div class="c-btns">
+      <button class="btn view" onclick="openDialog('/dialog/view/{{ s.name }}')">View</button>
+      <button class="btn push {{ 'disabled' if not can_push }}" {{ 'disabled' if not can_push }} onclick="openDialog('/dialog/push/{{ s.name }}')">Push</button>
+      <button class="btn share" onclick="openDialog('/dialog/share/{{ s.name }}')">Share</button>
+      <span class="tag {{ 'plugin' if s.source=='plugin' else 'user' }}" style="margin-left:auto;align-self:center" title="{{ 'Provided by an installed plugin' if s.source=='plugin' else 'Created by you or installed into ~/.claude/skills' }}">{{ s.source }}</span>
+    </div>
+  </div>
+{% else %}
+  <div class="alert info">No skills match these filters.</div>
+{% endfor %}
+</div>
+{% if total_pages > 1 %}
+<div class="row" style="justify-content:center;margin:20px 0 4px">
+  <div style="flex:0 0 auto;display:flex;gap:8px;align-items:center">
+    {% if page_n > 1 %}<a class="btn" href="?q={{q}}&source={{source}}&sort={{sort|urlencode}}&edited={{ edited|urlencode }}{{ ns.catqs }}&page={{ page_n-1 }}">‹</a>{% endif %}
+    <span class="caption" style="margin:0">Page {{ page_n }} of {{ total_pages }}</span>
+    {% if page_n < total_pages %}<a class="btn" href="?q={{q}}&source={{source}}&sort={{sort|urlencode}}&edited={{ edited|urlencode }}{{ ns.catqs }}&page={{ page_n+1 }}">›</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+<script>
+/* Global search: debounced server-side query across ALL skills (not just this page). */
+window.skSearch=function(v){ clearTimeout(window._skTimer); window._skTimer=setTimeout(function(){
+  window._refocusSearch=true; var f=document.getElementById('skf'); if(f) f.requestSubmit();
+}, 300); };
+/* Multi-select category dropdown: check several, applied when the menu closes. */
+window._catSnap='';
+function catVals(){ return [].slice.call(document.querySelectorAll('#catMenu input:checked')).map(function(c){return c.value;}); }
+function onCatChange(){ var v=catVals(); var lbl=document.getElementById('catLabel');
+  lbl.textContent = v.length===0 ? 'All categories' : (v.length===1 ? v[0] : v.length+' categories'); }
+function toggleCatMenu(e){ e.stopPropagation(); var m=document.getElementById('catMenu'); var opening=m.style.display==='none';
+  if(opening){ m.style.display='block'; window._catSnap=catVals().join('|'); } else { m.style.display='none'; applyCat(); } }
+function applyCat(){ if(catVals().join('|')!==window._catSnap){ window._refocusSearch=false; document.getElementById('skf').requestSubmit(); } }
+if(!window._catOutside){ window._catOutside=true;
+  document.addEventListener('click', function(e){ var ms=document.getElementById('catMs'); if(!ms) return;
+    var m=document.getElementById('catMenu'); if(m && m.style.display!=='none' && !ms.contains(e.target)){ m.style.display='none'; applyCat(); } }); }
+/* Highlight the query in the (already server-filtered) results on load. */
+(function(){ var s=document.querySelector('#skf input[name=q]'); var q=s?s.value.trim():''; if(!q) return;
+  document.querySelectorAll('.skill-grid .card').forEach(function(c){ var n=c.querySelector('.c-name'), d=c.querySelector('.c-desc');
+    if(n)n.innerHTML=hlText(n.textContent,q); if(d)d.innerHTML=hlText(d.textContent,q); });
+})();
+</script>
+{% endblock %}

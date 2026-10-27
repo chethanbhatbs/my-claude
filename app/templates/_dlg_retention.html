@@ -1,0 +1,31 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Keep conversations</h3>
+<div class="caption">Claude Code deletes conversations older than this when a session starts. Default {{ default }} days.</div>
+{% if ret.error %}
+<div class="alert err">{{ ret.error }}</div>
+{% else %}
+<div class="row" style="margin:14px 0 6px;gap:8px">
+  <input class="input" type="number" id="retDays" min="1" step="1" value="{{ ret.days }}" style="flex:0 0 120px" aria-describedby="retErr">
+  <span class="caption" style="margin:0;flex:0 0 auto">days</span>
+  <div class="seg" style="flex:0 0 auto">
+    {% for d in [30, 90, 365, 3650] %}<a href="#" onclick="document.getElementById('retDays').value={{ d }};return false">{{ '10 years' if d == 3650 else (d|string + ' days') }}</a>{% endfor %}
+  </div>
+</div>
+<div class="caption" id="retErr" role="alert" style="color:var(--err);margin:0 0 6px"></div>
+<div class="caption" style="margin:0 0 14px">Saved in <code>~/.claude/settings.json</code> as <code>cleanupPeriodDays</code>{% if not ret.set %} (not set yet, so the default applies){% endif %}.</div>
+<div style="display:flex;gap:8px">
+  <button class="btn primary" onclick="saveRetention(this)">Save</button>
+  <button class="btn" onclick="closeDialog()">Cancel</button>
+</div>
+<script>
+async function saveRetention(btn){
+  const v=document.getElementById('retDays').value.trim(), err=document.getElementById('retErr');
+  if(!/^\d+$/.test(v) || +v<1){ err.textContent='Enter a whole number of days, 1 or more.'; return; }
+  err.textContent=''; btn.classList.add('loading');
+  const r=await (await fetch('/action/retention',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:+v})})).json();
+  btn.classList.remove('loading');
+  if(!r.ok){ err.textContent=r.msg; return; }
+  toast(r.msg); closeDialog(); doRefresh(true);
+}
+</script>
+{% endif %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block heading %}My Claude{% endblock %}
+{% block content %}
+<div class="caption">Everything Claude Code keeps on this machine, all local. Press <code>Cmd-K</code> to jump anywhere.</div>
+
+<div class="metrics">
+  {% for k in kpis %}
+  {% if k.href %}<a class="metric" href="{{ k.href }}">{% else %}<div class="metric">{% endif %}
+    <div class="m-label">{{ k.label }}</div>
+    <div class="m-value">{{ k.value }}</div>
+    {% if k.sub %}<div class="m-sub">{{ k.sub }}</div>{% endif %}
+  {% if k.href %}</a>{% else %}</div>{% endif %}
+  {% endfor %}
+</div>
+
+{% if week %}
+<div class="metrics" style="margin-top:12px">
+  <div class="metric"><div class="m-label" title="Tokens of the last 7 days priced at Anthropic API list rates. Your plan covers them; this is a comparison figure, not a bill.">API est · 7d</div><div class="m-value">{{ week.cost7 }}</div>{% if week.delta is not none %}<div class="m-sub">{{ '+' if week.delta >= 0 else '' }}{{ week.delta }}% vs prev 7d</div>{% endif %}</div>
+  <div class="metric"><div class="m-label" title="What cache hits would have cost at full input price, minus what they did cost. API list prices.">Cache saved · API est</div><div class="m-value">{{ week.savings }}</div><div class="m-sub">vs uncached input</div></div>
+  <div class="metric"><div class="m-label">Busiest project</div><div class="m-value" style="font-size:1.05rem;letter-spacing:0">{{ week.busiest }}</div><div class="m-sub">{{ week.busiest_n }} messages</div></div>
+  <div class="metric"><div class="m-label" title="Heaviest day by API-list-price value of its tokens.">Heaviest day · API est</div><div class="m-value" style="font-size:1.35rem">${{ week.top_day[1] }}</div><div class="m-sub">{{ week.top_day[0] or '—' }}</div></div>
+</div>
+{% endif %}
+
+<details class="live" id="liveBox" style="display:none">
+  <summary class="live-head">
+    <span class="live-title">Active now</span>
+    <span class="tag" id="liveCount"></span>
+    <span class="live-sum caption" id="liveSum"></span>
+  </summary>
+  <div id="liveRows"></div>
+  <div class="live-procs" id="liveProcs"></div>
+</details>
+<script>
+/* Active sessions: transcripts written to in the last 10 minutes with the tokens they have actually
+   spent, plus the interactive `claude` processes running in terminals. Kept as two facts on purpose:
+   Claude Code does not expose which pid owns which session, so they are not joined. */
+function renderLive(j){
+  const box=document.getElementById('liveBox'), rows=document.getElementById('liveRows');
+  if(!box) return;
+  const t=j.totals||{};
+  if(!t.sessions && !t.processes){ box.style.display='none'; return; }
+  box.style.display='';
+  if(localStorage.getItem('mc_live_open')!=='0') box.open=true;
+  document.getElementById('liveCount').textContent=(t.sessions||0)+' session'+((t.sessions===1)?'':'s');
+  document.getElementById('liveSum').textContent=(t.tokens_h||'0')+' tokens · '+(t.cost_h||'$0')+' API est · last '+(j.window_min||10)+' min';
+  rows.innerHTML = (j.sessions||[]).map(s=>
+    '<div class="live-row">'+
+      '<div class="lr-main"><div class="lr-proj" title="'+escHtml(s.title)+'">'+escHtml(s.title)+'</div>'+
+      '<div class="lr-sub">'+escHtml(s.project)+' · <span class="mono">'+escHtml(s.session.slice(0,8))+'</span> · '+escHtml(s.model)+' · '+s.turns+' turns · '+escHtml(s.idle)+' ago</div></div>'+
+      '<div class="lr-n" title="Billable tokens in this session so far">'+s.tokens_h+'<span class="lr-cap">tokens</span></div>'+
+      '<div class="lr-n" title="API list-price estimate, not a bill">'+s.cost_h+'<span class="lr-cap">API est</span></div>'+
+      '<div class="lr-n" title="Tokens sent with the most recent turn — how full the context is">'+s.context_h+'<span class="lr-cap">context</span></div>'+
+      '<div class="lr-act">'+
+        '<button class="btn" title="Read this conversation here" onclick="openDialog(\'/api/conversation?path=\'+encodeURIComponent(\''+s.path+'\'))">View</button>'+
+        '<a class="btn" title="Open it in History, with search and the full list" href="/p/history?conv='+encodeURIComponent(s.path)+'">History</a>'+
+      '</div>'+
+    '</div>').join('') || '<div class="caption" style="margin:0">No session has written a transcript in the last '+(j.window_min||10)+' minutes.</div>';
+
+  const procs=(j.processes||[]).slice().sort((a,b)=>(b.uptime_s||0)-(a.uptime_s||0));
+  const el=document.getElementById('liveProcs');
+  if(!procs.length){ el.innerHTML=''; return; }
+  const stale=procs.filter(p=>(p.uptime_s||0) > 7*86400).length;
+  el.innerHTML =
+    '<details class="procs"><summary>'+
+      '<strong>'+procs.length+'</strong> terminal session'+(procs.length===1?'':'s')+' open'+
+      (procs.length ? ' · longest '+escHtml(procs[0].uptime) : '')+
+      (stale ? ' · '+stale+' idle over a week' : '')+
+    '</summary>'+
+    '<table class="data procs-tbl"><thead><tr><th>tty</th><th>open for</th><th>started</th><th>folder</th><th class="num">pid</th></tr></thead><tbody>'+
+    procs.map(p=>'<tr><td class="mono">'+escHtml(p.tty)+'</td><td>'+escHtml(p.uptime)+'</td><td>'+escHtml(p.started)+'</td><td>'+escHtml(p.project)+'</td><td class="num mono">'+p.pid+'</td></tr>').join('')+
+    '</tbody></table>'+
+    '<div class="caption" style="margin:8px 0 0;font-size:12px">A pid cannot be tied to a session id, so these are listed separately from the sessions above.</div>'+
+    '</details>';
+}
+async function loadLive(){ try{ const r=await fetch('/api/live'); renderLive(await r.json()); }catch(e){} }
+(function(){
+  if(window._liveTimer) clearInterval(window._liveTimer);
+  loadLive(); window._liveTimer=setInterval(()=>{ if(document.getElementById('liveBox')) loadLive(); else clearInterval(window._liveTimer); }, 10000);
+  document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='liveBox') localStorage.setItem('mc_live_open', e.target.open?'1':'0'); }, true);
+})();
+</script>
+
+{% if attention %}
+<h2 class="sub">Needs attention</h2>
+{% for a in attention %}
+<div class="attn">
+  <div><div class="a-text">{{ a.text }}</div><div class="a-sub">{{ a.sub }}</div></div>
+  <button class="btn" onclick="act('finder',{path:'{{ a.path }}'})">Open in Finder</button>
+</div>
+{% endfor %}
+{% endif %}
+
+<h2 class="sub">Recent</h2>
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-head"><h3>Recent conversations</h3><a href="/p/history">All history →</a></div>
+    {% for c in recent_convs %}
+    <a class="lrow" href="/p/history?conv={{ c.path | urlencode }}">
+      <div class="lr-title">{{ c.preview }}</div>
+      <div class="lr-meta">{{ c.project }} · {{ c.n }} msg · {{ c.when }}</div>
+    </a>
+    {% else %}<div class="lrow"><div class="lr-meta">No conversations yet.</div></div>{% endfor %}
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>Recently updated skills</h3><a href="/p/skills">All skills →</a></div>
+    {% for s in recent_skills %}
+    <a class="lrow" href="#" onclick="openDialog('/dialog/view/{{ s.name }}');return false">
+      <div class="lr-title">{{ s.name }}</div>
+      <div class="lr-meta">{{ s.cat }} · {{ s.size_human }}</div>
+    </a>
+    {% else %}<div class="lrow"><div class="lr-meta">No skills installed.</div></div>{% endfor %}
+  </div>
+</div>
+
+<h2 class="sub">Storage</h2>
+<div id="storage" class="chart" style="height:320px"></div>
+
+<div class="alert warn" style="margin-top:16px">Conversation transcripts under ~/.claude/projects/ are stored in plaintext. Don't share this screen without redacting.</div>
+
+<script>
+(function(){
+  const d = {{ chart|safe }};
+  const dark = document.body.classList.contains('dark');
+  Plotly.newPlot('storage', [{
+    type:'bar', orientation:'h', x:d.x, y:d.y, text:d.text, textposition:'auto', cliponaxis:false,
+    marker:{color:d.colors}, hovertemplate:'%{y}: %{text}<extra></extra>'
+  }], {
+    height:320, margin:{l:90,r:80,t:6,b:24}, showlegend:false,
+    paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+    font:{color: dark?'#A69B8C':'#6E655A', family:'Inter, sans-serif', size:12},
+    xaxis:{gridcolor: dark?'#2E2822':'#E6E0D5', zerolinecolor: dark?'#2E2822':'#E6E0D5'}, yaxis:{automargin:true}
+  }, {displayModeBar:false, responsive:true});
+})();
+</script>
+{% endblock %}

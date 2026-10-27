@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Rebuild my-claude-dashboard.zip — the payload install.sh downloads — from the live skill.
 #
-#   ./build-bundle.sh [path-to-skill]     (default: ~/.claude/skills/My-Claude)
+#   ./build-bundle.sh [path-to-skill]     (default: ./app in this repo)
 #
 # Only the files a user needs to run the app are copied. Personal state (config.json), the venv,
 # the on-disk caches and the internal SKILL.md notes are never included. The script refuses to
 # build if a credential-shaped string turns up in the payload.
 set -euo pipefail
 
-SRC="${1:-$HOME/.claude/skills/My-Claude}"
+SRC="${1:-$(cd "$(dirname "$0")" && pwd)/app}"
 OUT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ZIP="$OUT_DIR/my-claude-dashboard.zip"
 NAME="my-claude-dashboard"

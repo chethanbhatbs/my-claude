@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">Your full conversation history and the performance caches Claude keeps, read locally.</div>
+
+<h2 class="sub">Conversation history</h2>
+<form method="get" style="margin-bottom:8px" onsubmit="return false">
+  <input type="hidden" name="win" value="{{ win }}">
+  <input type="hidden" name="year" value="{{ year }}">
+  <input class="input" type="text" id="histSearch" name="q" value="{{ q }}" placeholder="Search titles and full text, or filter by project">
+</form>
+<div class="caption" style="margin:-2px 0 8px;font-size:12px">Transcripts are plaintext on your machine; redact before screen-sharing.</div>
+<div class="row" style="margin-bottom:12px;gap:10px">
+  <div class="seg" style="flex:0 0 auto">
+    {% for w in ["All time","30 days","7 days"] %}
+    <a class="{{ 'active' if win==w and year=='All' }}" href="?win={{ w|urlencode }}&year=All{% if q %}&q={{ q|urlencode }}{% endif %}">{{ w }}</a>
+    {% endfor %}
+  </div>
+  {% if years %}
+  <div class="seg" style="flex:0 0 auto">
+    {% for y in years %}
+    <a class="{{ 'active' if year==y|string }}" href="?year={{ y }}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ y }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <label class="toggle" style="flex:0 0 auto" title="Sessions whose transcript file was rotated away — prompts recovered from ~/.claude/history.jsonl">
+    <input type="checkbox" {{ 'checked' if show_arch }} onchange="histToggle('arch', this.checked)"><span class="track"></span>Archived ({{ arch_n }})</label>
+  <label class="toggle" style="flex:0 0 auto" title="Sub-agent and workflow transcripts spawned inside your conversations">
+    <input type="checkbox" {{ 'checked' if include_sub }} onchange="histToggle('sub', this.checked)"><span class="track"></span>Sub-agents ({{ sub_n }})</label>
+  <button class="btn" style="flex:0 0 auto;margin-left:auto" onclick="openDialog('/dialog/retention')">{% if ret.error %}Keep conversations: unreadable{% else %}Keep conversations: {{ '10 years' if ret.days == 3650 else (ret.days|string + ' days') }}{% endif %}</button>
+</div>
+<div class="caption"><strong>{{ conv_total }}</strong> conversations · {{ total_msgs }} messages{% if content_hits is not none %} · {{ content_hits }} with text matches{% endif %}{% if sub_n and not include_sub and content_hits is none %} · <span title="Sub-agent and workflow transcripts spawned inside your conversations, not separate chats.">+{{ sub_n }} sub-agent / workflow transcripts hidden</span>{% endif %}{% if not show_arch and arch_n %} · {{ arch_n }} archived hidden{% endif %}</div>
+{% if search_capped %}<div class="alert info" style="margin:8px 0 0">Full-text search stopped at its 500-match cap, so there may be more matches than listed. Narrow the query to see the rest.</div>{% endif %}
+
+<div class="conv">
+  <div class="conv-list" id="convList">
+    {% for c in convs %}
+    <div class="conv-item" data-path="{{ c.path_q }}"{% if c.first_hit is not none %} data-hit="{{ c.first_hit }}"{% endif %} onclick="loadConv(this)">
+      <div class="ci-title">{{ c.preview }}</div>
+      <div class="ci-meta"><span>{{ c.project.split('/')[-1] or c.project }}</span><span>·</span><span>{{ c.n }} {{ 'prompts' if c.kind=='archived' else 'msg' }}</span>{% if c.cost_h %}<span>·</span><span title="API list-price estimate, not a bill">{{ c.cost_h }}</span>{% endif %}{% if c.hits %}<span class="tag hit-count">{{ c.hits }} match{{ '' if c.hits==1 else 'es' }}</span>{% endif %}{% if c.kind and c.kind != 'conversation' %}<span class="tag" style="font-size:9px">{{ c.kind }}</span>{% endif %}</div>
+      <div class="ci-meta ci-when"><span>{{ c.when }}</span></div>
+    </div>
+    {% else %}
+    <div class="conv-empty">No conversations found.</div>
+    {% endfor %}
+  </div>
+  <div class="conv-detail" id="convDetail">
+    <div class="conv-empty">Select a conversation to read it.</div>
+  </div>
+</div>
+
+<hr class="divider">
+<h2 class="sub">Caches</h2>
+<div class="caption">Performance caches Claude rebuilds as needed: shell snapshots, paste cache, image cache, file-edit history, telemetry.</div>
+{% for r in cache %}
+<div class="card">
+  <div class="c-head">
+    <div class="c-title">{{ r.name }}{% if r.items %} <span class="caption" style="display:inline;font-weight:400">· {{ r.items }} items</span>{% endif %}</div>
+    <div class="c-size">{{ r.size_human }}</div>
+  </div>
+  <div class="c-btns">
+    <button class="btn" onclick="act('finder',{path:'{{ r.path }}'})">Open</button>
+    <button class="btn" onclick="act('copy',{text:'{{ r.path }}'})">Copy path</button>
+  </div>
+</div>
+{% else %}
+<div class="alert info">Nothing cached.</div>
+{% endfor %}
+
+<script>
+/* keep the current window/year/query when toggling archived / sub-agent transcripts */
+function histToggle(key, on){
+  const u=new URL(location.href); u.searchParams.set(key, on?'1':'0');
+  navigate(u.pathname+u.search);
+}
+function _hlConv(q){
+  if(!q) return; const box=document.getElementById('convMsgs'); if(!box) return;
+  const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');
+  box.querySelectorAll('.msg-text').forEach(t=>{ if(t.dataset.hl) return; t.dataset.hl=1;
+    const esc=t.textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    t.innerHTML=esc.replace(re,'<mark>$1</mark>'); });
+}
+async function loadConv(el, push=true){
+  document.querySelectorAll('.conv-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  const d=document.getElementById('convDetail'); d.innerHTML='<div class="conv-empty">Loading…</div>';
+  const r=await fetch('/api/conversation?path='+encodeURIComponent(el.dataset.path));
+  d.innerHTML=await r.text(); runScripts(d); d.scrollTop=0;
+  const q=(document.getElementById('histSearch')||{}).value || (document.querySelector('form input[name=q]')||{}).value;
+  if(q && q.trim()){
+    setTimeout(()=>{ _hlConv(q.trim()); if(window._markMatches) _markMatches(q.trim()); }, 30);
+  } else if(el.dataset.hit !== undefined && window.jumpToMessage){
+    setTimeout(()=>jumpToMessage(+el.dataset.hit), 40);
+  }
+  if(push){ const u=new URL(location.href); u.searchParams.set('conv', el.dataset.path); history.replaceState({},'',u); }
+}
+(function(){
+  const cp=new URLSearchParams(location.search).get('conv'); if(!cp) return;
+  const el=[...document.querySelectorAll('.conv-item')].find(e=>e.dataset.path===cp);
+  if(el){ loadConv(el, false); el.scrollIntoView({block:'nearest'}); }
+})();
+// live search: instant title/preview filter + highlight as you type; Enter runs the deeper full-text search
+(function(){
+  const input=document.getElementById('histSearch'); if(!input) return;
+  const items=[].slice.call(document.querySelectorAll('#convList .conv-item'));
+  items.forEach(it=>{ const t=it.querySelector('.ci-title'); if(t&&!t.dataset.raw) t.dataset.raw=t.textContent; });
+  function apply(v){ v=(v||'').trim(); const lc=v.toLowerCase(); let shown=0;
+    items.forEach(it=>{ const t=it.querySelector('.ci-title'); const raw=t?t.dataset.raw:''; const meta=it.querySelector('.ci-meta');
+      const hay=(raw+' '+(meta?meta.textContent:'')).toLowerCase(); const m=!v||hay.indexOf(lc)>=0;
+      it.style.display=m?'':'none'; if(m)shown++; if(t) t.innerHTML=hlText(raw, v); });
+    let e=document.getElementById('convLiveEmpty');
+    if(!e){ e=document.createElement('div'); e.id='convLiveEmpty'; e.className='conv-empty'; document.getElementById('convList').appendChild(e); }
+    e.textContent='No title matches. Press Enter to search full text.'; e.style.display=shown?'none':'';
+  }
+  window.histSearch=function(v){ apply(v); };
+  input.addEventListener('input', function(){ apply(input.value); });   // bound here so it survives client-side navigation
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault();
+    const win=document.querySelector('input[name=win]').value, year=document.querySelector('input[name=year]').value;
+    const v=input.value.trim();
+    navigate('/p/history?win='+encodeURIComponent(win)+'&year='+encodeURIComponent(year)+(v?('&q='+encodeURIComponent(v)):'')); } });
+  if(input.value.trim()) apply(input.value);   // re-highlight server results on load
+})();
+</script>
+{% endblock %}

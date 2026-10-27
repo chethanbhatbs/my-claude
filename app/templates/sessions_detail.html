@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block heading %}<a href="/sessions" class="back-link">←</a> {{ real_path }}{% endblock %}
+{% block content %}
+
+<div class="meta-row">
+  <span><strong>{{ sessions|length }}</strong> transcripts</span>
+  <span>Storage: <code>{{ storage }}</code></span>
+  {% if not exists %}<span class="pill pill-grey">project folder deleted</span>{% endif %}
+</div>
+
+<ul class="list list-card">
+  {% for s in sessions %}
+  <li class="list-row session-row">
+    <div class="list-main">
+      <div class="list-title">{{ s.label }}</div>
+      <div class="list-sub">id: <code>{{ s.sid[:8] }}…</code> · {{ s.mtime_human }} · {{ s.size_human }}</div>
+    </div>
+    <div class="list-actions">
+      <button class="btn btn-view"
+              hx-get="/transcript?path={{ s.path }}"
+              hx-target="#transcript-modal-body"
+              hx-on::after-request="document.getElementById('transcript-modal').classList.add('open')">
+        View transcript
+      </button>
+      <button class="btn btn-push" onclick="fetch('/action/reveal?path=' + encodeURIComponent('{{ s.path }}'), {method:'POST'})">Reveal</button>
+    </div>
+  </li>
+  {% else %}
+  <li class="list-empty">No transcripts.</li>
+  {% endfor %}
+</ul>
+
+<div id="transcript-modal" class="modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Transcript</h3>
+      <button class="modal-close" onclick="document.getElementById('transcript-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="transcript-modal-body" class="modal-body">
+      <div class="modal-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

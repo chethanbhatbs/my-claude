@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">{{ description }}</div>
+<form method="get"><input class="input" type="text" name="q" value="{{ q }}" placeholder="Search" onchange="this.form.submit()"></form>
+<div class="caption"><strong>{{ count }} of {{ total }}</strong> · {{ filt_size }}</div>
+{% for r in rows %}
+<div class="card">
+  <div class="c-head">
+    <div class="c-title">{{ r.name }}{% if r.items %} <span class="caption" style="display:inline;font-weight:400">· {{ r.items }} items</span>{% endif %}</div>
+    <div class="c-size">{{ r.size_human }}</div>
+  </div>
+  <div class="c-btns">
+    <button class="btn" onclick="act('finder',{path:'{{ r.path }}'})">Open</button>
+    <button class="btn" onclick="act('copy',{text:'{{ r.path }}'})">Copy</button>
+  </div>
+</div>
+{% else %}
+<div class="alert info">Nothing here.</div>
+{% endfor %}
+{% endblock %}

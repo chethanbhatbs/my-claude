@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">MCP tool servers and installed plugin bundles wired into Claude Code on this machine.</div>
+
+<div class="row" style="margin-bottom:14px">
+  <div class="seg" style="flex:0 0 auto">
+    <a class="{{ 'active' if tab=='mcp' }}" href="?tab=mcp">MCP · {{ n_conn }}</a>
+    <a class="{{ 'active' if tab=='plugins' }}" href="?tab=plugins">Plugins · {{ n_plug }}</a>
+  </div>
+  <input class="input" type="text" id="extSearch" value="{{ q }}" placeholder="Search by name" oninput="extFilter(this.value)" style="flex:1">
+  {% if tab == 'mcp' %}<span class="mono" id="mcpCount" role="status" style="flex:0 0 auto;color:var(--dim);font-size:13px"></span><button class="btn" style="flex:0 0 auto" id="healthBtn" onclick="checkHealth()">Check health</button>{% endif %}
+</div>
+
+{% if tab == 'mcp' %}
+<div class="caption">External tool servers via the Model Context Protocol; secrets auto-redacted, health pings each one.</div>
+<div class="alert info" style="margin:8px 0 14px">These come from your <b>Claude Code</b> config (<code>~/.claude.json</code> and per-project <code>.mcp.json</code>). Claude Desktop and claude.ai web connectors are configured separately and aren't shown here.</div>
+{% for c in connectors %}
+<details class="exp" data-name="{{ c.name }}">
+  <summary>
+    <span style="display:flex;align-items:center"><span class="mcp-dot unknown" data-key="{{ c.key }}"></span><span class="ext-name">{{ c.name }}</span><span class="mcp-scope">{{ c.scope_label }}</span><span class="mcp-status-text" data-status="{{ c.key }}"></span></span>
+  </summary>
+  <div class="exp-body">
+    <div class="caption" style="margin:6px 0">registered in: {{ c.scopes | join(', ') }} · from {{ c.source }}</div>
+    <pre class="code-json"><code class="language-json">{{ c.config }}</code></pre>
+  </div>
+</details>
+{% else %}
+<div class="alert info">No MCP connectors configured. Add one with <code>claude mcp add</code>.</div>
+{% endfor %}
+<script>
+async function checkHealth(){
+  const btn=document.getElementById('healthBtn'); if(btn){ btn.textContent='Checking…'; btn.classList.add('disabled'); }
+  try{
+    const res=await (await fetch('/api/mcp-health')).json();
+    res.forEach(r=>{
+      document.querySelectorAll('.mcp-dot[data-key="'+CSS.escape(r.key)+'"]').forEach(d=>{ d.className='mcp-dot '+r.status; });
+      document.querySelectorAll('.mcp-status-text[data-status="'+CSS.escape(r.key)+'"]').forEach(t=>{ t.textContent=r.status+' · '+r.detail; });
+    });
+    const cnt=document.getElementById('mcpCount');
+    if(cnt) cnt.textContent=res.filter(r=>r.status==='ok').length+' of '+res.length+' reachable';
+  }catch(e){ toast('Health check failed'); }
+  if(btn){ btn.textContent='Re-check health'; btn.classList.remove('disabled'); }
+}
+checkHealth();
+</script>
+
+{% else %}
+<div class="caption">Bundles installed with /plugin; each can ship skills, commands, and hooks.</div>
+{% for p in plugins %}
+<details class="exp" data-name="{{ p.name }}"><summary><span class="ext-name">{{ p.name }}</span></summary><div class="exp-body"><pre class="code-json"><code class="language-json">{{ p.info }}</code></pre></div></details>
+{% else %}
+<div class="alert info">No plugins installed.</div>
+{% endfor %}
+{% endif %}
+<script>
+function extFilter(q){ q=(q||'').trim(); var lc=q.toLowerCase(); var shown=0;
+  document.querySelectorAll('#main details.exp[data-name]').forEach(function(d){
+    var name=d.dataset.name; var match=!q || name.toLowerCase().indexOf(lc)>=0;
+    d.style.display=match?'':'none'; if(match) shown++;
+    var el=d.querySelector('.ext-name'); if(el) el.innerHTML=hlText(name, q);
+  });
+  var e=document.getElementById('extEmpty'); if(e) e.style.display=shown?'none':'';
+}
+(function(){ var s=document.getElementById('extSearch'); if(s&&s.value) extFilter(s.value); })();
+</script>
+{% endblock %}

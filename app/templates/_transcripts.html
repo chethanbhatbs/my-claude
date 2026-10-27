@@ -1,0 +1,16 @@
+<div style="font-weight:600;margin:12px 0 8px">Transcripts</div>
+{% for s in sessions %}
+<div class="card">
+  <div class="c-head"><div class="c-title">{{ s.label }}</div><div class="c-size">{{ s.size_h }}</div></div>
+  <div class="caption">id: <code>{{ s.short_id }}…</code> · {{ s.when }}</div>
+  <div class="c-btns">
+    <button class="btn primary {{ 'disabled' if not real_exists }}" {{ 'disabled' if not real_exists }} onclick="act('claude',{path:'{{ project_real }}',resume:'{{ s.sid_full }}'})">Resume in Claude</button>
+    <button class="btn view" onclick="openDialog('/dialog/transcript?path={{ s.path | urlencode }}')">View transcript</button>
+    <button class="btn" onclick="act('editor',{path:'{{ s.path }}'})">Open in {{ editor }}</button>
+    <button class="btn" onclick="act('reveal',{path:'{{ s.path }}'})">Reveal</button>
+    <button class="btn" onclick="act('copy',{text:'{{ s.sid_full }}'})">Copy id</button>
+  </div>
+</div>
+{% else %}
+<div class="caption">No transcripts.</div>
+{% endfor %}

@@ -1,0 +1,35 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>{{ name }}</h3>
+<div class="caption mono" style="margin:4px 0 12px">{{ path }}</div>
+{% if meta.description %}<div class="alert info">{{ meta.description }}</div>{% endif %}
+<div class="c-btns" style="margin-top:12px">
+  <button class="btn primary" onclick="act('finder',{path:'{{ path }}'})">Open in Finder</button>
+  <button class="btn" onclick="act('copy',{text:'{{ path }}'})">Copy path</button>
+</div>
+<hr class="divider" style="margin:20px 0">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+  <div style="font-weight:600">SKILL.md</div>
+  <div class="c-btns" style="margin-top:0">
+    <button class="btn" id="mdToggle" onclick="toggleMd()">View raw</button>
+    <button class="btn" onclick="act('copyfile',{path:'{{ path }}/SKILL.md'})">Copy markdown</button>
+  </div>
+</div>
+{% if meta.body %}
+<div class="md-scroll">
+  <div class="md-doc" id="mdRendered"></div>
+  <pre id="mdRaw" style="display:none;white-space:pre-wrap"></pre>
+</div>
+<script>
+(function(){
+  const src={{ meta.body | tojson }};
+  document.getElementById('mdRaw').textContent=src;
+  renderMarkdown(document.getElementById('mdRendered'), src);
+})();
+function toggleMd(){
+  const r=document.getElementById('mdRendered'), raw=document.getElementById('mdRaw'), b=document.getElementById('mdToggle');
+  const rawVisible = raw.style.display!=='none';
+  raw.style.display = rawVisible?'none':'block'; r.style.display = rawVisible?'block':'none';
+  b.textContent = rawVisible?'View raw':'View rendered';
+}
+</script>
+{% else %}<div class="caption">(no content)</div>{% endif %}

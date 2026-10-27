@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23E8825A'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='20' font-weight='700' text-anchor='middle' fill='%230A0A0A'%3EC%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}My Claude{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/app.css?v={{ asset_ver }}">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+</head>
+<body class="{{ 'dark' if theme == 'dark' else 'light' }}">
+<div id="nprog"></div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">C</div><div class="brand-name">My Claude</div></div>
+    <div class="brand-sub">{{ claude_home }}</div>
+    <nav class="nav">
+      {% for p in pages %}
+      <a href="/p/{{ page_slug[p] }}" class="{{ 'active' if active == p else '' }}">{{ p }}</a>
+      {% endfor %}
+    </nav>
+    <div class="side-spacer"></div>
+    <hr class="hr">
+    <div class="side-btns">
+      <button class="btn" onclick="openDialog('/dialog/settings')">Settings</button>
+      <button class="btn" id="refreshBtn" onclick="doRefresh()">Refresh</button>
+      <a class="btn" href="/p/help">Help</a>
+    </div>
+    <div class="gh-chip foot {{ chip.cls }}" id="ghChip" title="GitHub connection (via gh CLI)"><span class="dot"></span><span id="ghChipText">{{ chip.text }}</span></div>
+    <div class="foot-cap"><span class="dot"></span>localhost · updated <span id="updatedAt">{{ updated }}</span><span id="syncChip" class="sync-chip">syncing…</span></div>
+  </aside>
+
+  <main class="main" id="main">
+    {% block main %}
+    <div class="reveal">
+      {% if eyebrow %}<div class="eyebrow">{{ eyebrow }}</div>{% endif %}
+      <div class="page-head">
+        <h1>{% block heading %}{{ active }}{% endblock %}</h1>
+        <div class="hactions">
+          <button class="btn" onclick="doRefresh()">Refresh</button>
+          <a class="btn" href="/toggle-theme?next={{ ('/p/' ~ page_slug[active]) | urlencode }}">{{ 'Light' if theme == 'dark' else 'Dark' }}</a>
+        </div>
+      </div>
+    </div>
+    {% block content %}{% endblock %}
+    {% endblock %}
+  </main>
+</div>
+
+<div class="modal-back" id="modalBack" onclick="if(event.target===this)closeDialog()">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<div class="pal-back" id="palBack" onclick="if(event.target===this)closePalette()">
+  <div class="pal">
+    <input id="palInput" placeholder="Jump to a page, or search skills and conversations…" autocomplete="off">
+    <div class="pal-results" id="palResults"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+if(window.mermaid){ try{ mermaid.initialize({startOnLoad:false, securityLevel:'loose', flowchart:{htmlLabels:true, useMaxWidth:true}, theme: document.body.classList.contains('dark')?'dark':'neutral'}); }catch(_){} }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+// escape + highlight a query term inside a plain string -> HTML (shared across the dashboard)
+function escHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function hlText(text, q){ text=text||''; q=(q||'').trim(); if(!q) return escHtml(text);
+  const i=text.toLowerCase().indexOf(q.toLowerCase()); if(i<0) return escHtml(text);
+  return escHtml(text.slice(0,i))+'<mark>'+escHtml(text.slice(i,i+q.length))+'</mark>'+escHtml(text.slice(i+q.length)); }
+async function act(kind, payload){
+  try{ const r=await fetch('/action/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
+    const j=await r.json(); toast(j.msg||(j.ok?'Done':'Failed')); return j; }
+  catch(e){ toast('Error: '+e); }
+}
+function runScripts(root){ root.querySelectorAll('script').forEach(s=>{ const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; s.replaceWith(n); }); }
+async function openDialog(url){
+  const b=document.getElementById('modalBody'); b.innerHTML='<div class="caption">Loading…</div>';
+  document.getElementById('modalBack').classList.add('show');
+  const r=await fetch(url); b.innerHTML=await r.text(); runScripts(b); addCopyButtons(b);
+}
+function closeDialog(){ document.getElementById('modalBack').classList.remove('show'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDialog(); closePalette(); } });
+
+/* shared markdown renderer with syntax highlighting */
+function renderMarkdown(el, src){
+  try{ marked.setOptions({breaks:true, gfm:true}); el.innerHTML=marked.parse(src||''); }
+  catch(e){ el.textContent=src||''; return; }
+
+  // give headings an id from a leading "§N" so a table of contents can jump to them
+  el.querySelectorAll('h1,h2,h3,h4').forEach(h=>{
+    const m=(h.textContent||'').match(/§\s*(\d+)/);
+    if(m && !h.id) h.id='s'+m[1];
+    h.style.scrollMarginTop='16px';
+  });
+
+  // external links open in a new tab; in-page #anchors scroll within the modal (delegated so linkified TOC works too)
+  el.querySelectorAll('a[href]').forEach(a=>{
+    const href=a.getAttribute('href')||'';
+    if(/^https?:/i.test(href)){ a.target='_blank'; a.rel='noopener noreferrer'; }
+  });
+  if(!el._anchorWired){
+    el._anchorWired=true;
+    el.addEventListener('click', ev=>{
+      const a=ev.target.closest('a[href^="#"]'); if(!a) return;
+      ev.preventDefault();
+      const t=el.querySelector('#'+CSS.escape(a.getAttribute('href').slice(1)));
+      if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  }
+
+  // code blocks: render mermaid diagrams, linkify a §-style table of contents, else syntax-highlight
+  el.querySelectorAll('pre code').forEach(b=>{
+    const cls=b.className||'', txt=b.textContent||'';
+    const isMermaid = /language-mermaid/.test(cls) || /^\s*(flowchart|graph|sequenceDiagram|gantt|classDiagram|stateDiagram|erDiagram|journey|pie)\b/.test(txt);
+    if(isMermaid && window.mermaid){
+      const d=document.createElement('div'); d.className='mermaid'; d.textContent=txt;
+      b.closest('pre').replaceWith(d);
+      return;
+    }
+    // a code-fenced table of contents: turn "§N" into links to the matching heading
+    if(/§\s*\d+/.test(txt) && /(PART|contents|table of)/i.test(txt)){
+      const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+      b.innerHTML=esc(txt).replace(/§\s*(\d+)/g,'<a href="#s$1" class="toc-jump">§$1</a>');
+      b.closest('pre').classList.add('toc-pre');
+      return;
+    }
+    if(window.hljs){ try{ hljs.highlightElement(b); }catch(_){} }
+  });
+
+  if(window.mermaid){ try{ mermaid.run({nodes: el.querySelectorAll('.mermaid:not([data-processed])')}); }catch(_){} }
+  if(window.addCopyButtons) addCopyButtons(el);
+}
+
+/* ---- command palette (Cmd/Ctrl-K) ---- */
+let palItems=[], palSel=0, palTimer=null;
+function openPalette(){ document.getElementById('palBack').classList.add('show'); const i=document.getElementById('palInput'); i.value=''; i.focus(); palQuery(''); }
+function closePalette(){ document.getElementById('palBack').classList.remove('show'); }
+async function palQuery(q){
+  const box=document.getElementById('palResults');
+  const r=await fetch('/api/palette?q='+encodeURIComponent(q)); palItems=await r.json(); palSel=0;
+  if(!palItems.length){ box.innerHTML='<div class="pal-empty">No matches.</div>'; return; }
+  box.innerHTML=palItems.map((it,i)=>'<div class="pal-item'+(i===0?' sel':'')+'" data-i="'+i+'"><span class="pi-type">'+it.t+'</span><span class="pi-label">'+
+    (it.label||'').replace(/</g,'&lt;')+'</span>'+(it.sub?'<span class="pi-sub">'+it.sub.replace(/</g,'&lt;')+'</span>':'')+'</div>').join('');
+  box.querySelectorAll('.pal-item').forEach(el=>el.onclick=()=>palGo(+el.dataset.i));
+}
+function palGo(i){ const it=palItems[i]; if(!it) return; closePalette();
+  if(it.view){ openDialog('/dialog/view/'+encodeURIComponent(it.view)); }
+  else if(it.href){ navigate(it.href); } }
+function palMove(d){ const els=[...document.querySelectorAll('.pal-item')]; if(!els.length)return;
+  els[palSel]?.classList.remove('sel'); palSel=(palSel+d+els.length)%els.length; els[palSel].classList.add('sel'); els[palSel].scrollIntoView({block:'nearest'}); }
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openPalette(); return; }
+  if(!document.getElementById('palBack').classList.contains('show')) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); palMove(1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); palMove(-1); }
+  else if(e.key==='Enter'){ e.preventDefault(); palGo(palSel); }
+});
+document.getElementById('palInput').addEventListener('input', e=>{ clearTimeout(palTimer); const v=e.target.value; palTimer=setTimeout(()=>palQuery(v),120); });
+
+/* ---- client-side navigation: base + libs load once; hover-prefetch + progress bar ---- */
+let _navToken = 0; const _prefetch = new Map();
+function startProg(){ const p=document.getElementById('nprog'); p.classList.add('on'); p.style.width='35%'; setTimeout(()=>{ if(p.classList.contains('on')) p.style.width='75%'; }, 180); }
+function doneProg(){ const p=document.getElementById('nprog'); p.style.width='100%'; setTimeout(()=>{ p.classList.remove('on'); p.style.width='0'; }, 220); }
+function prefetch(url){ if(_prefetch.has(url)) return _prefetch.get(url); const pr=fetch(url).then(r=>r.text()).catch(()=>null); _prefetch.set(url, pr); setTimeout(()=>_prefetch.delete(url), 15000); return pr; }
+async function navigate(url, push=true, keepScroll=false){
+  const main=document.getElementById('main'); const tok=++_navToken;
+  main.classList.add('nav-busy'); startProg();
+  try{
+    const html=await (_prefetch.get(url) || fetch(url).then(r=>r.text()));
+    if(tok!==_navToken) return;
+    if(!html){ location.href=url; return; }
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const nm=doc.getElementById('main');
+    if(!nm){ location.href=url; return; }
+    main.innerHTML=nm.innerHTML; document.title=doc.title;
+    const path=new URL(url, location.origin).pathname;
+    document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('active', a.getAttribute('href')===path));
+    runScripts(main); highlightMain();
+    if(window._refocusSearch){ window._refocusSearch=false; const si=main.querySelector('#skf input[name=q]'); if(si){ si.focus(); const v=si.value; try{ si.setSelectionRange(v.length, v.length); }catch(_){} } }
+    else if(!keepScroll){ const h=new URL(url, location.origin).hash, t=h && main.querySelector(h); if(t) t.scrollIntoView({block:'start'}); else window.scrollTo(0,0); }
+    if(push) history.pushState({}, '', url);
+  }catch(e){ location.href=url; }
+  finally{ main.classList.remove('nav-busy'); doneProg(); }
+}
+async function doRefresh(silent){
+  const cur=location.pathname+location.search; _prefetch.clear();
+  const main=document.getElementById('main'); main.classList.add('nav-busy'); startProg();
+  const rb=document.getElementById('refreshBtn'); if(rb && !silent){ rb.dataset.lbl=rb.textContent; rb.classList.add('loading'); rb.innerHTML='<span class="spin"></span> Refreshing'; }
+  const t0=Date.now();
+  try{ await fetch('/refresh?next='+encodeURIComponent(cur)); }catch(e){}
+  await new Promise(r=>setTimeout(r, Math.max(0, 450-(Date.now()-t0))));  // keep the loader visible briefly
+  await navigate(cur, false);
+  const ua=document.getElementById('updatedAt'); if(ua) ua.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(rb && !silent){ rb.classList.remove('loading'); rb.textContent=rb.dataset.lbl||'Refresh'; }
+  if(!silent) toast('Refreshed');
+}
+/* Auto-refresh: interval stored in localStorage (seconds; 0 = off). Timers only fire while the tab is open and the laptop is awake. */
+function autoRefreshSeconds(){ return parseInt(localStorage.getItem('mc_autorefresh')||'0',10)||0; }
+function applyAutoRefresh(){ if(window._autoRefreshTimer) clearInterval(window._autoRefreshTimer);
+  const s=autoRefreshSeconds(); if(s>0) window._autoRefreshTimer=setInterval(()=>{ if(!document.getElementById('modalBack').classList.contains('show')) doRefresh(true); }, s*1000); }
+function setAutoRefresh(s){ localStorage.setItem('mc_autorefresh', String(parseInt(s,10)||0)); applyAutoRefresh();
+  toast(autoRefreshSeconds()? 'Auto-refresh every '+({60:'1 min',300:'5 min',900:'15 min',1800:'30 min',3600:'1 hour'}[autoRefreshSeconds()]||autoRefreshSeconds()+'s') : 'Auto-refresh off'); }
+document.addEventListener('pointerover', e=>{ const a=e.target.closest && e.target.closest('a'); if(!a) return;
+  const href=a.getAttribute('href'); if(href && href.startsWith('/p/') && !_prefetch.has(href)) prefetch(href); });
+document.addEventListener('click', e=>{
+  if(e.defaultPrevented || e.metaKey || e.ctrlKey || e.button) return;
+  const a=e.target.closest('a'); if(!a) return;
+  const href=a.getAttribute('href'); if(!href) return;
+  if(a.target==='_blank' || a.hasAttribute('download')) return;
+  if(href.startsWith('/toggle-theme')) return; // full load (changes theme)
+  if(href.startsWith('/p/')){ e.preventDefault(); navigate(href); }
+  else if(href.startsWith('?')){ e.preventDefault(); navigate(location.pathname+href); }
+});
+document.addEventListener('submit', e=>{
+  const f=e.target; if((f.method||'get').toLowerCase()!=='get') return;
+  e.preventDefault();
+  const params=new URLSearchParams(new FormData(f)).toString();
+  navigate((f.getAttribute('action')||location.pathname)+(params?'?'+params:''));
+});
+window.addEventListener('popstate', ()=>navigate(location.pathname+location.search, false));
+/* highlight any code blocks in the main panel — runs after every SPA nav and on first load */
+function highlightMain(){ const m=document.getElementById('main'); if(m&&window.hljs) m.querySelectorAll('pre code').forEach(b=>{ try{ hljs.highlightElement(b); }catch(_){} }); addCopyButtons(m); }
+/* Auto-inject a copy icon onto every <pre> block (logs, config, code, JSON) across the app. */
+const _COPY_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+function addCopyButtons(root){ root=root||document;
+  root.querySelectorAll('pre').forEach(function(pre){
+    if(pre.closest('.codewrap') || pre.dataset.nocopy) return;
+    const wrap=document.createElement('div'); wrap.className='codewrap';
+    pre.parentNode.insertBefore(wrap, pre); wrap.appendChild(pre);
+    const b=document.createElement('button'); b.className='copy-btn'; b.type='button'; b.title='Copy'; b.setAttribute('aria-label','Copy'); b.innerHTML=_COPY_SVG;
+    wrap.appendChild(b);
+  });
+}
+document.addEventListener('click', function(e){ const b=e.target.closest && e.target.closest('.copy-btn'); if(!b) return;
+  e.preventDefault(); e.stopPropagation(); const wrap=b.closest('.codewrap'); const pre=wrap&&wrap.querySelector('pre'); if(!pre) return;
+  navigator.clipboard.writeText(pre.innerText).then(function(){ toast('Copied'); b.classList.add('ok'); setTimeout(function(){ b.classList.remove('ok'); },1200); }).catch(function(){ toast('Copy failed'); });
+});
+highlightMain();
+applyAutoRefresh();
+/* ---- live sync: the open page notices new transcripts/skills and pulls them in ----
+   Polls a stat-only fingerprint (~6ms server-side). When it changes, the server rebuilds in the
+   background and we silently re-render once it's done, so the page you're staring at stops being a
+   snapshot of whenever you opened it. */
+let _dataVer=null, _syncBusy=false;
+async function syncTick(){
+  if(_syncBusy || document.hidden) return;
+  if(document.getElementById('modalBack').classList.contains('show')) return;  // don't yank a dialog
+  try{
+    const r=await fetch('/api/data-version'); const j=await r.json();
+    if(_dataVer===null){ _dataVer=j.version; return; }
+    if(j.version===_dataVer) return;
+    // Don't yank the page out from under someone who is reading a conversation or typing —
+    // offer the refresh instead of forcing it.
+    if(document.querySelector('#convDetail .cvm') || (document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))){
+      const chip=document.getElementById('syncChip');
+      if(chip){ chip.textContent='new data · refresh'; chip.classList.add('on','click'); chip.onclick=()=>doRefresh(); }
+      return;
+    }
+    _syncBusy=true;
+    const chip=document.getElementById('syncChip'); if(chip){ chip.textContent='syncing…'; chip.classList.remove('click'); chip.onclick=null; chip.classList.add('on'); }
+    _prefetch.clear();
+    const y=window.scrollY;
+    await navigate(location.pathname+location.search, false, true);
+    window.scrollTo(0, y);                                        // stay where you were reading
+    _dataVer=j.version;
+    const ua=document.getElementById('updatedAt'); if(ua) ua.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    if(chip) chip.classList.remove('on');
+  }catch(e){}
+  finally{ _syncBusy=false; }
+}
+setInterval(syncTick, 15000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) syncTick(); });
+syncTick();
+/* warm the other tabs shortly after load so the first switch is instant */
+setTimeout(()=>{ document.querySelectorAll('.nav a').forEach(a=>{ const h=a.getAttribute('href');
+  if(h && h.startsWith('/p/') && h!==location.pathname) prefetch(h); }); }, 500);
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

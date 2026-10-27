@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+config.json
+.DS_Store
+.mc_cache.json
+.mc_usage_cache.json
+.mc_search.db
+.mc_search.db-wal
+.mc_search.db-shm

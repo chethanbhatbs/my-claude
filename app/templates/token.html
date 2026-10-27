@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block heading %}Token Usage{% endblock %}
+{% block content %}
+<div class="caption">Live plan limits from your Claude account; token counts parsed from local transcripts. Billable = tokens metered by the API; context = what the model saw.</div>
+
+<div class="limits" id="limitsBox">
+  <div class="lim-head">
+    <h2 class="sub" style="margin:0">Your usage limits <span class="tag" id="limPlan" style="display:none"></span></h2>
+    <div class="row" style="flex:0 0 auto;gap:8px;align-items:center">
+      <span class="caption mono" id="limStamp" style="margin:0;font-size:11px"></span>
+      <button class="btn" id="limBtn" onclick="loadLimits(true)" title="Fetch fresh numbers from Anthropic">Refresh</button>
+    </div>
+  </div>
+  <div id="limRows"><div class="caption" style="margin:0">Loading your limits…</div></div>
+  <details class="exp" style="margin-top:12px"><summary><span>Where these numbers come from (and what leaves this machine)</span></summary><div class="exp-body">
+    <div class="caption" style="margin:0">
+      One request: <span class="mono">GET https://api.anthropic.com/api/oauth/usage</span>, authorised with your Claude Code
+      OAuth token read from the macOS keychain entry <span class="mono">Claude Code-credentials</span> — the same entry the
+      <span class="mono">claude</span> CLI made and uses. The token is sent in the <span class="mono">Authorization</span> header and
+      nothing else goes with it: no transcripts, no prompts, no filenames, no telemetry. It is held in memory for 10 minutes
+      and never written to disk. This happens only while this page is open (on load, every 60s, and on Refresh).
+      Decline the keychain prompt and nothing breaks — the panel falls back to the copy Claude Code already cached in
+      <span class="mono">~/.claude.json</span> and says so, with the age of those numbers. Every other page in this app is
+      computed from files on your disk with no network access.
+    </div>
+  </div></details>
+</div>
+<script>
+/* Live plan limits — same source Claude's Settings → Usage panel uses (api.anthropic.com/api/oauth/usage,
+   authorised with the Claude Code token from your keychain). Falls back to the copy Claude Code cached
+   in ~/.claude.json and says so. Never leaves this machine except that one call. */
+function _agoText(sec){ if(sec<10) return 'just now'; if(sec<60) return Math.round(sec)+'s ago';
+  if(sec<3600) return Math.round(sec/60)+' min ago'; if(sec<86400) return Math.round(sec/3600)+'h ago';
+  return Math.round(sec/86400)+'d ago'; }
+function renderLimits(j){
+  const box=document.getElementById('limRows'), st=document.getElementById('limStamp'), pl=document.getElementById('limPlan');
+  if(!box) return;
+  if(pl && j.plan){ pl.textContent=j.plan; pl.style.display=''; }
+  if(!j.ok){
+    box.innerHTML='<div class="alert info" style="margin:0">Could not read your live limits. '+
+      (j.error?'<span class="mono" style="font-size:11px">'+escHtml(j.error)+'</span><br>':'')+
+      'Click Refresh and allow the keychain prompt for <span class="mono">Claude Code-credentials</span>.</div>';
+    if(st) st.textContent=''; return;
+  }
+  const groups=[['session','Session'],['weekly','Weekly limits']]; let html='';
+  groups.forEach(([g,title])=>{
+    const rows=j.rows.filter(r=>r.group===g); if(!rows.length) return;
+    html+='<div class="lim-group"><div class="lim-gtitle">'+title+'</div>';
+    rows.forEach(r=>{
+      const pct=Math.max(0, Math.min(100, r.pct));
+      const sub=r.unused ? ("You haven't used "+escHtml(r.label)+' yet') : escHtml(r.resets||'');
+      html+='<div class="lim-row'+(r.active?' active':'')+'">'+
+        '<div class="lim-label"><div class="lim-name">'+escHtml(r.label)+'</div><div class="lim-sub">'+sub+'</div></div>'+
+        '<div class="lim-bar"><div class="lim-fill sev-'+escHtml(r.severity)+'" style="width:'+pct+'%"></div></div>'+
+        '<div class="lim-pct">'+pct+'% used</div></div>';
+    });
+    html+='</div>';
+  });
+  const ex=j.extra||{};
+  if(ex.enabled) html+='<div class="caption" style="margin:8px 0 0">Extra usage credits enabled'+(ex.used_credits!=null?(' · '+ex.used_credits+' used'):'')+'</div>';
+  box.innerHTML=html||'<div class="caption" style="margin:0">No limit data returned.</div>';
+  if(st){
+    const age=(Date.now()/1000)-(j.fetched_at||0);
+    st.textContent=(j.source==='live'?'live · ':'Claude’s local cache · ')+'updated '+_agoText(age);
+    st.title=j.source==='live'?'Fetched from Anthropic just now':'Live fetch failed; showing the numbers Claude Code last cached';
+  }
+}
+async function loadLimits(fresh){
+  const b=document.getElementById('limBtn'); if(b){ b.disabled=true; b.textContent='…'; }
+  try{ const r=await fetch('/api/usage-limits'+(fresh?'?fresh=1':'')); renderLimits(await r.json()); }
+  catch(e){ renderLimits({ok:false, error:String(e)}); }
+  if(b){ b.disabled=false; b.textContent='Refresh'; }
+}
+(function(){
+  if(window._limTimer) clearInterval(window._limTimer);
+  loadLimits(false);
+  window._limTimer=setInterval(()=>{ if(document.getElementById('limRows')) loadLimits(false); else clearInterval(window._limTimer); }, 60000);
+})();
+</script>
+<hr class="divider">
+
+<div class="row" style="margin-bottom:12px">
+  <div class="seg" style="flex:0 0 auto">
+    {% for w in ["All time","30 days","7 days"] %}
+    <a class="{{ 'active' if win==w and not d_from and not d_to }}" href="?win={{ w|urlencode }}&family={{ family|urlencode }}">{{ w }}</a>
+    {% endfor %}
+  </div>
+  <div class="seg" style="flex:0 0 auto;flex-wrap:wrap">
+    {% for fm in models %}
+    <a class="{{ 'active' if family==fm }}" href="?win={{ win|urlencode }}&family={{ fm|urlencode }}">{{ fm }}</a>
+    {% endfor %}
+  </div>
+  <form method="get" class="row" style="flex:0 0 auto;gap:6px">
+    <input type="hidden" name="family" value="{{ family }}">
+    <input type="date" name="from" value="{{ d_from }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()">
+    <span class="caption" style="margin:0">to</span>
+    <input type="date" name="to" value="{{ d_to }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()">
+  </form>
+</div>
+
+{% if empty %}
+<div class="alert info">{{ 'No usage in this window/filter.' if empty_window else 'No usage data found in any transcript yet.' }}</div>
+{% else %}
+{% if insights %}
+<details class="fold" id="insFold">
+  <summary class="fold-head">
+    <span class="fold-title">Where your tokens go, and what to cut</span>
+    <span class="tag">{{ insights|length }} findings</span>
+    <span class="fold-sum caption">Measured from your own transcripts and files. Numbers, then the action.</span>
+  </summary>
+<div class="ins-list">
+  {% for i in insights %}
+  <div class="ins {{ 'hot' if i.severity == 'high' }}">
+    <div class="ins-num"><div class="ins-metric">{{ i.metric }}</div><div class="ins-unit">{{ i.unit }}</div></div>
+    <div class="ins-body">
+      <div class="ins-title">{{ i.title }}</div>
+      <div class="ins-detail">{{ i.detail }}</div>
+      <div class="ins-action"><span class="ins-do">Do this</span> {{ i.action }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+</details>
+<script>
+/* remember whether the reader wants this open */
+(function(){ const f=document.getElementById('insFold'); if(!f) return;
+  if(localStorage.getItem('mc_ins_open')==='1') f.open=true;
+  f.addEventListener('toggle', ()=>localStorage.setItem('mc_ins_open', f.open?'1':'0')); })();
+</script>
+<hr class="divider">
+{% endif %}
+<h2 class="sub" id="measured" style="scroll-margin-top:16px">Measured usage <span class="caption" style="display:inline;font-weight:400;margin:0">· {{ win if not (d_from or d_to) else 'custom range' }}{% if family != 'All' %} · {{ family }}{% endif %}</span></h2>
+<div class="metrics">
+  {% for label, value in metrics1 %}<div class="metric"><div class="m-label">{{ label }}</div><div class="m-value">{{ value }}</div></div>{% endfor %}
+</div>
+<div class="metrics" style="margin-top:12px">
+  {% for label, value in metrics2 %}<div class="metric"><div class="m-label">{{ label }}</div><div class="m-value">{{ value }}</div></div>{% endfor %}
+</div>
+<details class="exp" style="margin-top:14px"><summary><span>What this would cost on the API — estimate, not your bill</span></summary><div class="exp-body">
+  <div class="metrics">
+    {% for label, value in cost_metrics %}<div class="metric"><div class="m-label">{{ label }}</div><div class="m-value">{{ value }}</div></div>{% endfor %}
+  </div>
+  <div class="caption" style="margin-top:10px">You are on a Claude subscription, so these tokens are covered by your plan's flat fee — nothing here is money you spent. The figures are Anthropic's public per-token list prices applied to the tokens in your transcripts, useful only for comparing runs, models and projects against each other. Your real consumption is the plan limits at the top of this page.</div>
+</div></details>
+
+<hr class="divider">
+
+<h2 class="sub">Activity</h2>
+<div class="cal"><div class="cal-months" id="calMonths"></div><div class="heatmap" id="heatmap"></div></div>
+<div class="heat-legend">less
+  <span class="cell" style="background:var(--accent);opacity:.25"></span>
+  <span class="cell" style="background:var(--accent);opacity:.5"></span>
+  <span class="cell" style="background:var(--accent);opacity:.75"></span>
+  <span class="cell" style="background:var(--accent);opacity:1"></span>more · billable tokens/day for the current window &amp; model</div>
+
+{% if day_chart %}
+<h2 class="sub">Billable tokens per day</h2>
+<div id="dayChart" class="chart" style="height:340px"></div>
+{% endif %}
+
+<h2 class="sub">Top projects by usage</h2>
+<div class="caption" style="margin:-4px 0 8px">Ranked by tokens. The cost column is API list prices, for comparing projects against each other — not a bill.</div>
+<table class="data">
+  <thead><tr><th>project</th><th class="num">tokens</th><th class="num">est (API)</th><th class="num">turns</th></tr></thead>
+  <tbody>{% for r in proj_rows %}<tr><td><a href="/p/history?q={{ r.q|urlencode }}">{{ r.project }}</a></td><td class="num">{{ r.tokens }}</td><td class="num">{{ r.cost }}</td><td class="num">{{ r.turns }}</td></tr>{% endfor %}</tbody>
+</table>
+
+<h2 class="sub">Share by model</h2>
+<div class="caption" style="margin:-4px 0 8px">Relative weight of each model, priced at API list rates so an Opus turn outweighs a Haiku one.</div>
+<div id="pie" class="chart" style="height:320px"></div>
+
+<details class="exp" style="margin-top:16px"><summary><span>Why does this differ from Claude Desktop?</span></summary><div class="exp-body md">
+<ul>
+<li>Claude Desktop's "Total tokens" usually reflects <b>context tokens</b> (input + output), not the <b>billable</b> total.</li>
+<li>Cache reads are billable (~10% price) but not shown as "new" tokens in Claude Desktop's headline. "Cache saved" is the difference vs paying full input price.</li>
+<li>This aggregates <b>only Claude Code</b> transcripts on this machine.</li>
+</ul></div></details>
+<details class="exp" open><summary><span>Pricing used for these estimates (per 1M tokens)</span></summary><div class="exp-body">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;color:var(--dim)">
+      <th style="padding:6px 10px">Model</th><th style="padding:6px 10px">Input</th><th style="padding:6px 10px">Output</th><th style="padding:6px 10px">Cache write (5m)</th><th style="padding:6px 10px">Cache read</th>
+    </tr></thead>
+    <tbody>
+    {% for r in price_rows %}
+      <tr style="border-top:1px solid var(--line)">
+        <td style="padding:6px 10px;font-weight:600">{{ r.model }}</td>
+        <td style="padding:6px 10px">${{ '%.2f'|format(r.input) }}</td>
+        <td style="padding:6px 10px">${{ '%.2f'|format(r.output) }}</td>
+        <td style="padding:6px 10px">${{ '%.2f'|format(r.cache_write) }}</td>
+        <td style="padding:6px 10px">${{ '%.2f'|format(r.cache_read) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="caption" style="margin-top:10px">Anthropic list prices (platform.claude.com/docs), per 1M tokens, verified 2026-07-10. Sonnet 5 shows introductory pricing through 2026-08-31. Estimates, not your actual bill.</div>
+</div></details>
+
+<script>
+(function(){
+  const heat={{ heat|safe }}; const el=document.getElementById('heatmap'); const mo=document.getElementById('calMonths');
+  if(el && heat){
+    const map={}; heat.forEach(h=>map[h.date]=h.v); const max=Math.max(1, ...heat.map(h=>h.v));
+    // Window comes from the server (heatmap_window(), unit-tested) so the grid can't drift off today
+    // again: the LAST column is always the week containing today.
+    const win={{ heat_win|safe }};
+    const parseD=s=>{ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
+    const WEEKS=win.weeks; const end=parseD(win.end); const start=parseD(win.start);
+    // log scale: token counts per day span orders of magnitude, so a linear ramp would paint
+    // everything the palest shade except one or two record days
+    const lvl=v=>{ if(!v)return 0; const r=Math.log10(1+v)/Math.log10(1+max);
+      return r>0.94?1:r>0.85?0.72:r>0.7?0.48:0.28; };
+    const cells=[]; const monLbl=[]; let lastMon=-1;
+    for(let w=0; w<WEEKS; w++){
+      const colDate=new Date(start); colDate.setDate(start.getDate()+w*7);
+      const m=colDate.getMonth();
+      monLbl.push('<span>'+(m!==lastMon && colDate.getDate()<=7 ? colDate.toLocaleString('en',{month:'short'}) : '')+'</span>'); if(m!==lastMon && colDate.getDate()<=7) lastMon=m;
+      for(let d=0; d<7; d++){ const dt=new Date(start); dt.setDate(start.getDate()+w*7+d);
+        if(dt>end){ cells.push('<div class="cell" style="visibility:hidden"></div>'); continue; }
+        const key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+        const v=map[key]||0; const o=lvl(v);
+        cells.push('<div class="cell" data-d="'+key+'" data-v="'+v+'"'+(o?' style="background:var(--accent);opacity:'+o+'"':'')+'></div>');
+      }
+    }
+    el.innerHTML=cells.join(''); if(mo) mo.innerHTML=monLbl.join('');
+    // instant value tooltip on hover
+    let tip=document.getElementById('heatTip');
+    if(!tip){ tip=document.createElement('div'); tip.id='heatTip'; tip.className='heat-tip'; document.body.appendChild(tip); }
+    const fmtD=s=>{ const [y,m,dd]=s.split('-'); return new Date(y,m-1,dd).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}); };
+    const fmtTok=n=>{ n=+n||0;
+      if(n>=1e12) return (n/1e12).toFixed(2)+'T';           // display matches the KPI formatter
+      if(n>=1e9)  return (n/1e9).toFixed(2)+'B';
+      if(n>=1e6)  return (n/1e6).toFixed(2)+'M';
+      if(n>=1e3)  return (n/1e3).toFixed(1)+'K';
+      return String(Math.round(n)); };
+    el.addEventListener('mousemove', e=>{ const c=e.target.closest('.cell'); if(!c||!c.dataset.d){ tip.classList.remove('on'); return; }
+      const v=+c.dataset.v; tip.textContent=(v?fmtTok(v)+' billable tokens':'No activity')+' · '+fmtD(c.dataset.d);
+      const r=c.getBoundingClientRect(); tip.style.left=(r.left+r.width/2)+'px'; tip.style.top=(r.top-6)+'px'; tip.classList.add('on'); });
+    el.addEventListener('mouseleave', ()=>tip.classList.remove('on'));
+  }
+  const dark=document.body.classList.contains('dark');
+  const fg=dark?'#A69B8C':'#6E655A', grid=dark?'#2E2822':'#E6E0D5';
+  const fam={family:'Inter, sans-serif',size:12,color:fg};
+  const lay={height:340,margin:{l:50,r:20,t:10,b:36},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:fam,barmode:'stack',legend:{font:fam},xaxis:{gridcolor:grid,zerolinecolor:grid},yaxis:{gridcolor:grid,zerolinecolor:grid}};
+  {% if day_chart %}
+  const dc={{ day_chart|safe }};
+  Plotly.newPlot('dayChart', dc.map(t=>({type:'bar',name:t.name,x:t.x,y:t.y,marker:{color:t.color}})), lay, {displayModeBar:false,responsive:true});
+  {% endif %}
+  const pie={{ pie|safe }};
+  Plotly.newPlot('pie', [{
+    type:'pie', hole:0.55, labels:pie.labels, values:pie.values, sort:true, direction:'clockwise',
+    marker:{colors:pie.colors, line:{color:dark?'#16130F':'#F7F5F0', width:2}},
+    textinfo:'none', textfont:fam,
+    hovertemplate:'%{label}<br>$%{value:,.2f} · %{percent}<extra></extra>',
+    hoverlabel:{font:{family:'Inter, sans-serif', size:13}}
+  }], {height:320,margin:{l:10,r:10,t:10,b:10},paper_bgcolor:'rgba(0,0,0,0)',font:fam,legend:{font:fam}}, {displayModeBar:false,responsive:true});
+})();
+</script>
+{% endif %}
+{% endblock %}

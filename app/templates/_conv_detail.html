@@ -1,0 +1,114 @@
+<button class="close modal-only" onclick="closeDialog()" aria-label="Close">&#10005;</button>
+<div style="margin-bottom:6px">
+  <div style="font-weight:600;font-size:14px;word-break:break-word;margin-bottom:9px">{{ label }}</div>
+  <div class="c-btns" style="margin-top:0;flex-wrap:wrap;gap:8px">
+    <button class="btn primary {{ 'disabled' if not real_exists }}" {{ 'disabled' if not real_exists }} onclick="resumeHere(this)">Resume in Claude</button>
+    <select class="input term-pick" id="termPick" style="width:auto;flex:0 0 auto;padding:7px 10px" title="Which terminal to resume in" aria-label="Terminal"></select>
+    <button class="btn" onclick="act('editor',{path:'{{ path }}'})">Open file</button>
+    <a class="btn" href="/export/conversation?path={{ path|urlencode }}">Export .md</a>
+  </div>
+  <div class="caption" style="margin:6px 0 0;font-size:12px">Runs <span class="mono">claude --resume {{ session }}</span> in <span class="mono">{{ project_real or '—' }}</span>{% if not real_exists %} · folder no longer exists, so resume is disabled{% endif %}</div>
+</div>
+{% if archived %}
+<div class="alert info" style="margin:0 0 12px">Archived session: the transcript file is no longer on disk, so only your <strong>prompts</strong> survive — recovered from <span class="mono" style="font-size:11px">{{ archived_src }}</span>. Assistant replies and token costs are gone. Resume still works if the session is still known to Claude Code.</div>
+{% endif %}
+<div class="caption" style="margin:0 0 12px">{{ count }} {{ 'prompts' if archived else 'messages' }}{% if cost_h %} · <strong>{{ cost_h }}</strong>{% endif %} · <span class="mono" style="font-size:11px">{{ path }}</span></div>
+<script>
+/* Terminal picker for Resume: lists the terminal apps installed on this Mac, remembers the last pick. */
+(function(){
+  const sel=document.getElementById('termPick'); if(!sel) return;
+  const saved=localStorage.getItem('mc_term')||'';
+  function fill(list){
+    sel.innerHTML=list.map(t=>'<option value="'+t.id+'"'+(t.id===saved?' selected':'')+'>'+t.name+(t.mode==='open'?' (copies command)':'')+'</option>').join('')
+      || '<option value="">Default terminal</option>';
+  }
+  if(window._mcTerms) fill(window._mcTerms);
+  else fetch('/api/terminals').then(r=>r.json()).then(j=>{ window._mcTerms=j.terminals||[]; fill(window._mcTerms); }).catch(()=>fill([]));
+  sel.addEventListener('change',()=>localStorage.setItem('mc_term',sel.value));
+})();
+function resumeHere(btn){
+  const sel=document.getElementById('termPick');
+  act('claude',{path:'{{ project_real }}',resume:'{{ session }}',term:(sel?sel.value:'')});
+}
+</script>
+{% if capped %}<div class="alert info" style="margin:0 0 12px">Showing the first {{ cap }} messages — this transcript is longer. Use <strong>Export .md</strong> for the whole thing.</div>{% endif %}
+{% if not messages %}
+<div class="alert info">No readable messages (may be empty, tool-only, or corrupted).</div>
+{% else %}
+<div class="row" style="margin-bottom:12px;gap:10px">
+  <div class="seg" style="flex:0 0 auto">
+    <a href="#" class="active" data-role="all" onclick="roleFilter('all',this);return false">All</a>
+    <a href="#" data-role="user" onclick="roleFilter('user',this);return false">User</a>
+    <a href="#" data-role="assistant" onclick="roleFilter('assistant',this);return false">Assistant</a>
+    <a href="#" data-role="other" onclick="roleFilter('other',this);return false" title="Notifications, reminders, command output and script prompts you did not type">System</a>
+  </div>
+  <div class="seg" style="flex:0 0 auto" title="Reading order">
+    <a href="#" data-ord="asc" onclick="msgOrder('asc',this);return false">First → last</a>
+    <a href="#" data-ord="desc" onclick="msgOrder('desc',this);return false">Last → first</a>
+  </div>
+  <input class="input" type="text" placeholder="Filter messages…" oninput="convFilter(this.value)" style="flex:1">
+  <div class="row" id="matchNav" style="display:none;flex:0 0 auto;gap:6px;align-items:center">
+    <span class="caption mono" id="matchLbl" style="margin:0;font-size:11px"></span>
+    <button class="btn" onclick="jumpMatch(-1)" title="Previous match">↑</button>
+    <button class="btn" onclick="jumpMatch(1)" title="Next match">↓</button>
+  </div>
+</div>
+<div id="convMsgs">
+{% for m in messages %}
+{% set grp = m.role if m.role in ['user','assistant'] else 'other' %}<div id="m{{ loop.index0 }}" class="msg-{{ 'system' if grp == 'other' else grp }} cvm" data-role="{{ grp }}" data-i="{{ loop.index0 }}" data-t="{{ m.text|lower }}">
+  <div class="msg-role">{{ m.role }}</div>
+  <div class="msg-text clamped">{{ m.text }}</div>
+  <button class="readmore" style="display:none" onclick="toggleClamp(this)">Read more</button>
+</div>
+{% endfor %}
+</div>
+<script>
+let _cvq='', _cvRole='all';
+function applyConv(){ document.querySelectorAll('#convMsgs .cvm').forEach(e=>{
+  const okR=_cvRole==='all'||e.dataset.role===_cvRole; const okQ=!_cvq||e.dataset.t.includes(_cvq);
+  e.style.display=(okR&&okQ)?'':'none'; }); }
+function convFilter(q){ _cvq=q.toLowerCase(); applyConv(); }
+/* reading order: first→last (default, as written) or last→first. Reversed with flex so the
+   role filter and text filter keep working untouched. Choice is remembered per browser. */
+function msgOrder(ord, el){
+  const box=document.getElementById('convMsgs'); if(!box) return;
+  box.classList.toggle('rev', ord==='desc');
+  localStorage.setItem('mc_msgorder', ord);
+  const seg=el ? el.parentNode : document.querySelector('.seg a[data-ord]')?.parentNode;
+  if(seg) seg.querySelectorAll('a').forEach(a=>a.classList.toggle('active', a.dataset.ord===ord));
+  const d=document.getElementById('convDetail'); if(d && el) d.scrollTop=0;
+}
+(function(){ const ord=localStorage.getItem('mc_msgorder')||'asc';
+  msgOrder(ord, document.querySelector('.seg a[data-ord="'+ord+'"]')); })();
+function roleFilter(r,el){ _cvRole=r; el.parentNode.querySelectorAll('a').forEach(a=>a.classList.toggle('active',a===el)); applyConv(); }
+function toggleClamp(btn){ const t=btn.previousElementSibling; const on=t.classList.toggle('clamped'); btn.textContent=on?'Read more':'Show less'; }
+/* Search hits: jump straight to the matching message (deep-linked from the history search). */
+let _matches=[], _mi=-1;
+function _markMatches(q){
+  const box=document.getElementById('convMsgs'); if(!box||!q) return;
+  const terms=(q.match(/"[^"]+"|\S+/g)||[]).map(t=>t.replace(/"/g,'').toLowerCase()).filter(Boolean);
+  _matches=[...box.querySelectorAll('.cvm')].filter(m=>terms.every(t=>m.dataset.t.includes(t)));
+  _matches.forEach(m=>m.classList.add('hit'));
+  const nav=document.getElementById('matchNav');
+  if(_matches.length && nav){ nav.style.display='flex'; _mi=-1; jumpMatch(1); }
+}
+function jumpMatch(dir){
+  if(!_matches.length) return;
+  _mi=(_mi+dir+_matches.length)%_matches.length;
+  const el=_matches[_mi];
+  _matches.forEach(m=>m.classList.remove('hit-current')); el.classList.add('hit-current');
+  el.scrollIntoView({block:'center', behavior:'smooth'});
+  const lbl=document.getElementById('matchLbl'); if(lbl) lbl.textContent=(_mi+1)+' / '+_matches.length;
+}
+function jumpToMessage(i){
+  const el=document.getElementById('m'+i); if(!el) return;
+  el.classList.add('hit-current'); el.scrollIntoView({block:'center'});
+}
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  document.querySelectorAll('#convMsgs .cvm').forEach(m=>{
+    const t=m.querySelector('.msg-text'), b=m.querySelector('.readmore');
+    if(t && b && t.scrollHeight > t.clientHeight + 2) b.style.display='inline';
+  });
+}));
+</script>
+{% endif %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="caption">A local dashboard for your <b>Claude Code</b> install (everything under <code>~/.claude</code>). It does not read Claude Desktop or claude.ai web connectors. What each section means and where the data lives:</div>
+
+{% for title, anchor, summary, points in sections %}
+<section class="card help-section" id="help-{{ anchor }}">
+  <div class="c-title" style="font-size:1.05rem">{{ title }}</div>
+  <div class="c-desc" style="margin:2px 0 8px">{{ summary }}</div>
+  <ul class="help-points">{% for p in points %}<li>{{ p }}</li>{% endfor %}</ul>
+</section>
+{% endfor %}
+
+{% if link_sections %}
+<h2 class="sub" id="help-links">Worth reading</h2>
+<div class="caption" style="margin:-4px 0 12px">Primary sources on Claude Code, tokens and skills. Every link was checked to resolve on {{ links_checked }}; the list lives in <span class="mono">links.json</span> in this skill's folder, so you can add your own.</div>
+{% for sec in link_sections %}
+<section class="card help-section">
+  <div class="c-title" style="font-size:1.05rem">{{ sec.title }}</div>
+  {% if sec.note %}<div class="c-desc" style="margin:2px 0 10px">{{ sec.note }}</div>{% endif %}
+  <div class="linklist">
+    {% for l in sec.links %}
+    <a class="linkrow" href="{{ l.url }}" target="_blank" rel="noopener noreferrer">
+      <span class="lk-title">{{ l.title }}{% if l.stars %} <span class="lk-stars">{{ '{:,}'.format(l.stars) }} ★</span>{% endif %}</span>
+      {% if l.note %}<span class="lk-note">{{ l.note }}</span>{% endif %}
+      <span class="lk-host mono">{{ l.url.split('/')[2] }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endif %}
+
+<section class="card help-section" id="help-privacy">
+  <div class="c-title" style="font-size:1.05rem">Privacy &amp; safety</div>
+  <ul class="help-points">
+    <li>This app binds to <b>127.0.0.1 only</b>; nobody else on your network can reach it.</li>
+    <li>No data leaves your machine; there are no external API calls beyond your gh CLI on push.</li>
+    <li>Transcripts are stored in plaintext at ~/.claude/projects/; redact before screen-sharing.</li>
+    <li>Secrets in MCP configs (token, key, secret, password, auth, bearer, cred) are auto-redacted.</li>
+    <li>GitHub push uses your gh CLI session; review the dialog carefully before publishing.</li>
+  </ul>
+</section>
+{% endblock %}
