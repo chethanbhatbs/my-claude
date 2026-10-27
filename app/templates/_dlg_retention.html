@@ -4,6 +4,9 @@
 {% if ret.error %}
 <div class="alert err">{{ ret.error }}</div>
 {% else %}
+{% if ret.lowest is not none and ret.lowest < ret.days %}
+<div class="alert warn" style="margin:12px 0 0">Another settings file sets <strong>{{ ret.lowest }} days</strong>. An <a href="https://github.com/anthropics/claude-code/issues/90148" target="_blank" rel="noopener">open Claude Code issue</a> reports that a project's value can delete conversations machine-wide.</div>
+{% endif %}
 <div class="row" style="margin:14px 0 6px;gap:8px">
   <input class="input" type="number" id="retDays" min="1" step="1" value="{{ ret.days }}" style="flex:0 0 120px" aria-describedby="retErr">
   <span class="caption" style="margin:0;flex:0 0 auto">days</span>
@@ -17,6 +20,23 @@
   <button class="btn primary" onclick="saveRetention(this)">Save</button>
   <button class="btn" onclick="closeDialog()">Cancel</button>
 </div>
+
+{% if ret.others %}
+<h3 style="margin-top:22px">Other files that set it</h3>
+<table class="data" style="width:100%">
+  <thead><tr><th>File</th><th style="text-align:right">Days</th></tr></thead>
+  <tbody>{% for o in ret.others %}<tr><td class="mono" style="font-size:12px;word-break:break-all">{{ o.file }}{% if o.managed %} (your organisation){% endif %}</td><td class="mono" style="text-align:right">{{ o.error or o.days }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+{% endif %}
+
+<h3 style="margin-top:22px">Backup</h3>
+<div class="caption">Copies every transcript to <code>{{ bk.dir }}</code>, outside <code>~/.claude</code>, so the cleanup can't delete it. Copies only, never deletes.</div>
+<div class="caption mono" id="bkStatus" role="status" style="margin:10px 0">{% if bk.last_h %}Last backup {{ bk.last_h }} · {{ bk.kept }} transcripts kept{% else %}No backup yet{% endif %}</div>
+<div style="display:flex;gap:12px;align-items:center">
+  <button class="btn" onclick="backupNow(this)">Back up now</button>
+  <label class="toggle"><input type="checkbox" id="bkAuto" {{ 'checked' if bk.auto }} onchange="backupAuto(this)"><span class="track"></span>Every hour while My Claude runs</label>
+</div>
 <script>
 async function saveRetention(btn){
   const v=document.getElementById('retDays').value.trim(), err=document.getElementById('retErr');
@@ -27,5 +47,15 @@ async function saveRetention(btn){
   if(!r.ok){ err.textContent=r.msg; return; }
   toast(r.msg); closeDialog(); doRefresh(true);
 }
+function _bkShow(r){ const s=r.status||{}; document.getElementById('bkStatus').textContent=r.ok ? (r.msg+' '+(s.kept||0)+' transcripts kept.') : r.msg; }
+async function backupNow(btn){
+  btn.classList.add('loading'); document.getElementById('bkStatus').textContent='Copying…';
+  const r=await (await fetch('/action/backup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({now:true})})).json();
+  btn.classList.remove('loading'); _bkShow(r);
+}
+async function backupAuto(cb){
+  if(cb.checked) document.getElementById('bkStatus').textContent='Copying…';
+  const r=await (await fetch('/action/backup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({auto:cb.checked})})).json();
+  _bkShow(r);
+}
 </script>
-{% endif %}

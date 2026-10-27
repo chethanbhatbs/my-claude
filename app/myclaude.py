@@ -1,5 +1,5 @@
 """My-Claude — interactive dashboard of your Claude installation (FastAPI replica of the Streamlit app, no Streamlit)."""
-import io, json, os, pty, re, select, shutil, signal, sqlite3, subprocess, tempfile, threading, time, zipfile
+import asyncio, io, json, os, pty, re, select, shutil, signal, sqlite3, subprocess, sys, tempfile, threading, time, zipfile
 from urllib.parse import quote
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -72,6 +72,29 @@ def refresh_entry(cached_fn, *args):
     return val
 def clear_cache(): _CACHE.clear()
 
+# Data the dashboard owns lives here, not in the app folder: install.sh replaces ~/.my-claude.
+DATA_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config")) / "my-claude"
+LABELS_PATH = DATA_DIR / "labels.json"
+
+def load_labels():
+    try: d = json.loads(LABELS_PATH.read_text())
+    except Exception: return {}
+    return d if isinstance(d, dict) else {}
+
+def save_label(session, name, tags):
+    if not re.fullmatch(r"[0-9a-zA-Z_-]{1,80}", session or ""): raise ValueError("Unknown conversation.")
+    name = re.sub(r"\s+", " ", str(name or "")).strip()[:120]
+    clean = []
+    for t in tags or []:
+        t = re.sub(r"[^\w-]", "", str(t).strip().lstrip("#").lower())[:30]
+        if t and t not in clean: clean.append(t)
+    d = load_labels()
+    if name or clean: d[session] = {"name": name, "tags": clean[:10]}
+    else: d.pop(session, None)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = LABELS_PATH.with_suffix(".tmp"); tmp.write_text(json.dumps(d, indent=2)); tmp.replace(LABELS_PATH)
+    return d.get(session, {"name": "", "tags": []})
+
 # ---------- freshness: detect new data instead of waiting for a TTL ----------
 # Long TTLs made pages fast but meant a brand-new conversation or an edited skill could sit
 # invisible for up to 15 minutes. A stat-only scan of the corpus costs ~6ms, so every request can
@@ -143,6 +166,14 @@ def fmt_size(n):
         if n < 1024: return f"{n:.1f} {u}" if u != "B" else f"{int(n)} B"
         n /= 1024
     return f"{n:.1f} PB"
+
+def fmt_rel(ts):
+    """'just now', '5 min ago', '3 h ago', '2 days ago' for an epoch time."""
+    secs = max(0, time.time() - float(ts))
+    if secs < 60: return "just now"
+    if secs < 3600: return f"{int(secs // 60)} min ago"
+    if secs < 86400: return f"{int(secs // 3600)} h ago"
+    d = int(secs // 86400); return f"{d} day{'s' if d != 1 else ''} ago"
 
 def fmt_num(n):
     n = float(n or 0); sign = "-" if n < 0 else ""; n = abs(n)
@@ -546,6 +577,14 @@ def parse_transcript_messages(jsonl_path, max_messages=20000):
                 if not line: continue
                 try: entry = json.loads(line)
                 except json.JSONDecodeError: continue
+                if entry.get("type") == "system" and entry.get("subtype") == "compact_boundary":
+                    cm = entry.get("compactMetadata") or {}
+                    pre = cm.get("preTokens")
+                    messages.append({"role": "compact", "ts": entry.get("timestamp"),
+                                     "text": f"Conversation compacted ({cm.get('trigger') or 'unknown'})"
+                                             + (f" · {fmt_num(pre)} tokens of context before this point" if isinstance(pre, (int, float)) else "")
+                                             + " · everything above was summarised for Claude, and is still here for you"})
+                    continue
                 if entry.get("type", "") not in ("user", "assistant"): continue
                 msg = entry.get("message", {})
                 content = msg.get("content", ""); ts = entry.get("timestamp")
@@ -1078,7 +1117,7 @@ BUILTIN_CMDS = {"add-dir", "agents", "bug", "clear", "compact", "config", "cost"
                 "permissions", "pr-comments", "release-notes", "resume", "review", "status",
                 "terminal-setup", "usage-credits", "vim", "effort", "fast", "context", "rewind"}
 
-_CACHE_V = 2  # bump when _scan_meta output shape/logic changes, to invalidate the on-disk cache
+_CACHE_V = 3  # bump when _scan_meta output shape/logic changes, to invalidate the on-disk cache
 def _disk_load():
     global _disk
     if _disk is None:
@@ -1095,7 +1134,7 @@ def _disk_flush():
 
 def _scan_meta(path):
     """One read per transcript: preview, timestamps, message count, and skill invocations."""
-    first_user = ""; first_ts = last_ts = 0; n = 0; skills = []
+    first_user = ""; first_ts = last_ts = 0; n = 0; skills = []; ai_title = custom_title = ""; compactions = 0
     try:
         with open(path, "r", errors="ignore") as f:
             for raw in f:
@@ -1105,7 +1144,12 @@ def _scan_meta(path):
                 skill_tool = '"name":"Skill"' in raw
                 try: e = json.loads(raw)
                 except Exception: continue
-                if e.get("type") not in ("user", "assistant"): continue
+                et = e.get("type")
+                # Claude Code's own names: /rename writes custom-title, and it writes ai-title itself
+                if et == "custom-title" and e.get("customTitle"): custom_title = str(e["customTitle"])[:120]; continue
+                if et == "ai-title" and e.get("aiTitle"): ai_title = str(e["aiTitle"])[:120]; continue
+                if et == "system" and e.get("subtype") == "compact_boundary": compactions += 1; continue
+                if et not in ("user", "assistant"): continue
                 t = ts_epoch(e.get("timestamp") or e.get("ts"))
                 msg = e.get("message") or {}
                 content = msg.get("content") if isinstance(msg, dict) else None
@@ -1130,7 +1174,8 @@ def _scan_meta(path):
                 role = e.get("type") or (msg.get("role") if isinstance(msg, dict) else "")
                 if role in ("user", "human") and not first_user: first_user = text[:120]
     except Exception: pass
-    return {"preview": first_user or "(no preview)", "first_ts": first_ts, "last_ts": last_ts, "n": n, "skills": skills}
+    return {"preview": first_user or "(no preview)", "first_ts": first_ts, "last_ts": last_ts, "n": n, "skills": skills,
+            "title": custom_title or ai_title, "compactions": compactions}
 
 def _conv_meta(path):
     global _dirty
@@ -1147,7 +1192,7 @@ def _conv_meta(path):
 @ttl_cache(900)
 def conversation_index(include_sub=False):
     """Top-level conversations by default. include_sub also walks nested sub-agent + workflow transcripts."""
-    pdir = CLAUDE / "projects"; out = []
+    pdir = CLAUDE / "projects"; out = []; labels = load_labels()
     if not pdir.exists(): return out
     for proj in pdir.iterdir():
         if not proj.is_dir(): continue
@@ -1165,7 +1210,9 @@ def conversation_index(include_sub=False):
                     try: meta["first_ts"] = meta["last_ts"] = os.stat(jf).st_mtime
                     except OSError: pass
                 meta["preview"] = "(no readable text — tool-only session)"
-            meta.update({"project": decoded, "session": jf.name.split(".")[0], "path": str(jf), "kind": kind})
+            sid = jf.name.split(".")[0]; lab = labels.get(sid) or {}
+            meta.update({"project": decoded, "session": sid, "path": str(jf), "kind": kind,
+                         "title": lab.get("name") or meta.get("title") or meta["preview"], "tags": lab.get("tags") or []})
             out.append(meta)
     out.sort(key=lambda r: r["last_ts"] or 0, reverse=True)
     _disk_flush()
@@ -1526,7 +1573,8 @@ def live_sessions():
         proj = proj.replace("-", "/") if proj.startswith("-") else proj
         # a title from the session's first prompt: every home-dir session was showing as "~ (home)",
         # which made three different conversations look like one
-        title = (_conv_meta(str(jf)) or {}).get("preview") or ""
+        _m = _conv_meta(str(jf)) or {}
+        title = (load_labels().get(jf.stem) or {}).get("name") or _m.get("title") or _m.get("preview") or ""
         title = re.sub(r"\s+", " ", title).strip()
         if len(title) > 74: title = title[:74].rstrip() + "…"
         out.append({"session": jf.stem, "title": title or "(no prompt yet)",
@@ -1835,7 +1883,8 @@ def warm_async():
     threading.Thread(target=warm_caches, daemon=True).start()
 
 @app.on_event("startup")
-def _on_startup(): warm_async()
+def _on_startup():
+    warm_async(); threading.Thread(target=_auto_backup_loop, daemon=True).start()
 
 @app.get("/refresh")
 def refresh(request: Request, next: str = "/p/overview"):
@@ -1896,7 +1945,7 @@ def render_overview(request):
         {"label": "Tokens · 30d", "value": tokens30, "sub": cost30, "href": "/p/usage?win=30+days#measured"},
         {"label": "On disk", "value": fmt_size(total), "sub": f"{n_mcp} MCP · {len(plugins)} plugins", "href": "/p/mcp-plugins"},
     ]
-    recent_convs = [{"preview": c["preview"], "project": c["project"].split("/")[-1] or c["project"],
+    recent_convs = [{"preview": c.get("title") or c["preview"], "project": c["project"].split("/")[-1] or c["project"],
                      "when": fmt_when(c["last_ts"]) if c["last_ts"] else "—", "n": c["n"], "path": c["path"]}
                     for c in convs[:5]]
     recent_skills = sorted(skills, key=lambda s: -s["mtime"])[:5]
@@ -2113,7 +2162,9 @@ def render_history(request):
             first_match.setdefault(h["path"], h["idx"])
         hit_paths = set(match_counts)
         content_hits = len(hit_paths)
-        def _title_match(c): return q in c["preview"].lower() or q in c["project"].lower()
+        def _title_match(c):
+            hay = " ".join([c.get("title") or "", c["preview"], c["project"], " ".join("#" + t for t in c.get("tags") or [])]).lower()
+            return q in hay
         matched = [c for c in convs if _title_match(c) or c["path"] in hit_paths]
         matched.sort(key=lambda c: (0 if _title_match(c) else 1, -match_counts.get(c["path"], 0), -(c["last_ts"] or 0)))
         convs = matched
@@ -2151,8 +2202,9 @@ def api_conversation(request: Request, path: str):
             "archived": True, "archived_src": str(HISTORY_FILE)})
     MSG_CAP = 20000
     messages = parse_transcript_messages(path, max_messages=MSG_CAP)
-    label = transcript_label(path) or "(unnamed conversation)"
     p = Path(path)
+    lab = load_labels().get(p.stem) or {}
+    label = lab.get("name") or _conv_meta(path).get("title") or transcript_label(path) or "(unnamed conversation)"
     slug = p.parent.name
     project_real = slug.replace("-", "/") if slug.startswith("-") else slug
     sess = usage_stats().get("by_session", {}).get(p.stem, {})
@@ -2161,7 +2213,8 @@ def api_conversation(request: Request, path: str):
         "theme": theme_of(request), "messages": messages, "label": label, "count": len(messages),
         "path": path, "session": p.stem, "project_real": project_real, "cost_h": cost_h,
         "real_exists": Path(project_real).exists(), "editor": editor_name(), "archived": False,
-        "capped": len(messages) >= MSG_CAP, "cap": MSG_CAP})
+        "capped": len(messages) >= MSG_CAP, "cap": MSG_CAP, "tags": lab.get("tags") or [], "custom_name": lab.get("name") or "",
+        "compactions": [i for i, m in enumerate(messages) if m["role"] == "compact"]})
 
 def render_system(request):
     tab = request.query_params.get("tab", "config")
@@ -2186,11 +2239,47 @@ def api_palette(q: str = ""):
                 res.append({"t": "Skill", "label": s["name"], "view": s["name"]})
                 if len(res) > 28: break
         for c in conversation_index():
-            if ql in c["preview"].lower() or ql in c["project"].lower():
-                res.append({"t": "Chat", "label": c["preview"][:70],
+            if ql in ((c.get("title") or "") + " " + c["preview"] + " " + c["project"] + " " + " ".join("#" + t for t in c.get("tags") or [])).lower():
+                res.append({"t": "Chat", "label": (c.get("title") or c["preview"])[:70],
                             "sub": c["project"].split("/")[-1], "href": "/p/history?conv=" + quote(c["path"])})
                 if len(res) > 45: break
     return res[:45]
+
+def usage_window(df, win="All time", family="All", d_from="", d_to=""):
+    """The same filter the Usage page applies: model, then a custom range or the 30/7-day window."""
+    if family != "All": df = df[df["label"] == family]
+    if (d_from or d_to) and df["date"].notna().any():
+        try:
+            lo = datetime.fromisoformat(d_from).date() if d_from else datetime(2000, 1, 1).date()
+            hi = datetime.fromisoformat(d_to).date() if d_to else datetime.now().date()
+            return df[df["date"].apply(lambda d: bool(d) and lo <= d <= hi)]
+        except ValueError: return df
+    if win != "All time" and df["date"].notna().any():
+        cutoff = (datetime.now() - timedelta(days=30 if win == "30 days" else 7)).date()
+        df = df[df["date"].apply(lambda d: bool(d) and d >= cutoff)]
+    return df
+
+@app.get("/export/usage")
+def export_usage(fmt: str = "csv", win: str = "All time", family: str = "All", d_from: str = "", d_to: str = ""):
+    """Tokens per day and model for the window on screen. cost_usd_est is an API list-price estimate."""
+    df = aggregate_usage()
+    cols = ["date", "model", "turns", "input_tokens", "cache_write_tokens", "cache_read_tokens", "output_tokens", "cost_usd_est"]
+    out = []
+    if not df.empty:
+        df = usage_window(df.dropna(subset=["date"]), win, family, d_from, d_to)
+        g = df.groupby(["date", "label"]).agg(turns=("model", "size"), input_tokens=("input_tokens", "sum"),
+                                              cache_write_tokens=("cache_creation", "sum"), cache_read_tokens=("cache_read", "sum"),
+                                              output_tokens=("output_tokens", "sum"), cost_usd_est=("cost", "sum")).reset_index()
+        for r in g.sort_values(["date", "label"]).itertuples(index=False):
+            out.append({"date": str(r.date), "model": r.label, "turns": int(r.turns), "input_tokens": int(r.input_tokens),
+                        "cache_write_tokens": int(r.cache_write_tokens), "cache_read_tokens": int(r.cache_read_tokens),
+                        "output_tokens": int(r.output_tokens), "cost_usd_est": round(float(r.cost_usd_est), 4)})
+    name = f"claude-usage-{datetime.now().date().isoformat()}"
+    if fmt == "json":
+        return JSONResponse(out, headers={"Content-Disposition": f'attachment; filename="{name}.json"'})
+    import csv
+    buf = io.StringIO(); w = csv.DictWriter(buf, fieldnames=cols); w.writeheader(); w.writerows(out)
+    return PlainTextResponse(buf.getvalue(), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}.csv"'})
 
 @app.get("/export/conversation")
 def export_conversation(path: str):
@@ -2447,13 +2536,59 @@ def dialog_settings(request: Request):
 # Claude Code deletes transcripts older than cleanupPeriodDays (default 30, minimum 1) in a
 # background sweep after a session starts: code.claude.com/docs/en/settings-reference#cleanupperioddays
 RETENTION_DEFAULT = 30
-def retention_info():
-    sp = CLAUDE / "settings.json"
-    try: d = json.loads(sp.read_text()) if sp.exists() else {}
-    except Exception: return {"days": None, "set": False, "error": "~/.claude/settings.json is not valid JSON, so it can't be read or changed here."}
+def _read_cleanup_days(path):
+    """(days or None, error or None) for one settings file."""
+    try: d = json.loads(Path(path).read_text())
+    except FileNotFoundError: return None, None
+    except Exception: return None, "not valid JSON"
     v = d.get("cleanupPeriodDays") if isinstance(d, dict) else None
-    ok = isinstance(v, int) and not isinstance(v, bool)
-    return {"days": v if ok else RETENTION_DEFAULT, "set": ok, "error": None}
+    return (v if isinstance(v, int) and not isinstance(v, bool) else None), None
+
+@ttl_cache(300)
+def known_project_dirs():
+    """Real folders Claude Code has run in: the cwd recorded in each transcript, plus history.jsonl."""
+    dirs = set(); pdir = CLAUDE / "projects"
+    if pdir.exists():
+        for jf in pdir.glob("*/*.jsonl"):
+            try:
+                with open(jf, "r", errors="ignore") as f:
+                    for _, line in zip(range(30), f):
+                        if '"cwd"' in line:
+                            c = json.loads(line).get("cwd")
+                            if c: dirs.add(c); break
+            except Exception: pass
+    try:
+        with open(HISTORY_FILE, "r", errors="ignore") as f:
+            for line in f:
+                try: pj = json.loads(line).get("project")
+                except Exception: continue
+                if pj: dirs.add(pj)
+    except Exception: pass
+    return sorted(d for d in dirs if os.path.isdir(d))
+
+MANAGED_SETTINGS = Path("/Library/Application Support/ClaudeCode/managed-settings.json") if sys.platform == "darwin" \
+    else Path("/etc/claude-code/managed-settings.json")
+
+def retention_info():
+    """The user-file value, plus every other settings file that sets cleanupPeriodDays. An open issue
+    (anthropics/claude-code#90148) reports that a project's value controls the sweep machine-wide, so
+    the lowest value anywhere is shown as the one at risk of applying."""
+    days, err = _read_cleanup_days(CLAUDE / "settings.json")
+    if err: return {"days": None, "set": False, "error": "~/.claude/settings.json is not valid JSON, so it can't be read or changed here.",
+                    "others": [], "lowest": None}
+    files = [MANAGED_SETTINGS, CLAUDE / "settings.local.json"]
+    for d in known_project_dirs():
+        if Path(d) == HOME: continue  # ~/.claude/settings*.json already covered
+        files += [Path(d) / ".claude" / "settings.json", Path(d) / ".claude" / "settings.local.json"]
+    others = []
+    for f in files:
+        v, e = _read_cleanup_days(f)
+        if v is not None or e:
+            others.append({"file": str(f).replace(str(HOME), "~"), "days": v, "error": e,
+                           "managed": f == MANAGED_SETTINGS})
+    cur = days if days is not None else RETENTION_DEFAULT
+    vals = [cur] + [o["days"] for o in others if o["days"] is not None]
+    return {"days": cur, "set": days is not None, "error": None, "others": others, "lowest": min(vals)}
 
 def set_retention(days):
     if isinstance(days, bool) or not isinstance(days, int) or days < 1:
@@ -2465,10 +2600,63 @@ def set_retention(days):
     d["cleanupPeriodDays"] = days
     sp.write_text(json.dumps(d, indent=2) + "\n")
 
+# Copy of every transcript, kept outside ~/.claude so Claude Code's cleanup sweep can't reach it.
+# Copy-only: a file deleted from ~/.claude/projects stays here, which is the point.
+BACKUP_DIR = DATA_DIR / "transcript-backup"
+DATA_SETTINGS = DATA_DIR / "settings.json"
+_backup_lock = threading.Lock()
+
+def data_settings():
+    try: d = json.loads(DATA_SETTINGS.read_text())
+    except Exception: d = {}
+    return d if isinstance(d, dict) else {}
+
+def set_data_setting(key, value):
+    d = data_settings(); d[key] = value
+    DATA_DIR.mkdir(parents=True, exist_ok=True); DATA_SETTINGS.write_text(json.dumps(d, indent=2))
+
+def backup_transcripts():
+    src = CLAUDE / "projects"; copied = total = 0; nbytes = 0
+    if not src.exists(): return {"copied": 0, "files": 0}
+    with _backup_lock:
+        for jf in src.rglob("*.jsonl"):
+            total += 1
+            try:
+                st = jf.stat(); dst = BACKUP_DIR / jf.relative_to(src)
+                if dst.exists():
+                    ds = dst.stat()
+                    if ds.st_size == st.st_size and ds.st_mtime >= st.st_mtime: continue
+                dst.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(jf, dst)
+                copied += 1; nbytes += st.st_size
+            except OSError: pass
+        info = {"at": time.time(), "copied": copied, "files": total, "bytes": nbytes}
+        set_data_setting("last_backup", info)
+    return info
+
+def backup_status():
+    d = data_settings(); last = d.get("last_backup") or {}
+    kept = sum(1 for _ in BACKUP_DIR.rglob("*.jsonl")) if BACKUP_DIR.exists() else 0
+    return {"auto": bool(d.get("auto_backup")), "last": last, "last_h": fmt_rel(last["at"]) if last.get("at") else "",
+            "kept": kept, "dir": str(BACKUP_DIR).replace(str(HOME), "~")}
+
+def _auto_backup_loop():
+    while True:
+        try:
+            if data_settings().get("auto_backup"): backup_transcripts()
+        except Exception: pass
+        time.sleep(3600)
+
 @app.get("/dialog/retention", response_class=HTMLResponse)
 def dialog_retention(request: Request):
     return templates.TemplateResponse(request, "_dlg_retention.html", {"request": request, "theme": theme_of(request),
-        "ret": retention_info(), "default": RETENTION_DEFAULT})
+        "ret": retention_info(), "default": RETENTION_DEFAULT, "bk": backup_status()})
+
+@app.get("/dialog/label", response_class=HTMLResponse)
+def dialog_label(request: Request, path: str):
+    sid = Path(path).stem; lab = load_labels().get(sid) or {}
+    return templates.TemplateResponse(request, "_dlg_label.html", {"request": request, "theme": theme_of(request),
+        "session": sid, "name": lab.get("name") or "", "tags": " ".join("#" + t for t in lab.get("tags") or []),
+        "claude_title": _conv_meta(path).get("title") or "", "path": path, "store": str(LABELS_PATH).replace(str(HOME), "~")})
 
 @app.get("/dialog/install", response_class=HTMLResponse)
 def dialog_install(request: Request):
@@ -2507,12 +2695,34 @@ async def action_save_claudemd(request: Request):
     except Exception as e:
         return {"ok": False, "msg": str(e)}
 
+@app.post("/action/backup")
+async def action_backup(request: Request):
+    d = await request.json()
+    try:
+        if "auto" in d: set_data_setting("auto_backup", bool(d["auto"]))
+        if d.get("now") or d.get("auto"):
+            info = await asyncio.to_thread(backup_transcripts)
+            return {"ok": True, "msg": f"Backed up {info['copied']} new or changed of {info['files']} transcripts.", "status": backup_status()}
+        return {"ok": True, "msg": "Automatic backup off.", "status": backup_status()}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
 @app.post("/action/retention")
 async def action_retention(request: Request):
     d = await request.json()
     try:
         set_retention(d.get("days"))
         return {"ok": True, "msg": f"Saved. Claude Code now keeps conversations for {d.get('days')} days. Previous file backed up to settings.json.my-claude.bak"}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
+@app.post("/action/label")
+async def action_label(request: Request):
+    d = await request.json()
+    try:
+        lab = save_label(d.get("session"), d.get("name"), d.get("tags"))
+        for k in [k for k in list(_CACHE) if k[0] == "conversation_index"]: _CACHE.pop(k, None)
+        return {"ok": True, "msg": "Saved.", "label": lab}
     except Exception as e:
         return {"ok": False, "msg": str(e)}
 
