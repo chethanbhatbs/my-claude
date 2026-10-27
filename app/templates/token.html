@@ -96,6 +96,9 @@ async function loadLimits(fresh){
     <span class="caption" style="margin:0">to</span>
     <input type="date" name="to" value="{{ d_to }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()">
   </form>
+  {% set q = 'win=' ~ (win|urlencode) ~ '&family=' ~ (family|urlencode) ~ '&d_from=' ~ (d_from|urlencode) ~ '&d_to=' ~ (d_to|urlencode) %}
+  <a class="btn" style="flex:0 0 auto;margin-left:auto" href="/export/usage?fmt=csv&{{ q }}">Export CSV</a>
+  <a class="btn" style="flex:0 0 auto" href="/export/usage?fmt=json&{{ q }}">Export JSON</a>
 </div>
 
 {% if empty %}

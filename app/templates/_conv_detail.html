@@ -1,6 +1,9 @@
 <button class="close modal-only" onclick="closeDialog()" aria-label="Close">&#10005;</button>
 <div style="margin-bottom:6px">
-  <div style="font-weight:600;font-size:14px;word-break:break-word;margin-bottom:9px">{{ label }}</div>
+  <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:9px">
+    <div style="font-weight:600;font-size:14px;word-break:break-word;flex:1">{{ label }}{% for t in tags %} <span class="tag">#{{ t }}</span>{% endfor %}</div>
+    {% if not archived %}<button class="btn" style="flex:0 0 auto" onclick="openDialog('/dialog/label?path={{ path|urlencode }}')">Rename / tag</button>{% endif %}
+  </div>
   <div class="c-btns" style="margin-top:0;flex-wrap:wrap;gap:8px">
     <button class="btn primary {{ 'disabled' if not real_exists }}" {{ 'disabled' if not real_exists }} onclick="resumeHere(this)">Resume in Claude</button>
     <select class="input term-pick" id="termPick" style="width:auto;flex:0 0 auto;padding:7px 10px" title="Which terminal to resume in" aria-label="Terminal"></select>
@@ -12,7 +15,7 @@
 {% if archived %}
 <div class="alert info" style="margin:0 0 12px">Archived session: the transcript file is no longer on disk, so only your <strong>prompts</strong> survive — recovered from <span class="mono" style="font-size:11px">{{ archived_src }}</span>. Assistant replies and token costs are gone. Resume still works if the session is still known to Claude Code.</div>
 {% endif %}
-<div class="caption" style="margin:0 0 12px">{{ count }} {{ 'prompts' if archived else 'messages' }}{% if cost_h %} · <strong>{{ cost_h }}</strong>{% endif %} · <span class="mono" style="font-size:11px">{{ path }}</span></div>
+<div class="caption" style="margin:0 0 12px">{% if compactions %}<a href="#" onclick="var e=document.getElementById('m{{ compactions[0] }}');if(e)e.scrollIntoView({block:'center'});return false">Compacted {{ compactions|length }} time{{ '' if compactions|length == 1 else 's' }}</a> · {% endif %}{{ count }} {{ 'prompts' if archived else 'messages' }}{% if cost_h %} · <strong>{{ cost_h }}</strong>{% endif %} · <span class="mono" style="font-size:11px">{{ path }}</span></div>
 <script>
 /* Terminal picker for Resume: lists the terminal apps installed on this Mac, remembers the last pick. */
 (function(){
@@ -55,11 +58,12 @@ function resumeHere(btn){
 </div>
 <div id="convMsgs">
 {% for m in messages %}
+{% if m.role == 'compact' %}<div id="m{{ loop.index0 }}" class="compact-mark cvm" data-role="other" data-i="{{ loop.index0 }}" data-t="{{ m.text|lower }}">{{ m.text }}</div>{% else %}
 {% set grp = m.role if m.role in ['user','assistant'] else 'other' %}<div id="m{{ loop.index0 }}" class="msg-{{ 'system' if grp == 'other' else grp }} cvm" data-role="{{ grp }}" data-i="{{ loop.index0 }}" data-t="{{ m.text|lower }}">
   <div class="msg-role">{{ m.role }}</div>
   <div class="msg-text clamped">{{ m.text }}</div>
   <button class="readmore" style="display:none" onclick="toggleClamp(this)">Read more</button>
-</div>
+</div>{% endif %}
 {% endfor %}
 </div>
 <script>

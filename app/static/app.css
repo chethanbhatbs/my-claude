@@ -387,6 +387,7 @@ h3.sub { font-size: 0.98rem; font-weight: 600; margin: 8px 0; }
 .msg-user .msg-role { color: var(--accent); }
 .msg-system { padding: 8px 15px; margin-bottom: 8px; border-radius: var(--radius); border: 1px dashed var(--line); color: var(--dim); }
 .msg-system .msg-text { font-size: 12px; }
+.compact-mark { margin: 16px 0; padding: 8px 0; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); font-size: 12px; color: var(--dim); text-align: center; }
 .msg-text { white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
 .msg-text.clamped { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
 mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }

@@ -435,14 +435,17 @@ def test_retention_reads_default_and_saves_only_that_key(tmp_path, monkeypatch):
     """The History "Keep conversations" setting writes cleanupPeriodDays into ~/.claude/settings.json.
     It must leave every other key alone, back the file up, and refuse values Claude Code rejects (0)."""
     monkeypatch.setattr(mc, "CLAUDE", tmp_path)
-    assert mc.retention_info() == {"days": 30, "set": False, "error": None}
+    monkeypatch.setattr(mc, "known_project_dirs", lambda: [])
+    monkeypatch.setattr(mc, "MANAGED_SETTINGS", tmp_path / "no-managed.json")
+    info = mc.retention_info()
+    assert (info["days"], info["set"], info["error"], info["others"]) == (30, False, None, [])
     sp = tmp_path / "settings.json"
     sp.write_text(json.dumps({"model": "opus", "permissions": {"allow": ["Bash(ls)"]}}))
     mc.set_retention(3650)
     saved = json.loads(sp.read_text())
     assert saved == {"model": "opus", "permissions": {"allow": ["Bash(ls)"]}, "cleanupPeriodDays": 3650}
     assert json.loads((tmp_path / "settings.json.my-claude.bak").read_text()) == {"model": "opus", "permissions": {"allow": ["Bash(ls)"]}}
-    assert mc.retention_info() == {"days": 3650, "set": True, "error": None}
+    assert (mc.retention_info()["days"], mc.retention_info()["set"]) == (3650, True)
     for bad in (0, -5, "90", 1.5, True, None):
         with pytest.raises(ValueError):
             mc.set_retention(bad)
@@ -468,3 +471,81 @@ def test_mcp_check_counts_a_server_that_answers_4xx_as_reachable(monkeypatch):
     for code, want in ((401, "ok"), (403, "ok"), (405, "ok"), (502, "fail"), (503, "fail")):
         monkeypatch.setattr(urllib.request, "urlopen", fake(code))
         assert mc.mcp_check("s", {"url": "https://example.invalid/mcp"})[0] == want, code
+
+
+def test_retention_shows_a_project_value_lower_than_the_user_value(tmp_path, monkeypatch):
+    """anthropics/claude-code#90148: a project's cleanupPeriodDays reportedly controls the sweep
+    machine-wide, so the dialog must surface it instead of only reading ~/.claude/settings.json."""
+    claude = tmp_path / ".claude"; claude.mkdir(); proj = tmp_path / "proj"; (proj / ".claude").mkdir(parents=True)
+    (claude / "settings.json").write_text(json.dumps({"cleanupPeriodDays": 3650}))
+    (proj / ".claude" / "settings.local.json").write_text(json.dumps({"cleanupPeriodDays": 30}))
+    monkeypatch.setattr(mc, "CLAUDE", claude); monkeypatch.setattr(mc, "HOME", tmp_path)
+    monkeypatch.setattr(mc, "known_project_dirs", lambda: [str(proj)])
+    monkeypatch.setattr(mc, "MANAGED_SETTINGS", tmp_path / "none.json")
+    info = mc.retention_info()
+    assert info["days"] == 3650 and info["lowest"] == 30
+    assert [o["file"] for o in info["others"]] == ["~/proj/.claude/settings.local.json"]
+
+
+def test_backup_copies_new_and_changed_transcripts_and_never_deletes(tmp_path, monkeypatch):
+    claude = tmp_path / ".claude"; pj = claude / "projects" / "-x"; pj.mkdir(parents=True)
+    monkeypatch.setattr(mc, "CLAUDE", claude); monkeypatch.setattr(mc, "DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr(mc, "BACKUP_DIR", tmp_path / "data" / "bk"); monkeypatch.setattr(mc, "DATA_SETTINGS", tmp_path / "data" / "s.json")
+    (pj / "a.jsonl").write_text("1\n"); (pj / "b.jsonl").write_text("2\n")
+    assert mc.backup_transcripts()["copied"] == 2
+    assert mc.backup_transcripts()["copied"] == 0          # unchanged files are skipped
+    (pj / "a.jsonl").write_text("1\n1b\n"); (pj / "b.jsonl").unlink()
+    assert mc.backup_transcripts()["copied"] == 1
+    assert (tmp_path / "data" / "bk" / "-x" / "b.jsonl").read_text() == "2\n"   # deleted upstream, kept here
+    assert (tmp_path / "data" / "bk" / "-x" / "a.jsonl").read_text() == "1\n1b\n"
+
+
+def test_titles_prefer_rename_then_claude_name_then_first_prompt(tmp_path):
+    f = tmp_path / "s.jsonl"
+    rows = [{"type": "user", "timestamp": "2026-10-01T00:00:00Z", "message": {"role": "user", "content": "first prompt here"}},
+            {"type": "ai-title", "aiTitle": "AI name"}]
+    f.write_text("\n".join(json.dumps(r) for r in rows))
+    assert mc._scan_meta(str(f))["title"] == "AI name"
+    f.write_text("\n".join(json.dumps(r) for r in rows + [{"type": "custom-title", "customTitle": "My name"}]))
+    assert mc._scan_meta(str(f))["title"] == "My name"
+    f.write_text(json.dumps(rows[0])); m = mc._scan_meta(str(f))
+    assert m["title"] == "" and m["preview"] == "first prompt here"
+
+
+def test_compaction_is_marked_in_the_conversation(tmp_path):
+    f = tmp_path / "s.jsonl"
+    rows = [{"type": "user", "message": {"role": "user", "content": "before"}, "origin": {"kind": "human"}},
+            {"type": "system", "subtype": "compact_boundary", "compactMetadata": {"trigger": "auto", "preTokens": 635278}},
+            {"type": "user", "message": {"role": "user", "content": "after"}, "origin": {"kind": "human"}}]
+    f.write_text("\n".join(json.dumps(r) for r in rows))
+    msgs = mc.parse_transcript_messages(str(f))
+    assert [m["role"] for m in msgs] == ["user", "compact", "user"]
+    assert "auto" in msgs[1]["text"] and "635" in msgs[1]["text"]
+    assert mc._scan_meta(str(f))["compactions"] == 1
+
+
+def test_labels_save_clean_and_clear(tmp_path, monkeypatch):
+    monkeypatch.setattr(mc, "DATA_DIR", tmp_path); monkeypatch.setattr(mc, "LABELS_PATH", tmp_path / "labels.json")
+    lab = mc.save_label("abc-123", "  Payment   retry ", ["#Billing", "bug", "bug", "x y"])
+    assert lab == {"name": "Payment retry", "tags": ["billing", "bug", "xy"]}
+    assert mc.load_labels()["abc-123"]["name"] == "Payment retry"
+    mc.save_label("abc-123", "", [])
+    assert "abc-123" not in mc.load_labels()
+    with pytest.raises(ValueError):
+        mc.save_label("../etc", "x", [])
+
+
+def test_usage_export_matches_the_window_and_sums_per_day(monkeypatch):
+    import pandas as pd
+    today = datetime.now().date(); old = today - timedelta(days=40)
+    df = pd.DataFrame([
+        {"date": today, "label": "opus 5.5", "model": "m", "input_tokens": 1, "cache_creation": 2, "cache_read": 3, "output_tokens": 4, "cost": 0.5},
+        {"date": today, "label": "opus 5.5", "model": "m", "input_tokens": 1, "cache_creation": 2, "cache_read": 3, "output_tokens": 4, "cost": 0.5},
+        {"date": old, "label": "opus 5.5", "model": "m", "input_tokens": 9, "cache_creation": 9, "cache_read": 9, "output_tokens": 9, "cost": 9.0}])
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: df)
+    rows = json.loads(mc.export_usage(fmt="json", win="30 days").body)
+    assert rows == [{"date": str(today), "model": "opus 5.5", "turns": 2, "input_tokens": 2, "cache_write_tokens": 4,
+                     "cache_read_tokens": 6, "output_tokens": 8, "cost_usd_est": 1.0}]
+    csv_text = mc.export_usage(fmt="csv", win="All time").body.decode()
+    assert csv_text.splitlines()[0] == "date,model,turns,input_tokens,cache_write_tokens,cache_read_tokens,output_tokens,cost_usd_est"
+    assert len(csv_text.strip().splitlines()) == 3

@@ -1,0 +1,25 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Rename / tag</h3>
+<div class="caption">Only this dashboard uses these. Claude Code's own name{% if claude_title %}: <strong>{{ claude_title }}</strong>{% else %} is not set{% endif %}.</div>
+<label class="fld" for="lbName" style="margin-top:14px">Name</label>
+<input class="input" type="text" id="lbName" maxlength="120" value="{{ name }}" placeholder="{{ claude_title or 'Payment webhook retry' }}">
+<label class="fld" for="lbTags" style="margin-top:12px">Tags</label>
+<input class="input" type="text" id="lbTags" value="{{ tags }}" placeholder="#billing #bug">
+<div class="caption" id="lbErr" role="alert" style="color:var(--err);margin:6px 0 0"></div>
+<div class="caption" style="margin:6px 0 14px">Saved in <code>{{ store }}</code>. Leave both empty to clear.</div>
+<div style="display:flex;gap:8px">
+  <button class="btn primary" onclick="saveLabel(this)">Save</button>
+  <button class="btn" onclick="closeDialog()">{{ 'Discard changes' if name or tags else 'Cancel' }}</button>
+</div>
+<script>
+async function saveLabel(btn){
+  const tags=document.getElementById('lbTags').value.split(/[\s,]+/).filter(Boolean);
+  btn.classList.add('loading');
+  const r=await (await fetch('/action/label',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({session:'{{ session }}',name:document.getElementById('lbName').value,tags})})).json();
+  btn.classList.remove('loading');
+  if(!r.ok){ document.getElementById('lbErr').textContent=r.msg; return; }
+  toast('Saved'); closeDialog(); navigate(location.pathname+location.search, false, true);
+}
+setTimeout(()=>{ const e=document.getElementById('lbName'); if(e) e.focus(); },50);
+</script>
