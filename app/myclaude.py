@@ -2,7 +2,7 @@
 import asyncio, io, json, os, pty, re, select, shutil, signal, sqlite3, subprocess, sys, tempfile, threading, time, zipfile
 from urllib.parse import quote
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 from fastapi import FastAPI, Request, Form
@@ -182,6 +182,7 @@ def fmt_num(n):
     if n >= 1e6:  return f"{sign}{n/1e6:.2f}M"
     if n >= 1e3:  return f"{sign}{n/1e3:.1f}K"
     return f"{sign}{int(n)}"
+templates.env.globals["fmt_num"] = fmt_num
 
 def fmt_when(ts):
     try: return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
@@ -1885,6 +1886,7 @@ def warm_async():
 @app.on_event("startup")
 def _on_startup():
     warm_async(); threading.Thread(target=_auto_backup_loop, daemon=True).start()
+    threading.Thread(target=_limit_alert_loop, daemon=True).start()
 
 @app.get("/refresh")
 def refresh(request: Request, next: str = "/p/overview"):
@@ -2214,7 +2216,7 @@ def api_conversation(request: Request, path: str):
         "path": path, "session": p.stem, "project_real": project_real, "cost_h": cost_h,
         "real_exists": Path(project_real).exists(), "editor": editor_name(), "archived": False,
         "capped": len(messages) >= MSG_CAP, "cap": MSG_CAP, "tags": lab.get("tags") or [], "custom_name": lab.get("name") or "",
-        "compactions": [i for i, m in enumerate(messages) if m["role"] == "compact"]})
+        "compactions": [i for i, m in enumerate(messages) if m["role"] == "compact"], "subs": _sub_rows(p.stem)})
 
 def render_system(request):
     tab = request.query_params.get("tab", "config")
@@ -2382,11 +2384,14 @@ def render_token(request):
     # per-model list prices actually used for these estimates (models present in the data, most-used first)
     price_rows = [{"model": lbl, **(MODEL_PRICING.get(lbl) or TIER_PRICING.get(model_family(lbl), TIER_PRICING["sonnet"]))}
                   for lbl in by_model["label"]]
+    sub_heavy = sorted([r for r in window_breakdown(datetime(2000, 1, 1, tzinfo=timezone.utc), df)["rows"] if r["subagents"]],
+                       key=lambda r: -r["sub_tokens"])[:8]
     return render(request, "token.html", "Usage", empty=False, win=win, family=family, d_from=d_from, d_to=d_to,
                   metrics1=metrics1, metrics2=metrics2, cost_metrics=cost_metrics, day_chart=day_chart, proj_rows=proj_rows,
                   pie=json.dumps(pie), price_rows=price_rows,
                   heat=json.dumps(heat), heat_win=json.dumps(heat_win), models=["All"] + model_list,
-                  insights=token_insights())
+                  insights=token_insights(), rebuild=cache_rebuilds(df), sub_heavy=sub_heavy, SUB_FLAG=SUB_FLAG,
+                  alerts_on=bool(data_settings().get("limit_alerts")))
 
 def render_sunburst(request):
     rows = []
@@ -2639,6 +2644,38 @@ def backup_status():
     return {"auto": bool(d.get("auto_backup")), "last": last, "last_h": fmt_rel(last["at"]) if last.get("at") else "",
             "kept": kept, "dir": str(BACKUP_DIR).replace(str(HOME), "~")}
 
+ALERT_LEVELS = (80, 95)
+
+def notify_desktop(title, text):
+    if sys.platform == "darwin":
+        script = 'display notification ' + json.dumps(text) + ' with title ' + json.dumps(title)
+        subprocess.run(["osascript", "-e", script], capture_output=True, timeout=10)
+    elif shutil.which("notify-send"):
+        subprocess.run(["notify-send", title, text], capture_output=True, timeout=10)
+
+def check_limit_alerts(rows):
+    """Notify once per limit window when it passes 80% and again at 95%. Sent windows are remembered
+    by limit + reset time, so a restart doesn't repeat them."""
+    sent = data_settings().get("alerts_sent") or {}; fired = []
+    for r in rows or []:
+        pct = r.get("pct") or 0
+        for lvl in ALERT_LEVELS:
+            key = f"{r.get('kind')}|{r.get('label')}|{r.get('resets_at')}|{lvl}"
+            if pct >= lvl and key not in sent:
+                notify_desktop("My Claude", f"{r.get('label')}: {round(pct)}% used. {r.get('resets') or ''}".strip())
+                sent[key] = time.time(); fired.append(key)
+    if fired:
+        cutoff = time.time() - 8 * 86400
+        set_data_setting("alerts_sent", {k: v for k, v in sent.items() if v >= cutoff})
+    return fired
+
+def _limit_alert_loop():
+    while True:
+        try:
+            if data_settings().get("limit_alerts"): check_limit_alerts((live_limits(force=True) or {}).get("rows"))
+        except Exception: pass
+        time.sleep(600)
+
 def _auto_backup_loop():
     while True:
         try:
@@ -2706,6 +2743,12 @@ async def action_backup(request: Request):
         return {"ok": True, "msg": "Automatic backup off.", "status": backup_status()}
     except Exception as e:
         return {"ok": False, "msg": str(e)}
+
+@app.post("/action/limit-alerts")
+async def action_limit_alerts(request: Request):
+    d = await request.json(); on = bool(d.get("on"))
+    set_data_setting("limit_alerts", on)
+    return {"ok": True, "msg": "Alerts on: checked every 10 minutes while My Claude runs." if on else "Alerts off."}
 
 @app.post("/action/retention")
 async def action_retention(request: Request):
@@ -2790,9 +2833,132 @@ def api_data_version():
     return {"version": "%d-%.0f-%d-%.0f" % served, "transcripts": served[0], "skills": served[2],
             "pending": fp != served, "rebuilding": _rebuilding.is_set()}
 
+WINDOW_LEN = {"session": timedelta(hours=5), "weekly": timedelta(days=7)}
+
+def _window_start(row):
+    try: return datetime.fromisoformat(str(row["resets_at"]).replace("Z", "+00:00")) - WINDOW_LEN[row["group"]]
+    except Exception: return None
+
+def pace_forecast(row, now=None):
+    """Straight-line pace: % used so far divided by time elapsed in the window. An estimate, not Anthropic's."""
+    start = _window_start(row); pct = row.get("pct") or 0
+    if start is None or pct <= 0: return ""
+    now = now or datetime.now(start.tzinfo); elapsed = (now - start).total_seconds()
+    total = WINDOW_LEN[row["group"]].total_seconds()
+    if elapsed < 600 or elapsed >= total: return ""
+    if pct >= 100: return "Limit reached"
+    proj = pct * total / elapsed
+    if proj < 100: return f"At this pace: about {round(proj)}% by reset"
+    hit = (start + timedelta(seconds=elapsed * 100 / pct)).astimezone()
+    when = hit.strftime("%-I:%M %p") if hit.date() == datetime.now().date() else hit.strftime("%a %-I:%M %p")
+    return f"At this pace: 100% around {when}"
+
 @app.get("/api/usage-limits")
 def api_usage_limits(fresh: int = 0):
-    return live_limits(force=bool(fresh))
+    j = dict(live_limits(force=bool(fresh)))
+    if j.get("rows"): j["rows"] = [dict(r, pace=pace_forecast(r)) for r in j["rows"]]
+    return j
+
+def _titles():
+    """session id -> (title, transcript path) for linking rows to History."""
+    return {c["session"]: (c.get("title") or c["preview"], c["path"]) for c in conversation_index()}
+
+def window_breakdown(start_utc, df=None):
+    """Sessions ranked by billable tokens since start_utc (sub-agent turns count to their parent)."""
+    df = aggregate_usage() if df is None else df
+    if df.empty: return {"total": 0, "rows": [], "cost": 0}
+    ts = pd.to_datetime(df["ts"], errors="coerce", utc=True, format="mixed")
+    w = df[ts >= pd.Timestamp(start_utc)].copy()
+    if w.empty: return {"total": 0, "rows": [], "cost": 0}
+    w["billable"] = w["input_tokens"] + w["cache_creation"] + w["cache_read"] + w["output_tokens"]
+    total = int(w["billable"].sum()); titles = _titles(); rows = []
+    for sid, g in w.groupby("session"):
+        sub = g[g["kind"] != "conversation"]
+        rows.append({"session": sid, "title": titles.get(sid, (sid, ""))[0], "path": titles.get(sid, ("", ""))[1], "tokens": int(g["billable"].sum()),
+                     "share": g["billable"].sum() / total * 100 if total else 0, "cost": float(g["cost"].sum()),
+                     "turns": int(len(g)), "sub_tokens": int(sub["billable"].sum()), "subagents": int(sub["transcript"].nunique()),
+                     "models": ", ".join(sorted(g["label"].dropna().unique()))})
+    rows.sort(key=lambda r: -r["tokens"])
+    return {"total": total, "rows": rows, "cost": float(w["cost"].sum())}
+
+@app.get("/api/limit-breakdown", response_class=HTMLResponse)
+def api_limit_breakdown(request: Request, group: str = "session"):
+    j = live_limits()
+    row = next((r for r in j.get("rows") or [] if r.get("group") == group and r.get("kind") in ("session", "weekly_all")), None)
+    start = _window_start(row) if row else None
+    if start is None:
+        return HTMLResponse('<div class="caption" style="margin:0">No window to break down: live limits are not available.</div>')
+    b = window_breakdown(start)
+    return templates.TemplateResponse(request, "_limit_breakdown.html", {"request": request, "b": b, "group": group,
+        "since": start.astimezone().strftime("%a %-I:%M %p"), "fmt_num": fmt_num})
+
+# A conversation is flagged when its sub-agents pass either of these (anthropics/claude-code#66023: 46 Opus sub-agents).
+SUB_FLAG = {"count": 20, "share": 50}
+
+def fmt_minutes(m):
+    m = int(m)
+    if m < 60: return f"{m} min"
+    if m < 1440: return f"{m // 60} h {m % 60} min" if m % 60 else f"{m // 60} h"
+    return f"{m // 1440} d {(m % 1440) // 60} h"
+
+def cache_rebuilds(df, gap_min=5):
+    """Turns that came after a pause of gap_min+ minutes in the same transcript and wrote cache.
+    Claude's prompt cache expires after a few minutes idle, so these turns pay to write it again."""
+    if df.empty: return {"turns": 0, "tokens": 0, "cost": 0.0, "by_session": []}
+    d = df.copy(); d["t"] = pd.to_datetime(d["ts"], errors="coerce", utc=True, format="mixed")
+    d = d.dropna(subset=["t"]).sort_values(["transcript", "t"])
+    d["gap"] = d.groupby("transcript")["t"].diff().dt.total_seconds()
+    hit = d[(d["gap"] >= gap_min * 60) & (d["cache_creation"] > 0)].copy()
+    if hit.empty: return {"turns": 0, "tokens": 0, "cost": 0.0, "by_session": []}
+    hit["cw_cost"] = hit.apply(lambda r: r["cache_creation"] * pricing_for(r["model"])["cache_write"] / 1_000_000, axis=1)
+    titles = _titles(); by = []
+    for sid, g in hit.groupby("session"):
+        by.append({"session": sid, "title": titles.get(sid, (sid, ""))[0], "path": titles.get(sid, ("", ""))[1], "turns": int(len(g)), "tokens": int(g["cache_creation"].sum()),
+                   "cost": float(g["cw_cost"].sum()), "longest_gap_min": int(g["gap"].max() // 60),
+                   "longest_gap": fmt_minutes(g["gap"].max() // 60)})
+    by.sort(key=lambda r: -r["cost"])
+    return {"turns": int(len(hit)), "tokens": int(hit["cache_creation"].sum()), "cost": float(hit["cw_cost"].sum()), "by_session": by}
+
+def _sub_rows(session, gap_min=30):
+    """subagent_timeline grouped into bursts (runs within gap_min of each other), each burst on its own
+    0-100 scale, so parallel runs are visible even in a conversation that spans months."""
+    subs = subagent_timeline(session)
+    if not subs: return {"rows": [], "tokens": 0, "groups": []}
+    groups = []
+    for r in subs:
+        if groups and r["start"] <= groups[-1]["end"] + timedelta(minutes=gap_min):
+            groups[-1]["runs"].append(r); groups[-1]["end"] = max(groups[-1]["end"], r["end"])
+        else: groups.append({"start": r["start"], "end": r["end"], "runs": [r]})
+    rows = []
+    for g in groups:
+        span = max((g["end"] - g["start"]).total_seconds(), 1)
+        g["label"] = g["start"].to_pydatetime().astimezone().strftime("%-d %b %H:%M") + " · " + fmt_minutes(span // 60) \
+            + f" · {len(g['runs'])} sub-agent{'s' if len(g['runs']) != 1 else ''}"
+        g["tokens"] = sum(r["tokens"] for r in g["runs"])
+        for r in g["runs"]:
+            dur = (r["end"] - r["start"]).total_seconds()
+            r.update(left=round((r["start"] - g["start"]).total_seconds() / span * 100, 2), width=round(max(dur / span * 100, 0.6), 2),
+                     start_h=r["start"].to_pydatetime().astimezone().strftime("%H:%M"), dur_h=f"{int(dur // 60)}m {int(dur % 60)}s")
+            rows.append(r)
+    return {"rows": rows, "tokens": sum(r["tokens"] for r in subs), "groups": groups}
+
+def subagent_timeline(session):
+    """Each sub-agent / workflow transcript under one conversation: when it ran, tokens, model."""
+    df = aggregate_usage()
+    if df.empty: return []
+    g = df[(df["session"] == session) & (df["kind"] != "conversation")].copy()
+    if g.empty: return []
+    g["t"] = pd.to_datetime(g["ts"], errors="coerce", utc=True, format="mixed")
+    g["billable"] = g["input_tokens"] + g["cache_creation"] + g["cache_read"] + g["output_tokens"]
+    out = []
+    for tid, x in g.groupby("transcript"):
+        x = x.dropna(subset=["t"])
+        if x.empty: continue
+        out.append({"id": tid, "kind": x["kind"].iloc[0], "start": x["t"].min(), "end": x["t"].max(), "turns": int(len(x)),
+                    "tokens": int(x["billable"].sum()), "cost": float(x["cost"].sum()), "model": ", ".join(sorted(x["label"].dropna().unique()))})
+    out.sort(key=lambda r: r["start"])
+    return out
+
 
 @app.post("/settings/save")
 async def settings_save(github_owner: str = Form(""), repo_prefix: str = Form("claude-skill-"),

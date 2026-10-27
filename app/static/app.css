@@ -531,3 +531,5 @@ mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: in
 .fold .ins-list { margin-top: 4px; }
 .fold .ins { background: var(--bg); }
 @media (max-width: 900px) { .fold-sum { display: none; } }
+.tl-track { position: relative; height: 8px; background: var(--surface-2); border-radius: 4px; }
+.tl-bar { position: absolute; top: 0; height: 8px; background: var(--accent); border-radius: 4px; }

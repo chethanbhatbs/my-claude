@@ -549,3 +549,90 @@ def test_usage_export_matches_the_window_and_sums_per_day(monkeypatch):
     csv_text = mc.export_usage(fmt="csv", win="All time").body.decode()
     assert csv_text.splitlines()[0] == "date,model,turns,input_tokens,cache_write_tokens,cache_read_tokens,output_tokens,cost_usd_est"
     assert len(csv_text.strip().splitlines()) == 3
+
+
+def _usage_df(rows):
+    import pandas as pd
+    base = {"model": "claude-opus-5-5", "label": "opus 5.5", "input_tokens": 0, "cache_creation": 0, "cache_read": 0,
+            "output_tokens": 0, "cost": 0.0, "kind": "conversation"}
+    return pd.DataFrame([dict(base, **r) for r in rows])
+
+
+def test_pace_forecast_projects_a_straight_line():
+    from datetime import timezone
+    now = datetime(2026, 10, 27, 12, 0, tzinfo=timezone.utc)
+    half = {"group": "session", "resets_at": (now + timedelta(hours=2.5)).isoformat()}
+    assert mc.pace_forecast(dict(half, pct=20), now) == "At this pace: about 40% by reset"
+    assert mc.pace_forecast(dict(half, pct=60), now).startswith("At this pace: 100% around")
+    assert mc.pace_forecast(dict(half, pct=0), now) == ""
+    early = {"group": "session", "resets_at": (now + timedelta(hours=4, minutes=55)).isoformat(), "pct": 5}
+    assert mc.pace_forecast(early, now) == ""          # under 10 minutes in: too early to say
+
+
+def test_window_breakdown_counts_only_turns_inside_the_window(monkeypatch):
+    from datetime import timezone
+    monkeypatch.setattr(mc, "_titles", lambda: {"a": ("Alpha", "/p/a.jsonl")})
+    df = _usage_df([
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:00:00Z", "cache_read": 300},
+        {"session": "a", "transcript": "sub1", "kind": "sub-agent", "ts": "2026-10-27T10:05:00Z", "cache_read": 100},
+        {"session": "b", "transcript": "b", "ts": "2026-10-27T11:00:00Z", "cache_read": 100},
+        {"session": "b", "transcript": "b", "ts": "2026-10-20T11:00:00Z", "cache_read": 9999}])
+    b = mc.window_breakdown(datetime(2026, 10, 27, 9, 0, tzinfo=timezone.utc), df)
+    assert b["total"] == 500
+    assert [(r["session"], r["tokens"], round(r["share"]), r["subagents"]) for r in b["rows"]] == [("a", 400, 80, 1), ("b", 100, 20, 0)]
+    assert b["rows"][0]["title"] == "Alpha"
+
+
+def test_cache_rebuilds_only_count_writes_after_a_pause(monkeypatch):
+    monkeypatch.setattr(mc, "_titles", lambda: {})
+    df = _usage_df([
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:00:00Z", "cache_creation": 1000},
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:01:00Z", "cache_creation": 1000},   # 1 min: not a pause
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:20:00Z", "cache_creation": 4000},   # 19 min: counted
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T11:00:00Z", "cache_creation": 0}])     # pause but no write
+    r = mc.cache_rebuilds(df)
+    assert (r["turns"], r["tokens"]) == (1, 4000)
+    assert r["by_session"][0]["longest_gap_min"] == 19
+    assert abs(r["cost"] - 4000 * mc.pricing_for("claude-opus-5-5")["cache_write"] / 1e6) < 1e-9
+
+
+def test_limit_alerts_fire_once_per_level_per_window(tmp_path, monkeypatch):
+    monkeypatch.setattr(mc, "DATA_DIR", tmp_path); monkeypatch.setattr(mc, "DATA_SETTINGS", tmp_path / "s.json")
+    sent = []; monkeypatch.setattr(mc, "notify_desktop", lambda t, x: sent.append(x))
+    rows = [{"kind": "session", "label": "Current session", "pct": 85, "resets_at": "2026-10-27T17:00:00Z"}]
+    assert len(mc.check_limit_alerts(rows)) == 1
+    assert mc.check_limit_alerts(rows) == []                       # same window, same level: silent
+    rows[0]["pct"] = 96
+    assert len(mc.check_limit_alerts(rows)) == 1                   # 95% is its own alert
+    rows[0]["resets_at"] = "2026-10-27T22:00:00Z"
+    assert len(mc.check_limit_alerts(rows)) == 2                   # new window: both levels again
+    assert len(sent) == 4
+
+
+def test_subagent_timeline_places_each_run(monkeypatch):
+    df = _usage_df([
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:00:00Z", "cache_read": 5},
+        {"session": "a", "transcript": "s1", "kind": "sub-agent", "ts": "2026-10-27T10:00:00Z", "cache_read": 100},
+        {"session": "a", "transcript": "s1", "kind": "sub-agent", "ts": "2026-10-27T10:10:00Z", "cache_read": 100},
+        {"session": "a", "transcript": "s2", "kind": "sub-agent", "ts": "2026-10-27T10:10:00Z", "cache_read": 50},
+        {"session": "a", "transcript": "s2", "kind": "sub-agent", "ts": "2026-10-27T10:20:00Z", "cache_read": 50}])
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: df)
+    r = mc._sub_rows("a")
+    assert r["tokens"] == 300
+    assert [(x["id"], x["left"], x["width"], x["tokens"]) for x in r["rows"]] == [("s1", 0.0, 50.0, 200), ("s2", 50.0, 50.0, 100)]
+    assert len(r["groups"]) == 1
+
+
+def test_subagent_runs_far_apart_get_their_own_time_axis(monkeypatch):
+    df = _usage_df([
+        {"session": "a", "transcript": "s1", "kind": "sub-agent", "ts": "2026-08-17T10:00:00Z", "cache_read": 1},
+        {"session": "a", "transcript": "s1", "kind": "sub-agent", "ts": "2026-08-17T10:10:00Z", "cache_read": 1},
+        {"session": "a", "transcript": "s2", "kind": "sub-agent", "ts": "2026-10-01T09:00:00Z", "cache_read": 1},
+        {"session": "a", "transcript": "s2", "kind": "sub-agent", "ts": "2026-10-01T09:20:00Z", "cache_read": 1}])
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: df)
+    r = mc._sub_rows("a")
+    assert len(r["groups"]) == 2 and all(x["width"] == 100.0 for x in r["rows"])
+
+
+def test_pause_lengths_read_in_days_and_hours():
+    assert [mc.fmt_minutes(m) for m in (7, 60, 95, 19590)] == ["7 min", "1 h", "1 h 35 min", "13 d 14 h"]

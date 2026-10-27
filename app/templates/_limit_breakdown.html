@@ -1,0 +1,13 @@
+{% if not b.rows %}
+<div class="caption" style="margin:0">Nothing logged on this machine since {{ since }}.</div>
+{% else %}
+<div class="caption" style="margin:0 0 8px">Since {{ since }} · {{ fmt_num(b.total) }} tokens on this machine. Share of tokens, not of the limit: Anthropic doesn't publish how tokens map to the percentage.</div>
+<table class="data">
+  <thead><tr><th>Conversation</th><th class="num">Share</th><th class="num">Tokens</th><th class="num">Sub-agents</th><th class="num">API est</th></tr></thead>
+  <tbody>{% for r in b.rows[:10] %}<tr>
+    <td>{% if r.path %}<a href="/p/history?conv={{ r.path|urlencode }}">{{ r.title[:70] }}</a>{% else %}{{ r.title[:70] }}{% endif %}</td>
+    <td class="num">{{ '%.0f' % r.share }}%</td><td class="num">{{ fmt_num(r.tokens) }}</td>
+    <td class="num">{{ r.subagents or '' }}</td><td class="num">${{ '%.2f' % r.cost }}</td></tr>{% endfor %}</tbody>
+</table>
+{% if b.rows|length > 10 %}<div class="caption" style="margin:6px 0 0">Top 10 of {{ b.rows|length }} conversations.</div>{% endif %}
+{% endif %}

@@ -12,13 +12,24 @@
     </div>
   </div>
   <div id="limRows"><div class="caption" style="margin:0">Loading your limits…</div></div>
+  <div class="row" style="margin:16px 0 8px;gap:10px">
+    <h3 style="margin:0;flex:0 0 auto;font-size:14px">What used this window</h3>
+    <div class="seg" style="flex:0 0 auto" id="bdSeg">
+      <a href="#" class="active" onclick="loadBreakdown('session',this);return false">Session</a>
+      <a href="#" onclick="loadBreakdown('weekly',this);return false">Week</a>
+    </div>
+    <label class="toggle" style="flex:0 0 auto;margin-left:auto" title="Checks your limits every 10 minutes while My Claude runs, and shows a desktop notification at 80% and 95%">
+      <input type="checkbox" id="limAlert" {{ 'checked' if alerts_on }} onchange="setLimitAlerts(this.checked)"><span class="track"></span>Notify me at 80% and 95%</label>
+  </div>
+  <div id="bdBox"><div class="caption" style="margin:0">Loading…</div></div>
   <details class="exp" style="margin-top:12px"><summary><span>Where these numbers come from (and what leaves this machine)</span></summary><div class="exp-body">
     <div class="caption" style="margin:0">
       One request: <span class="mono">GET https://api.anthropic.com/api/oauth/usage</span>, authorised with your Claude Code
       OAuth token read from the macOS keychain entry <span class="mono">Claude Code-credentials</span> — the same entry the
       <span class="mono">claude</span> CLI made and uses. The token is sent in the <span class="mono">Authorization</span> header and
       nothing else goes with it: no transcripts, no prompts, no filenames, no telemetry. It is held in memory for 10 minutes
-      and never written to disk. This happens only while this page is open (on load, every 60s, and on Refresh).
+      and never written to disk. This happens while this page is open (on load, every 60s, and on Refresh), and every
+      10 minutes in the background only if you turn on <em>Notify me at 80% and 95%</em>.
       Decline the keychain prompt and nothing breaks — the panel falls back to the copy Claude Code already cached in
       <span class="mono">~/.claude.json</span> and says so, with the age of those numbers. Every other page in this app is
       computed from files on your disk with no network access.
@@ -48,7 +59,7 @@ function renderLimits(j){
     html+='<div class="lim-group"><div class="lim-gtitle">'+title+'</div>';
     rows.forEach(r=>{
       const pct=Math.max(0, Math.min(100, r.pct));
-      const sub=r.unused ? ("You haven't used "+escHtml(r.label)+' yet') : escHtml(r.resets||'');
+      const sub=r.unused ? ("You haven't used "+escHtml(r.label)+' yet') : escHtml(r.resets||'')+(r.pace?' · '+escHtml(r.pace):'');
       html+='<div class="lim-row'+(r.active?' active':'')+'">'+
         '<div class="lim-label"><div class="lim-name">'+escHtml(r.label)+'</div><div class="lim-sub">'+sub+'</div></div>'+
         '<div class="lim-bar"><div class="lim-fill sev-'+escHtml(r.severity)+'" style="width:'+pct+'%"></div></div>'+
@@ -64,6 +75,17 @@ function renderLimits(j){
     st.textContent=(j.source==='live'?'live · ':'Claude’s local cache · ')+'updated '+_agoText(age);
     st.title=j.source==='live'?'Fetched from Anthropic just now':'Live fetch failed; showing the numbers Claude Code last cached';
   }
+}
+async function loadBreakdown(g, el){
+  if(el) el.parentNode.querySelectorAll('a').forEach(a=>a.classList.toggle('active', a===el));
+  const b=document.getElementById('bdBox'); if(!b) return;
+  b.innerHTML='<div class="caption" style="margin:0">Loading…</div>';
+  try{ b.innerHTML=await (await fetch('/api/limit-breakdown?group='+g)).text(); }catch(e){ b.textContent='Could not load.'; }
+}
+loadBreakdown('session');
+async function setLimitAlerts(on){
+  const r=await (await fetch('/action/limit-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on})})).json();
+  toast(r.msg);
 }
 async function loadLimits(fresh){
   const b=document.getElementById('limBtn'); if(b){ b.disabled=true; b.textContent='…'; }
@@ -167,6 +189,27 @@ async function loadLimits(fresh){
   <thead><tr><th>project</th><th class="num">tokens</th><th class="num">est (API)</th><th class="num">turns</th></tr></thead>
   <tbody>{% for r in proj_rows %}<tr><td><a href="/p/history?q={{ r.q|urlencode }}">{{ r.project }}</a></td><td class="num">{{ r.tokens }}</td><td class="num">{{ r.cost }}</td><td class="num">{{ r.turns }}</td></tr>{% endfor %}</tbody>
 </table>
+
+<h2 class="sub">Cache rewritten after a pause</h2>
+<div class="caption" style="margin:-4px 0 8px">Turns that came 5+ minutes after the previous one in the same conversation and wrote to the prompt cache. The cache expires when idle, so the next turn pays to write it again. API list-price estimate.</div>
+{% if rebuild.turns %}
+<div class="caption" style="margin:0 0 8px"><strong>{{ rebuild.turns }}</strong> turns · {{ fmt_num(rebuild.tokens) }} tokens written · about <strong>${{ '%.2f' % rebuild.cost }}</strong> in this window</div>
+<table class="data">
+  <thead><tr><th>Conversation</th><th class="num">Turns after a pause</th><th class="num">Longest pause</th><th class="num">Cache written</th><th class="num">API est</th></tr></thead>
+  <tbody>{% for r in rebuild.by_session[:8] %}<tr><td>{% if r.path %}<a href="/p/history?conv={{ r.path|urlencode }}">{{ r.title[:70] }}</a>{% else %}{{ r.title[:70] }}{% endif %}</td>
+    <td class="num">{{ r.turns }}</td><td class="num">{{ r.longest_gap }}</td><td class="num">{{ fmt_num(r.tokens) }}</td><td class="num">${{ '%.2f' % r.cost }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<div class="caption">None in this window.</div>{% endif %}
+
+<h2 class="sub">Conversations with the most sub-agent use</h2>
+<div class="caption" style="margin:-4px 0 8px">Flagged at {{ SUB_FLAG.count }}+ sub-agents, or when sub-agents used {{ SUB_FLAG.share }}%+ of the conversation's tokens.</div>
+{% if sub_heavy %}
+<table class="data">
+  <thead><tr><th>Conversation</th><th class="num">Sub-agents</th><th class="num">Sub-agent tokens</th><th class="num">Share of the conversation</th></tr></thead>
+  <tbody>{% for r in sub_heavy %}{% set flag = r.subagents >= SUB_FLAG.count or (r.tokens and r.sub_tokens / r.tokens * 100 >= SUB_FLAG.share) %}<tr><td>{% if r.path %}<a href="/p/history?conv={{ r.path|urlencode }}">{{ r.title[:70] }}</a>{% else %}{{ r.title[:70] }}{% endif %}{% if flag %} <span class="tag">heavy</span>{% endif %}</td>
+    <td class="num">{{ r.subagents }}</td><td class="num">{{ fmt_num(r.sub_tokens) }}</td><td class="num">{{ '%.0f' % (r.sub_tokens / r.tokens * 100 if r.tokens else 0) }}%</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<div class="caption">No sub-agents in this window.</div>{% endif %}
 
 <h2 class="sub">Share by model</h2>
 <div class="caption" style="margin:-4px 0 8px">Relative weight of each model, priced at API list rates so an Opus turn outweighs a Haiku one.</div>
