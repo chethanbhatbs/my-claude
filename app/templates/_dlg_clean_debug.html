@@ -1,0 +1,20 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Clean up debug logs</h3>
+<div class="caption"><code>~/.claude/debug</code> holds {{ d.files }} file{{ '' if d.files == 1 else 's' }}, {{ d.size_h }}. Claude Code never removes them. Older logs move to the Trash, so you can put them back.</div>
+<div class="row" style="margin:14px 0;gap:8px">
+  <label class="fld" for="cdDays" style="margin:0;flex:0 0 auto">Older than</label>
+  <select class="input" id="cdDays" style="flex:0 0 auto;width:auto"><option value="7">7 days</option><option value="30">30 days</option><option value="1">1 day</option></select>
+</div>
+<div class="caption" id="cdMsg" role="status" style="margin:0 0 12px"></div>
+<div style="display:flex;gap:8px">
+  <button class="btn primary" onclick="cleanDebug(this)">Move to Trash</button>
+  <button class="btn" onclick="closeDialog()">Cancel</button>
+</div>
+<script>
+async function cleanDebug(btn){
+  btn.classList.add('loading');
+  const r=await (await fetch('/action/clean-debug',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:+document.getElementById('cdDays').value})})).json();
+  btn.classList.remove('loading'); document.getElementById('cdMsg').textContent=r.msg;
+  if(r.ok) setTimeout(()=>{ closeDialog(); doRefresh(true); }, 1200);
+}
+</script>

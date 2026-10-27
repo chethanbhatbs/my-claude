@@ -13,11 +13,24 @@
 
 {% if tab == 'mcp' %}
 <div class="caption">External tool servers via the Model Context Protocol; secrets auto-redacted, health pings each one.</div>
+<form method="get" class="row" style="margin:8px 0;gap:8px">
+  <input type="hidden" name="tab" value="mcp">
+  <label class="fld" for="mcpProj" style="margin:0;flex:0 0 auto">On or off in</label>
+  <select class="input" id="mcpProj" name="proj" style="flex:0 1 auto;width:auto;max-width:100%" onchange="this.form.requestSubmit()">
+    {% for p in projects %}<option value="{{ p }}" {{ 'selected' if p == proj }}>{{ '~ (home)' if p == home else p.replace(home, '~') }}</option>{% endfor %}
+  </select>
+</form>
+<div class="caption" style="margin:0 0 8px">Tools: how many each server adds, from your newest transcripts. Until Claude searches for a tool only its name is loaded, so the startup cost shown is an estimate of the names. Calls: last 30 days.</div>
 <div class="alert info" style="margin:8px 0 14px">These come from your <b>Claude Code</b> config (<code>~/.claude.json</code> and per-project <code>.mcp.json</code>). Claude Desktop and claude.ai web connectors are configured separately and aren't shown here.</div>
 {% for c in connectors %}
 <details class="exp" data-name="{{ c.name }}">
   <summary>
     <span style="display:flex;align-items:center"><span class="mcp-dot unknown" data-key="{{ c.key }}"></span><span class="ext-name">{{ c.name }}</span><span class="mcp-scope">{{ c.scope_label }}</span><span class="mcp-status-text" data-status="{{ c.key }}"></span></span>
+    <span style="display:flex;align-items:center;gap:14px;margin-left:auto;flex:0 0 auto">
+      <span class="caption mono" style="margin:0;font-size:12px">{% if c.n_tools %}{{ c.n_tools }} tools · ~{{ c.name_tokens }} tokens{% else %}tools not seen{% endif %} · {{ c.calls }} call{{ '' if c.calls == 1 else 's' }}</span>
+      <label class="toggle" onclick="event.stopPropagation()" title="Same switch as /mcp in Claude Code: stores this server in disabledMcpServers for the project above">
+        <input type="checkbox" {{ '' if c.off else 'checked' }} onchange="this.checked=!this.checked; openDialog('/dialog/mcp-toggle?server='+encodeURIComponent('{{ c.name }}')+'&project='+encodeURIComponent(document.getElementById('mcpProj').value)+'&off={{ 0 if c.off else 1 }}')"><span class="track"></span>{{ 'Off' if c.off else 'On' }}</label>
+    </span>
   </summary>
   <div class="exp-body">
     <div class="caption" style="margin:6px 0">registered in: {{ c.scopes | join(', ') }} · from {{ c.source }}</div>

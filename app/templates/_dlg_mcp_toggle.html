@@ -1,0 +1,21 @@
+<button class="close" onclick="closeDialog()">×</button>
+<h3>Turn {{ server }} {{ 'off' if off else 'on' }}?</h3>
+<div class="caption">In <strong>{{ proj_h }}</strong>, from the next Claude Code session. Same as the switch in <code>/mcp</code>.</div>
+<div class="caption mono" style="margin:12px 0;font-size:12px">~/.claude.json → projects["{{ project }}"].disabledMcpServers<br>
+now: {{ now|tojson }}<br>after: {{ ((now + [server]) if off else (now|reject('equalto', server)|list))|unique|list|tojson }}</div>
+<div class="caption" style="margin:0 0 14px">Only that list changes. The file is backed up to <code>~/.claude.json.my-claude.bak</code> first.</div>
+<div class="caption" id="mtMsg" role="alert" style="color:var(--err);margin:0 0 8px"></div>
+<div style="display:flex;gap:8px">
+  <button class="btn primary" onclick="mcpToggleGo(this)">Turn {{ 'off' if off else 'on' }}</button>
+  <button class="btn" onclick="closeDialog()">Cancel</button>
+</div>
+<script>
+async function mcpToggleGo(btn){
+  btn.classList.add('loading');
+  const r=await (await fetch('/action/mcp-toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({project:{{ project|tojson }}, server:{{ server|tojson }}, off:{{ 'true' if off else 'false' }}})})).json();
+  btn.classList.remove('loading');
+  if(!r.ok){ document.getElementById('mtMsg').textContent=r.msg; return; }
+  toast(r.msg); closeDialog(); navigate(location.pathname+location.search, false, true);
+}
+</script>
