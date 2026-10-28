@@ -29,6 +29,7 @@
     <hr class="hr">
     <div class="side-btns">
       <button class="btn" onclick="openDialog('/dialog/settings')">Settings</button>
+      <button class="btn" id="pvBtn" onclick="togglePrivacy()" aria-pressed="false" title="Blur conversation titles, message text, project names and paths, for screenshots">Hide names</button>
       <button class="btn" id="refreshBtn" onclick="doRefresh()">Refresh</button>
       <a class="btn" href="/p/help">Help</a>
     </div>
@@ -67,6 +68,13 @@
 
 <script>
 if(window.mermaid){ try{ mermaid.initialize({startOnLoad:false, securityLevel:'loose', flowchart:{htmlLabels:true, useMaxWidth:true}, theme: document.body.classList.contains('dark')?'dark':'neutral'}); }catch(_){} }
+function togglePrivacy(force){
+  const on = force===undefined ? !document.body.classList.contains('privacy') : force;
+  document.body.classList.toggle('privacy', on);
+  const b=document.getElementById('pvBtn'); if(b){ b.textContent=on?'Show names':'Hide names'; b.setAttribute('aria-pressed', on); b.classList.toggle('primary', on); }
+  try{ localStorage.setItem('mc_privacy', on?'1':'0'); }catch(e){}
+}
+try{ if(localStorage.getItem('mc_privacy')==='1') document.addEventListener('DOMContentLoaded',()=>togglePrivacy(true)); }catch(e){}
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 // escape + highlight a query term inside a plain string -> HTML (shared across the dashboard)
 function escHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }

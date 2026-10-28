@@ -1,0 +1,15 @@
+<button class="close" onclick="closeDialog()">×</button>
+{% if not m %}<div class="alert err">Unknown machine.</div>{% else %}
+<h3>Remove {{ m.name }}?</h3>
+<div class="caption">Deletes the imported usage ({{ m.first }} to {{ m.last }}) from this dashboard. Nothing on that machine changes, and you can import its export again.</div>
+<div style="display:flex;gap:8px;margin-top:14px">
+  <button class="btn danger" onclick="rmGo(this)">Remove</button>
+  <button class="btn" onclick="closeDialog()">Cancel</button>
+</div>
+<script>
+async function rmGo(btn){
+  btn.classList.add('loading');
+  const r=await (await fetch('/action/remove-machine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:{{ slug|tojson }}})})).json();
+  toast(r.msg); closeDialog(); if(r.ok) navigate(location.pathname+location.search,false,true);
+}
+</script>{% endif %}

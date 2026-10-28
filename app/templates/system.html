@@ -63,6 +63,7 @@
   <summary><span style="flex:1">{{ m.title }}{% if m.is_index %}<span class="tag">index</span>{% endif %}</span><span class="mcp-scope">{{ m.project }}</span></summary>
   <div class="exp-body">
     {% if m.desc %}<div class="caption" style="margin:4px 0 10px">{{ m.desc }}</div>{% endif %}
+    <div style="margin:0 0 8px"><button class="btn" onclick="openDialog('/dialog/mem-history?path='+encodeURIComponent({{ m.path|tojson }}))">History</button></div>
     <div class="md-doc mem-slot"><div class="caption">Loading…</div></div>
   </div>
 </details>
@@ -127,7 +128,7 @@ async function loadMem(det){
   </div>
 </div>
 
-<div class="page-head" style="margin-top:8px"><h2 class="sub" style="margin:0">CLAUDE.md</h2></div>
+<div class="page-head" style="margin-top:8px"><h2 class="sub" style="margin:0">CLAUDE.md</h2><button class="btn" onclick="openDialog('/dialog/mem-history?path='+encodeURIComponent({{ (claude_dir ~ '/CLAUDE.md')|tojson }}))">History</button></div>
 {% if cfg.claude_md %}
 <div class="card cm-card" id="cmView"><div class="md-doc" id="claudeMd"></div>
   <button class="btn cm-edit-fab" id="cmEditBtn" onclick="editClaudeMd()">Edit</button></div>
