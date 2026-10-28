@@ -554,19 +554,12 @@ body.privacy :is(.brand-sub, .ci-title, .ci-sub, .ci-meta > span:first-child, .l
   .msg-text, .mem-item summary > span:first-child, .mcp-scope, table.data td a, .pv, #convDetail .caption .mono,
   #convDetail div[style*="font-weight:600"], #ghChipText) { filter: blur(6px); }
 /* effective settings */
-.set-tbl td { vertical-align: top; }
-.set-key { display: flex; align-items: center; gap: 8px; }
-.set-key .mono { font-size: 12.5px; word-break: break-all; }
 .info-btn { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--dim);
   font: italic 600 11px/1 Georgia, serif; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .info-btn:hover, .info-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .kv-line { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; line-height: 1.5; padding: 2px 0; cursor: pointer;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .kv-line.open { display: block; }
-.kv-more > summary { font-size: 12px; color: var(--accent); cursor: pointer; list-style: none; padding: 2px 0; }
-.kv-more > summary::-webkit-details-marker { display: none; }
-.set-from { font-size: 12px; color: var(--dim); word-break: break-all; }
-.set-ref > td { padding-top: 0 !important; }
 .set-ref-box { background: var(--surface-2); border-radius: var(--radius); padding: 12px 14px; font-size: 13px; line-height: 1.5; }
 .sk-kpis .sk-val { font-size: 1.15rem; letter-spacing: -0.2px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sk-kpis a.metric:hover { border-color: var(--accent); text-decoration: none; }
@@ -581,4 +574,28 @@ body.privacy :is(.brand-sub, .ci-title, .ci-sub, .ci-meta > span:first-child, .l
 .sp-item:hover, .sp-item:focus-visible { background: var(--surface-2); text-decoration: none; outline: none; }
 .sp-item.on { background: var(--accent-soft); color: var(--accent); }
 .side-pop .sp-gh { margin-top: 4px; }
+/* row list: one line per item (title + plain description left, value + source right), expands for detail */
+.grp { margin-bottom: 18px; }
+.grp-h { font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--faint); margin: 0 0 8px; }
+.grp-h span { font-weight: 500; margin-left: 4px; }
+details.row-x { margin-bottom: 6px; }
+details.row-x > summary { padding: 11px 16px; }
+.rx-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.rx-title { font-size: 13.5px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rx-title.mono { font-size: 13px; }
+.rx-sub { font-size: 12px; font-weight: 400; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rx-side { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
+.rx-val { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.rx-val.mono { font-size: 12.5px; }
+.rx-src { font-size: 12px; font-weight: 400; color: var(--faint); min-width: 70px; text-align: right; }
+.kv-box { background: var(--surface-2); border-radius: var(--radius); padding: 8px 12px; max-height: 360px; overflow: auto; }
+.disk-list { display: grid; gap: 6px; }
+.disk-row { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); padding: 11px 16px 12px; }
+.dr-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+/* small dropdown menu on a button */
+details.dd { position: relative; }
+details.dd > summary { list-style: none; }
+details.dd > summary::-webkit-details-marker { display: none; }
+.dd-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 240px; padding: 6px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.18); display: grid; gap: 2px; }
 

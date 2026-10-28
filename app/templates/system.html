@@ -17,90 +17,59 @@
   <select class="input" id="projSel" name="proj" style="flex:0 1 auto;width:auto;max-width:100%" onchange="this.form.requestSubmit()">
     {% for p in projects %}<option value="{{ p }}" {{ 'selected' if p == proj }}>{{ '~ (home)' if p == home else p.replace(home, '~') }}</option>{% endfor %}
   </select>
+  {% if tab == 'settings' %}<input class="input" type="text" id="setFilter" placeholder="Filter" oninput="rowFilter(this.value)" style="flex:1" aria-label="Filter settings">{% endif %}
+  {% if tab == 'hooks' %}<input class="input" type="text" placeholder="Filter" oninput="rowFilter(this.value)" style="flex:1" aria-label="Filter hooks">{% endif %}
+  <button type="button" class="info-btn" aria-expanded="false" aria-controls="sysHelp" onclick="var h=document.getElementById('sysHelp');h.hidden=!h.hidden;this.setAttribute('aria-expanded',!h.hidden);this.classList.toggle('on',!h.hidden)" title="How this works">i</button>
 </form>
+<div class="set-ref-box" id="sysHelp" hidden style="margin:-4px 0 12px">{% if tab == 'settings' %}When a key is set in more than one file, the highest one wins: managed, then project local, then project, then user. Lists are combined across files. Descriptions come from the <a href="https://code.claude.com/docs/en/settings-reference" target="_blank" rel="noopener">settings reference</a>.{% else %}Hooks from this project's settings files, plus every hook recorded in conversations active in the last 30 days. Last run is the time on that record. Failed = the hook returned an error.{% endif %}</div>
+<script>
+function rowFilter(q){ q=(q||'').toLowerCase().trim();
+  document.querySelectorAll('#main details.exp[data-q]').forEach(d=>{ d.style.display=!q||d.dataset.q.includes(q)?'':'none'; });
+  document.querySelectorAll('#main .grp').forEach(g=>{ g.style.display=[...g.querySelectorAll('details.exp[data-q]')].some(d=>d.style.display!=='none')?'':'none'; });
+}
+</script>
 {% endif %}
 
 {% if tab == 'settings' %}
-<div class="row" style="margin-bottom:10px;gap:10px">
-  <input class="input" type="text" id="setFilter" placeholder="Filter keys or values" oninput="setFilterRows(this.value)" style="flex:1" aria-label="Filter settings">
-  <span class="caption" style="margin:0;flex:0 0 auto">{{ groups|length }} keys</span>
-</div>
-<div class="caption" style="margin:0 0 12px">Highest file wins: managed, then project local, then project, then user. Lists are combined. <a href="https://code.claude.com/docs/en/settings#settings-precedence" target="_blank" rel="noopener">How precedence works</a></div>
-<table class="data set-tbl">
-  <thead><tr><th style="width:26%">Key</th><th>Value</th><th style="width:22%">From</th></tr></thead>
-  <tbody>{% for g in groups %}{% set n = g['items']|length %}
-  <tr class="set-row" data-q="{{ (g.key ~ ' ' ~ (g['items']|map(attribute='lines')|map('join',' ')|join(' ')))|lower }}">
-    <td><div class="set-key"><span class="mono">{{ g.key }}</span>
-      <button class="info-btn" aria-expanded="false" aria-controls="ref-{{ loop.index }}" onclick="setInfo(this)" title="What this key does">i</button></div></td>
-    <td>
-      {% set lines = [] %}
-      {% for it in g['items'] %}{% for l in it.lines %}{% set _ = lines.append((it.sub ~ ': ' if it.sub else '') ~ l) %}{% endfor %}{% endfor %}
-      {% if lines|length == 0 %}<span class="caption">empty</span>{% endif %}
-      {% for l in lines[:3] %}<div class="kv-line" onclick="this.classList.toggle('open')">{{ l }}</div>{% endfor %}
-      {% if lines|length > 3 %}<details class="kv-more"><summary>{{ lines|length - 3 }} more</summary>{% for l in lines[3:] %}<div class="kv-line" onclick="this.classList.toggle('open')">{{ l }}</div>{% endfor %}</details>{% endif %}
-    </td>
-    <td class="set-from">{{ g['from']|join(' + ') }}{% if g.overrides %}<div class="caption" style="margin:2px 0 0;font-size:11px">overrides {{ g.overrides|join(', ') }}</div>{% endif %}</td>
-  </tr>
-  <tr class="set-ref" id="ref-{{ loop.index }}" hidden><td colspan="3"><div class="set-ref-box">
-    {% if g.ref %}<div>{{ g.ref.d }}.</div>
-      <div class="caption" style="margin:6px 0 0">{{ g.ref.c }} · set in: {{ g.ref.s }} · <a href="{{ g.ref.u }}" target="_blank" rel="noopener">Docs</a></div>
-      {% for it in g['items'] if it.ref %}<div style="margin-top:8px"><span class="mono">{{ g.key }}.{{ it.sub }}</span>: {{ it.ref.d }}. <a href="{{ it.ref.u }}" target="_blank" rel="noopener">Docs</a></div>{% endfor %}
-    {% else %}<div>Not in Claude Code's settings reference. It may come from an older version or a plugin.</div>{% endif %}
-  </div></td></tr>
-  {% else %}<tr><td colspan="3">No settings set.</td></tr>{% endfor %}</tbody>
-</table>
-<div class="caption" style="margin-top:8px">Descriptions: <a href="{{ ref_meta.source }}" target="_blank" rel="noopener">Claude Code settings reference</a>, copied {{ ref_meta.fetched }}.</div>
-<script>
-function setInfo(btn){
-  const row=document.getElementById(btn.getAttribute('aria-controls')); const open=row.hidden;
-  row.hidden=!open; btn.setAttribute('aria-expanded', open); btn.classList.toggle('on', open);
-}
-function setFilterRows(q){ q=(q||'').toLowerCase().trim();
-  document.querySelectorAll('.set-row').forEach(r=>{ const m=!q||r.dataset.q.includes(q); r.style.display=m?'':'none';
-    const ref=r.nextElementSibling; if(ref && !m) ref.hidden=true; });
-}
-</script>
+{% for cat, keys in groups %}<div class="grp"><h3 class="grp-h">{{ cat }} <span>{{ keys|length }}</span></h3>
+{% for g in keys %}{% set lines = [] %}{% for it in g['items'] %}{% for l in it.lines %}{% set _ = lines.append((it.sub ~ ': ' if it.sub else '') ~ l) %}{% endfor %}{% endfor %}
+<details class="exp row-x" data-q="{{ (g.key ~ ' ' ~ g.desc ~ ' ' ~ lines|join(' '))|lower }}"><summary>
+  <span class="rx-main"><span class="rx-title mono">{{ g.key }}</span><span class="rx-sub">{{ g.desc or 'Not in Claude Code\'s settings reference' }}</span></span>
+  <span class="rx-side"><span class="rx-val mono">{{ g.summary }}</span><span class="rx-src">{{ g.levels|join(' + ') }}</span></span></summary>
+  <div class="exp-body">
+    {% if g.ref %}<div class="caption" style="margin:0 0 10px">{{ g.ref.c }} · can be set in: {{ g.ref.s }} · <a href="{{ g.ref.u }}" target="_blank" rel="noopener">Docs</a></div>{% endif %}
+    <div class="kv-box">{% for l in lines %}<div class="kv-line open">{{ l }}</div>{% endfor %}</div>
+    <div class="caption" style="margin:10px 0 0;font-size:12px">From {{ g['from']|join(' + ') }}{% if g.overrides %} · overrides {{ g.overrides|join(', ') }}{% endif %}</div>
+  </div></details>
+{% endfor %}</div>
+{% else %}<div class="caption">No settings set.</div>{% endfor %}
 
 {% elif tab == 'hooks' %}
-<div class="caption">Hooks set in this project's settings files, plus every hook recorded in conversations active in the last 30 days. Last run is the time on that record.</div>
-<table class="data">
-  <thead><tr><th>Event</th><th>Command</th><th>From</th><th class="num">Runs</th><th class="num">Failed</th><th>Last run</th></tr></thead>
-  <tbody>{% for h in hooks %}<tr>
-    <td style="white-space:nowrap">{{ h.event }}{% if h.matcher %}<div class="caption mono" style="margin:0;font-size:11px">{{ h.matcher }}</div>{% endif %}</td>
-    <td class="mono" style="font-size:11.5px;word-break:break-all">{{ h.command[:220] }}{% if h.missing %}<div style="color:var(--err);font-family:inherit;font-size:12px">Script not found: {{ h.missing|join(', ') }}</div>{% endif %}</td>
-    <td style="font-size:12px">{{ h.source }}</td>
-    <td class="num">{{ h.runs }}</td><td class="num">{{ h.fails or '' }}</td>
-    <td style="white-space:nowrap;font-size:12px">{{ h.last_h or 'not in 30 days' }}{% if h.avg_ms is not none %}<div class="caption" style="margin:0;font-size:11px">avg {{ h.avg_ms }} ms</div>{% endif %}</td></tr>
-  {% else %}<tr><td colspan="6">No hooks found.</td></tr>{% endfor %}</tbody>
-</table>
+{% for ev, hs in hook_groups %}<div class="grp"><h3 class="grp-h">{{ ev }} <span>{{ hs|length }}</span></h3>
+{% for h in hs %}<details class="exp row-x" data-q="{{ (ev ~ ' ' ~ h.command ~ ' ' ~ h.source)|lower }}"><summary>
+  <span class="rx-main"><span class="rx-title">{{ h.label }}</span><span class="rx-sub">{{ h.source_short }}{% if h.matcher %} · matches {{ h.matcher }}{% endif %}{% if h.missing %} · <span style="color:var(--err)">script not found</span>{% endif %}</span></span>
+  <span class="rx-side"><span class="rx-val">{% if h.runs %}{{ h.runs }} run{{ '' if h.runs == 1 else 's' }}{% if h.fails %} · <span style="color:var(--err)">{{ h.fails }} failed</span>{% endif %}{% else %}no runs{% endif %}</span>
+    <span class="rx-src">{{ h.last_h or 'not in 30 days' }}</span></span></summary>
+  <div class="exp-body">
+    <div class="kv-box"><div class="kv-line open">{{ h.command }}</div></div>
+    <div class="caption" style="margin:10px 0 0;font-size:12px">From {{ h.source }}{% if h.avg_ms is not none %} · average {{ h.avg_ms }} ms{% endif %}{% if h.missing %} · <span style="color:var(--err)">not found: {{ h.missing|join(', ') }}</span>{% endif %}</div>
+  </div></details>
+{% endfor %}</div>
+{% else %}<div class="caption">No hooks found.</div>{% endfor %}
 
 {% elif tab == 'disk' %}
 <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
   <div class="metric"><div class="m-label">~/.claude</div><div class="m-value">{{ disk.total_h }}</div><div class="m-delta">{{ disk.count }} folders</div></div>
   <div class="metric"><div class="m-label">Largest</div><div class="m-value">{{ disk.rows[0].name if disk.rows else '' }}</div><div class="m-delta">{{ disk.rows[0].size_h if disk.rows else '' }}</div></div>
-  <div class="metric"><div class="m-label">Cleaned up by Claude Code</div><div class="m-value">{{ disk.auto_h }}</div><div class="m-delta">{{ disk.auto_pct }}% of the total, deleted after the retention period</div></div>
+  <div class="metric"><div class="m-label">Cleaned up by Claude Code</div><div class="m-value">{{ disk.auto_h }}</div><div class="m-delta">{{ disk.auto_pct }}% of the total</div></div>
 </div>
-<table class="data disk-tbl">
-  <thead><tr><th style="width:18%">Folder</th><th>What it is</th><th style="width:22%">Share</th><th class="num">Size</th><th class="num">Files</th><th></th></tr></thead>
-  <tbody>
-  {% for d in disk.rows %}<tr>
-    <td class="mono" style="font-size:12.5px">{{ d.name }}</td>
-    <td><div style="font-size:13px">{{ d.note or '' }}</div><div class="caption" style="margin:2px 0 0;font-size:11.5px">{{ d.kind_h }}</div></td>
-    <td><div class="tl-track"><div class="tl-bar" style="left:0;width:{{ '%.2f' % [d.pct, 0.6]|max }}%"></div></div><div class="caption mono" style="margin:3px 0 0;font-size:11px">{{ '%.0f' % d.pct }}%</div></td>
-    <td class="num" style="white-space:nowrap">{{ d.size_h }}</td><td class="num">{{ '{:,}'.format(d.files) }}</td>
-    <td style="text-align:right">{% if d.clean == 'debug' %}<button class="btn" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</td></tr>{% endfor %}
-  </tbody>
-</table>
-{% if disk.small %}
-<details class="exp" style="margin-top:12px"><summary><span>{{ disk.small|length }} small folders · {{ disk.small_h }} together</span></summary><div class="exp-body">
-<table class="data disk-tbl"><tbody>{% for d in disk.small %}<tr>
-  <td class="mono" style="font-size:12.5px;width:18%">{{ d.name }}</td>
-  <td><div style="font-size:13px">{{ d.note or '' }}</div><div class="caption" style="margin:2px 0 0;font-size:11.5px">{{ d.kind_h }}</div></td>
-  <td class="num" style="white-space:nowrap">{{ d.size_h }}</td><td class="num">{{ '{:,}'.format(d.files) }}</td>
-  <td style="text-align:right">{% if d.clean == 'debug' %}<button class="btn" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</td></tr>{% endfor %}</tbody></table>
-</div></details>
-{% endif %}
-<div class="caption" style="margin-top:8px">Descriptions: <a href="https://code.claude.com/docs/en/claude-directory" target="_blank" rel="noopener">What's in ~/.claude</a>, Claude Code docs.</div>
+{% macro drow(d) %}<div class="disk-row">
+  <div class="dr-top"><span class="rx-main"><span class="rx-title mono">{{ d.name }}</span><span class="rx-sub">{{ d.note or 'Not described in Claude Code\'s docs' }}{% if d.note %} · {{ d.kind_h }}{% endif %} · {{ '{:,}'.format(d.files) }} files</span></span>
+    <span class="rx-side"><span class="rx-val">{{ d.size_h }}</span><span class="rx-src">{{ '%.0f' % d.pct }}%</span>{% if d.clean == 'debug' %}<button class="btn" style="margin-left:12px" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</span></div>
+  <div class="tl-track"><div class="tl-bar" style="left:0;width:{{ '%.2f' % [d.pct, 0.5]|max }}%"></div></div></div>{% endmacro %}
+<div class="disk-list">{% for d in disk.rows %}{{ drow(d) }}{% endfor %}</div>
+{% if disk.small %}<details class="exp" style="margin-top:12px"><summary><span>{{ disk.small|length }} small folders · {{ disk.small_h }} together</span></summary><div class="exp-body disk-list">{% for d in disk.small %}{{ drow(d) }}{% endfor %}</div></details>{% endif %}
+<div class="caption" style="margin-top:8px">Descriptions: <a href="https://code.claude.com/docs/en/claude-directory" target="_blank" rel="noopener">What's in ~/.claude</a>.</div>
 
 {% elif tab == 'memory' %}
 <div class="caption">Persistent notes Claude carries between sessions, from <code>~/.claude/projects/*/memory/</code>.</div>

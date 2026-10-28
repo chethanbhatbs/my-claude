@@ -770,7 +770,11 @@ def test_settings_groups_one_row_per_key_with_docs(tmp_path, monkeypatch):
     home, claude = _cfg_home(tmp_path, monkeypatch)
     (claude / "settings.json").write_text(json.dumps({"effortLevel": "high", "enabledPlugins": {"a@x": True, "b@y": False},
         "autoMode": {"soft_deny": ["Bash(rm) — risky"]}, "madeUpKey": 1}))
-    g = {r["key"]: r for r in mc.settings_groups(str(home))}
+    cats = mc.settings_groups(str(home))
+    g = {r["key"]: r for _, keys in cats for r in keys}
+    assert [c for c, _ in cats][-1] == "Not in the settings reference"
+    assert (g["effortLevel"]["summary"], g["enabledPlugins"]["summary"], g["autoMode"]["summary"]) == ("high", "2 entries", "1 entry")
+    assert g["effortLevel"]["levels"] == ["user"]
     assert set(g) == {"autoMode", "effortLevel", "enabledPlugins", "madeUpKey"}
     assert g["effortLevel"]["items"][0]["lines"] == ["high"]                       # no JSON quotes
     assert [i["sub"] for i in g["enabledPlugins"]["items"]] == ["a@x", "b@y"]
@@ -802,3 +806,14 @@ def test_mcp_stats_record_per_tool_calls_and_descriptions(tmp_path, monkeypatch)
     st = mc.mcp_tool_stats()
     assert st["tool_calls"] == {"mcp__doit__list_issues": 2}
     assert st["descs"] == {"mcp__doit__list_issues": "List issues", "mcp__doit__get_issue": "Get one issue"}
+
+
+def test_history_custom_date_range_is_inclusive(monkeypatch):
+    from starlette.testclient import TestClient
+    day = datetime(2026, 10, 20, 15, 0).timestamp()
+    rows = [{"session": s, "title": s, "preview": s, "project": "/p", "path": f"/p/{s}.jsonl", "kind": "conversation", "n": 1, "tags": [],
+             "first_ts": t, "last_ts": t, "skills": []} for s, t in (("in", day), ("before", day - 2 * 86400), ("after", day + 2 * 86400))]
+    monkeypatch.setattr(mc, "conversation_index", lambda include_sub=False: rows)
+    monkeypatch.setattr(mc, "archived_sessions", lambda: [])
+    html = TestClient(mc.app).get("/p/history?from=2026-10-19&to=2026-10-20").text
+    assert "in.jsonl" in html and "before.jsonl" not in html and "after.jsonl" not in html
