@@ -7,21 +7,25 @@
   <div class="lim-head">
     <h2 class="sub" style="margin:0">Your usage limits <span class="tag" id="limPlan" style="display:none"></span></h2>
     <div class="row" style="flex:0 0 auto;gap:8px;align-items:center">
-      <span class="caption mono" id="limStamp" style="margin:0;font-size:11px"></span>
+      <span class="caption mono" id="limStamp" style="margin:0;font-size:11px;white-space:nowrap"></span>
       <button class="btn" id="limBtn" onclick="loadLimits(true)" title="Fetch fresh numbers from Anthropic">Refresh</button>
     </div>
   </div>
   <div id="limRows"><div class="caption" style="margin:0">Loading your limits…</div></div>
-  <div class="row" style="margin:16px 0 8px;gap:10px">
-    <h3 style="margin:0;flex:0 0 auto;font-size:14px">What used this window</h3>
-    <div class="seg" style="flex:0 0 auto" id="bdSeg">
-      <a href="#" class="active" onclick="loadBreakdown('session',this);return false">Session</a>
-      <a href="#" onclick="loadBreakdown('weekly',this);return false">Week</a>
-    </div>
-    <label class="toggle" style="flex:0 0 auto;margin-left:auto" title="Checks your limits every 10 minutes while My Claude runs, and shows a desktop notification at 80% and 95%">
+  <div class="row" style="margin:12px 0 0;justify-content:flex-end">
+    <label class="toggle" style="flex:0 0 auto" title="Checks your limits every 10 minutes while My Claude runs, and shows a desktop notification at 80% and 95%">
       <input type="checkbox" id="limAlert" {{ 'checked' if alerts_on }} onchange="setLimitAlerts(this.checked)"><span class="track"></span>Notify me at 80% and 95%</label>
   </div>
-  <div id="bdBox"><div class="caption" style="margin:0">Loading…</div></div>
+  <details class="exp" id="bdWrap" style="margin-top:12px" ontoggle="if(this.open && !this.dataset.loaded){ this.dataset.loaded=1; loadBreakdown('session'); }">
+    <summary><span>What used this window</span></summary>
+    <div class="exp-body">
+      <div class="seg" style="margin:0 0 10px" id="bdSeg">
+        <a href="#" class="active" onclick="loadBreakdown('session',this);return false">Session</a>
+        <a href="#" onclick="loadBreakdown('weekly',this);return false">Week</a>
+      </div>
+      <div id="bdBox"><div class="caption" style="margin:0">Loading…</div></div>
+    </div>
+  </details>
   <details class="exp" style="margin-top:12px"><summary><span>Where these numbers come from (and what leaves this machine)</span></summary><div class="exp-body">
     <div class="caption" style="margin:0">
       One request: <span class="mono">GET https://api.anthropic.com/api/oauth/usage</span>, authorised with your Claude Code
@@ -82,7 +86,6 @@ async function loadBreakdown(g, el){
   b.innerHTML='<div class="caption" style="margin:0">Loading…</div>';
   try{ b.innerHTML=await (await fetch('/api/limit-breakdown?group='+g)).text(); }catch(e){ b.textContent='Could not load.'; }
 }
-loadBreakdown('session');
 async function setLimitAlerts(on){
   const r=await (await fetch('/action/limit-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on})})).json();
   toast(r.msg);
