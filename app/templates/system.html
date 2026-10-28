@@ -21,16 +21,45 @@
 {% endif %}
 
 {% if tab == 'settings' %}
-<div class="caption">What Claude Code uses in this project. The highest file wins (managed, then project local, then project, then user); lists are combined across files. <a href="https://code.claude.com/docs/en/settings#settings-precedence" target="_blank" rel="noopener">A few keys follow their own rules.</a></div>
-<div class="caption mono" style="margin:6px 0 12px;font-size:12px">{% for l in layers %}{{ l.level }}: {{ l.path }}{% if l.error %} ({{ l.error }}){% endif %}{% if not loop.last %} · {% endif %}{% else %}No settings files found.{% endfor %}</div>
-<table class="data">
-  <thead><tr><th>Key</th><th>Value</th><th>From</th></tr></thead>
-  <tbody>{% for r in eff %}<tr>
-    <td class="mono" style="font-size:12px;white-space:nowrap">{{ r.key }}</td>
-    <td class="mono" style="font-size:12px;word-break:break-all">{{ r.shown }}</td>
-    <td style="font-size:12px">{{ r['from']|join(' + ') }}{% if r.overrides %}<div class="caption" style="margin:2px 0 0;font-size:11px">overrides {{ r.overrides|join(', ') }}</div>{% endif %}</td></tr>
+<div class="row" style="margin-bottom:10px;gap:10px">
+  <input class="input" type="text" id="setFilter" placeholder="Filter keys or values" oninput="setFilterRows(this.value)" style="flex:1" aria-label="Filter settings">
+  <span class="caption" style="margin:0;flex:0 0 auto">{{ groups|length }} keys</span>
+</div>
+<div class="caption" style="margin:0 0 12px">Highest file wins: managed, then project local, then project, then user. Lists are combined. <a href="https://code.claude.com/docs/en/settings#settings-precedence" target="_blank" rel="noopener">How precedence works</a></div>
+<table class="data set-tbl">
+  <thead><tr><th style="width:26%">Key</th><th>Value</th><th style="width:22%">From</th></tr></thead>
+  <tbody>{% for g in groups %}{% set n = g['items']|length %}
+  <tr class="set-row" data-q="{{ (g.key ~ ' ' ~ (g['items']|map(attribute='lines')|map('join',' ')|join(' ')))|lower }}">
+    <td><div class="set-key"><span class="mono">{{ g.key }}</span>
+      <button class="info-btn" aria-expanded="false" aria-controls="ref-{{ loop.index }}" onclick="setInfo(this)" title="What this key does">i</button></div></td>
+    <td>
+      {% set lines = [] %}
+      {% for it in g['items'] %}{% for l in it.lines %}{% set _ = lines.append((it.sub ~ ': ' if it.sub else '') ~ l) %}{% endfor %}{% endfor %}
+      {% if lines|length == 0 %}<span class="caption">empty</span>{% endif %}
+      {% for l in lines[:3] %}<div class="kv-line" onclick="this.classList.toggle('open')">{{ l }}</div>{% endfor %}
+      {% if lines|length > 3 %}<details class="kv-more"><summary>{{ lines|length - 3 }} more</summary>{% for l in lines[3:] %}<div class="kv-line" onclick="this.classList.toggle('open')">{{ l }}</div>{% endfor %}</details>{% endif %}
+    </td>
+    <td class="set-from">{{ g['from']|join(' + ') }}{% if g.overrides %}<div class="caption" style="margin:2px 0 0;font-size:11px">overrides {{ g.overrides|join(', ') }}</div>{% endif %}</td>
+  </tr>
+  <tr class="set-ref" id="ref-{{ loop.index }}" hidden><td colspan="3"><div class="set-ref-box">
+    {% if g.ref %}<div>{{ g.ref.d }}.</div>
+      <div class="caption" style="margin:6px 0 0">{{ g.ref.c }} · set in: {{ g.ref.s }} · <a href="{{ g.ref.u }}" target="_blank" rel="noopener">Docs</a></div>
+      {% for it in g['items'] if it.ref %}<div style="margin-top:8px"><span class="mono">{{ g.key }}.{{ it.sub }}</span>: {{ it.ref.d }}. <a href="{{ it.ref.u }}" target="_blank" rel="noopener">Docs</a></div>{% endfor %}
+    {% else %}<div>Not in Claude Code's settings reference. It may come from an older version or a plugin.</div>{% endif %}
+  </div></td></tr>
   {% else %}<tr><td colspan="3">No settings set.</td></tr>{% endfor %}</tbody>
 </table>
+<div class="caption" style="margin-top:8px">Descriptions: <a href="{{ ref_meta.source }}" target="_blank" rel="noopener">Claude Code settings reference</a>, copied {{ ref_meta.fetched }}.</div>
+<script>
+function setInfo(btn){
+  const row=document.getElementById(btn.getAttribute('aria-controls')); const open=row.hidden;
+  row.hidden=!open; btn.setAttribute('aria-expanded', open); btn.classList.toggle('on', open);
+}
+function setFilterRows(q){ q=(q||'').toLowerCase().trim();
+  document.querySelectorAll('.set-row').forEach(r=>{ const m=!q||r.dataset.q.includes(q); r.style.display=m?'':'none';
+    const ref=r.nextElementSibling; if(ref && !m) ref.hidden=true; });
+}
+</script>
 
 {% elif tab == 'hooks' %}
 <div class="caption">Hooks set in this project's settings files, plus every hook recorded in conversations active in the last 30 days. Last run is the time on that record.</div>
@@ -46,14 +75,32 @@
 </table>
 
 {% elif tab == 'disk' %}
-<div class="caption">What each folder in <code>~/.claude</code> holds and how big it is.</div>
-<table class="data">
-  <thead><tr><th>Folder</th><th>What it is</th><th class="num">Files</th><th class="num">Size</th><th></th></tr></thead>
-  <tbody>{% for d in disk %}<tr>
-    <td class="mono" style="font-size:12px">{{ d.name }}</td><td style="font-size:12px">{{ d.note }}</td>
-    <td class="num">{{ d.files }}</td><td class="num">{{ d.size_h }}</td>
-    <td style="text-align:right">{% if d.clean == 'debug' %}<button class="btn" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</td></tr>{% endfor %}</tbody>
+<div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+  <div class="metric"><div class="m-label">~/.claude</div><div class="m-value">{{ disk.total_h }}</div><div class="m-delta">{{ disk.count }} folders</div></div>
+  <div class="metric"><div class="m-label">Largest</div><div class="m-value">{{ disk.rows[0].name if disk.rows else '' }}</div><div class="m-delta">{{ disk.rows[0].size_h if disk.rows else '' }}</div></div>
+  <div class="metric"><div class="m-label">Cleaned up by Claude Code</div><div class="m-value">{{ disk.auto_h }}</div><div class="m-delta">{{ disk.auto_pct }}% of the total, deleted after the retention period</div></div>
+</div>
+<table class="data disk-tbl">
+  <thead><tr><th style="width:18%">Folder</th><th>What it is</th><th style="width:22%">Share</th><th class="num">Size</th><th class="num">Files</th><th></th></tr></thead>
+  <tbody>
+  {% for d in disk.rows %}<tr>
+    <td class="mono" style="font-size:12.5px">{{ d.name }}</td>
+    <td><div style="font-size:13px">{{ d.note or '' }}</div><div class="caption" style="margin:2px 0 0;font-size:11.5px">{{ d.kind_h }}</div></td>
+    <td><div class="tl-track"><div class="tl-bar" style="left:0;width:{{ '%.2f' % [d.pct, 0.6]|max }}%"></div></div><div class="caption mono" style="margin:3px 0 0;font-size:11px">{{ '%.0f' % d.pct }}%</div></td>
+    <td class="num" style="white-space:nowrap">{{ d.size_h }}</td><td class="num">{{ '{:,}'.format(d.files) }}</td>
+    <td style="text-align:right">{% if d.clean == 'debug' %}<button class="btn" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</td></tr>{% endfor %}
+  </tbody>
 </table>
+{% if disk.small %}
+<details class="exp" style="margin-top:12px"><summary><span>{{ disk.small|length }} small folders · {{ disk.small_h }} together</span></summary><div class="exp-body">
+<table class="data disk-tbl"><tbody>{% for d in disk.small %}<tr>
+  <td class="mono" style="font-size:12.5px;width:18%">{{ d.name }}</td>
+  <td><div style="font-size:13px">{{ d.note or '' }}</div><div class="caption" style="margin:2px 0 0;font-size:11.5px">{{ d.kind_h }}</div></td>
+  <td class="num" style="white-space:nowrap">{{ d.size_h }}</td><td class="num">{{ '{:,}'.format(d.files) }}</td>
+  <td style="text-align:right">{% if d.clean == 'debug' %}<button class="btn" onclick="openDialog('/dialog/clean-debug')">Clean up</button>{% endif %}</td></tr>{% endfor %}</tbody></table>
+</div></details>
+{% endif %}
+<div class="caption" style="margin-top:8px">Descriptions: <a href="https://code.claude.com/docs/en/claude-directory" target="_blank" rel="noopener">What's in ~/.claude</a>, Claude Code docs.</div>
 
 {% elif tab == 'memory' %}
 <div class="caption">Persistent notes Claude carries between sessions, from <code>~/.claude/projects/*/memory/</code>.</div>
@@ -128,17 +175,18 @@ async function loadMem(det){
   </div>
 </div>
 
-<div class="page-head" style="margin-top:8px"><h2 class="sub" style="margin:0">CLAUDE.md</h2><button class="btn" onclick="openDialog('/dialog/mem-history?path='+encodeURIComponent({{ (claude_dir ~ '/CLAUDE.md')|tojson }}))">History</button></div>
+<div class="page-head" style="margin-top:8px"><h2 class="sub" style="margin:0">CLAUDE.md</h2>
+  <div style="display:flex;gap:8px">{% if cfg.claude_md %}<button class="btn" id="cmEditBtn" onclick="editClaudeMd()">Edit</button>{% endif %}
+  <button class="btn" onclick="openDialog('/dialog/mem-history?path='+encodeURIComponent({{ (claude_dir ~ '/CLAUDE.md')|tojson }}))">History</button></div></div>
 {% if cfg.claude_md %}
-<div class="card cm-card" id="cmView"><div class="md-doc" id="claudeMd"></div>
-  <button class="btn cm-edit-fab" id="cmEditBtn" onclick="editClaudeMd()">Edit</button></div>
+<div class="card cm-card" id="cmView"><div class="md-doc" id="claudeMd"></div></div>
 {% else %}
 <div class="alert info" id="cmView">No global CLAUDE.md found. <button class="btn" id="cmEditBtn" onclick="editClaudeMd()" style="margin-left:8px">Create one</button></div>
 {% endif %}
 <div id="cmEdit" style="display:none">
+  <div class="c-btns" style="margin:0 0 10px"><button class="btn primary" onclick="saveClaudeMd()">Save changes</button><button class="btn" onclick="cancelClaudeMd()">Discard changes</button></div>
   <textarea id="cmText" class="input" spellcheck="false" style="width:100%;min-height:340px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;line-height:1.6"></textarea>
   <div class="caption" style="margin:6px 0 8px">Saving overwrites <code>~/.claude/CLAUDE.md</code>. A backup (<code>CLAUDE.md.bak</code>) is kept, and you'll be asked to confirm first.</div>
-  <div class="c-btns"><button class="btn primary" onclick="saveClaudeMd()">Save changes</button><button class="btn" onclick="cancelClaudeMd()">Cancel</button></div>
 </div>
 <script>
 (function(){ var src={{ cfg.claude_md | tojson }}; window._cmSrc=src;

@@ -1004,19 +1004,41 @@ def load_config_detail():
 
 # ---- per-file hook runs + MCP tool names/calls, memoised on disk by (mtime, size) like usage ----
 SIG_CACHE_FILE = SKILL_DIR / ".mc_signals_cache.json"
-_SIG_V = 1
+_SIG_V = 2
 _sig = None; _sig_dirty = False; _sig_lock = threading.Lock()
-_CALL_RE = re.compile(r'"type":"tool_use","id":"[^"]*","name":"mcp__([^"_]+(?:_[^"_]+)*)__')
+_CALL_RE = re.compile(r'"type":"tool_use","id":"[^"]*","name":"(mcp__([^"_]+(?:_[^"_]+)*)__[^"]+)"')
+_FUNC_RE = re.compile(r"<function>(\{.*?\})</function>")
+
+def _strings(x):
+    if isinstance(x, str): yield x
+    elif isinstance(x, list):
+        for y in x: yield from _strings(y)
+    elif isinstance(x, dict):
+        for y in x.values(): yield from _strings(y)
 
 def _scan_signals(path):
-    hooks = {}; calls = {}; tools = []
+    hooks = {}; calls = {}; tools = []; tool_calls = {}; descs = {}
     with open(path, "r", errors="ignore") as f:
         for line in f:
             if "mcp__" in line:
                 if '"deferred_tools_delta"' in line:
-                    try: tools += [n for n in (json.loads(line).get("attachment") or {}).get("addedNames") or [] if n.startswith("mcp__")]
+                    try:
+                        a = json.loads(line).get("attachment") or {}
+                        tools += [n for n in a.get("addedNames") or [] if n.startswith("mcp__")]
+                        for sd in a.get("surfacedDefinitions") or []:
+                            dfn = (sd or {}).get("definition") or {}
+                            if str(dfn.get("name", "")).startswith("mcp__") and dfn.get("description"): descs[dfn["name"]] = dfn["description"][:300]
                     except Exception: pass
-                for m in _CALL_RE.finditer(line): calls[m.group(1)] = calls.get(m.group(1), 0) + 1
+                if "<function>" in line:     # tool definitions returned by tool search
+                    try:
+                        for txt in _strings(json.loads(line).get("message")):
+                            for blob in _FUNC_RE.findall(txt):
+                                try: dfn = json.loads(blob)
+                                except Exception: continue
+                                if str(dfn.get("name", "")).startswith("mcp__") and dfn.get("description"): descs[dfn["name"]] = dfn["description"][:300]
+                    except Exception: pass
+                for m in _CALL_RE.finditer(line):
+                    calls[m.group(2)] = calls.get(m.group(2), 0) + 1; tool_calls[m.group(1)] = tool_calls.get(m.group(1), 0) + 1
             if '"hook_' in line and '"command"' in line:
                 try: d = json.loads(line)
                 except Exception: continue
@@ -1026,7 +1048,7 @@ def _scan_signals(path):
                 h["runs"] += 1; h["last"] = max(h["last"], ts_epoch(d.get("timestamp")) or 0)
                 if str(a.get("exitCode", "0")) not in ("0", "None") or a["type"] != "hook_success": h["fails"] += 1
                 if isinstance(a.get("durationMs"), (int, float)): h["ms"] += a["durationMs"]; h["n_ms"] += 1
-    return {"hooks": hooks, "calls": calls, "tools": sorted(set(tools))}
+    return {"hooks": hooks, "calls": calls, "tools": sorted(set(tools)), "tool_calls": tool_calls, "descs": descs}
 
 def file_signals(path):
     global _sig, _sig_dirty
@@ -1100,6 +1122,37 @@ def effective_settings(project=None):
     for r in rows: r["shown"] = json.dumps(redact_secrets(r["value"]) if isinstance(r["value"], dict) else r["value"])[:300]
     return rows
 
+SETTINGS_REF_FILE = SKILL_DIR / "static" / "settings_ref.json"
+
+@ttl_cache(3600)
+def settings_ref():
+    """Key -> description, category, docs link, from code.claude.com/docs/en/settings-reference (bundled copy)."""
+    try: return json.loads(SETTINGS_REF_FILE.read_text())
+    except Exception: return {"keys": {}, "source": "", "fetched": ""}
+
+def _show(v):
+    """A value as a person reads it: strings without quotes or escapes, everything else as compact JSON."""
+    if isinstance(v, str): return v
+    if isinstance(v, (dict, list)): return json.dumps(redact_secrets(v) if isinstance(v, dict) else v, ensure_ascii=False)
+    return json.dumps(v)
+
+def settings_groups(project=None):
+    """effective_settings rolled up to one row per top-level key, each with its docs entry."""
+    ref = settings_ref()["keys"]; groups = {}
+    for r in effective_settings(project):
+        top = r["key"].split(".")[0]
+        g = groups.setdefault(top, {"key": top, "ref": ref.get(top), "items": [], "from": [], "overrides": []})
+        sub = r["key"][len(top) + 1:]
+        val = r["value"]
+        lines = [_show(x) for x in val] if isinstance(val, list) else [_show(val)]
+        g["items"].append({"sub": sub, "lines": lines, "list": isinstance(val, list), "ref": ref.get(r["key"]) if sub else None,
+                           "from": r["from"], "overrides": r["overrides"]})
+        for f in r["from"]:
+            if f not in g["from"]: g["from"].append(f)
+        for f in r["overrides"]:
+            if f not in g["overrides"]: g["overrides"].append(f)
+    return sorted(groups.values(), key=lambda g: g["key"].lower())
+
 _PATH_RE = re.compile(r"""(?:~|\$HOME|/)[\w./@-]+\.(?:sh|py|js|mjs|ts|rb|pl)\b""")
 
 def _hook_definitions(project=None):
@@ -1152,15 +1205,17 @@ def hook_audit(project=None):
 @ttl_cache(900)
 def mcp_tool_stats(days=30):
     """Tool names per server from the 40 newest transcripts' deferred-tool lists, and calls per server."""
-    tools = {}; calls = {}
+    tools = {}; calls = {}; tool_calls = {}; descs = {}
     for i, jf in enumerate(_recent_transcripts(days)):
         try: sg = file_signals(str(jf))
         except OSError: continue
         for srv, n in sg["calls"].items(): calls[srv] = calls.get(srv, 0) + n
+        for t, n in (sg.get("tool_calls") or {}).items(): tool_calls[t] = tool_calls.get(t, 0) + n
+        for t, d in (sg.get("descs") or {}).items(): descs.setdefault(t, d)      # newest file first
         if i < 40:
             for n in sg["tools"]: tools.setdefault(n.split("__")[1], set()).add(n)
     _sig_flush()
-    return {"tools": {k: sorted(v) for k, v in tools.items()}, "calls": calls}
+    return {"tools": {k: sorted(v) for k, v in tools.items()}, "calls": calls, "tool_calls": tool_calls, "descs": descs}
 
 def _mcp_key(name):
     """Tool names use the server name with non-word characters as underscores."""
@@ -1192,17 +1247,38 @@ def set_mcp_disabled(project, server, off):
     return lst
 
 # ---------- disk ----------
+# What each ~/.claude folder is, from code.claude.com/docs/en/claude-directory (2026-10-28).
+# kind: auto = deleted after cleanupPeriodDays; keep = state to keep; yours = things you made; legacy = no longer written.
 CLAUDE_DIR_NOTES = {
-    "projects": ("Conversation transcripts", None), "debug": ("Debug logs Claude Code writes; never cleaned up automatically", "debug"),
-    "file-history": ("Copies of files before Claude edited them, for undo", None), "shell-snapshots": ("Shell environment snapshots", None),
-    "paste-cache": ("Large pastes", None), "telemetry": ("Telemetry Claude Code has not sent yet", None),
-    "plugins": ("Installed plugins", None), "skills": ("Your skills", None), "todos": ("Task lists", None),
-    "statsig": ("Feature-flag cache", None), "image-cache": ("Pasted images", None)}
+    "projects": ("Conversation transcripts, sub-agent transcripts, large tool outputs", "auto"),
+    "file-history": ("Copies of files from before Claude edited them, for checkpoint restore", "auto"),
+    "plans": ("Plan files from plan mode", "auto"),
+    "debug": ("Debug logs, written while debug logging is on", "auto"),
+    "paste-cache": ("Contents of large pastes", "auto"),
+    "image-cache": ("Attached images from Claude Code 2.1.274 and earlier", "auto"),
+    "uploads": ("Files attached from the web or mobile app to a Remote Control session", "auto"),
+    "dev-mods": ("Mods Claude wrote during a session", "auto"),
+    "session-env": ("Per-session environment metadata", "auto"),
+    "tasks": ("Task lists written by the task tools", "auto"),
+    "shell-snapshots": ("Shell aliases, functions and options captured at startup", "auto"),
+    "backups": ("Earlier versions of ~/.claude.json (the five newest)", "auto"),
+    "feedback-bundles": ("Redacted transcript archives written by /feedback", "auto"),
+    "feedback": ("Feedback drafts waiting for your review in /feedback", "auto"),
+    "usage-data": ("Reports written by /insights", "auto"),
+    "todos": ("From older versions, no longer written", "legacy"), "statsig": ("From older versions, no longer written", "legacy"),
+    "logs": ("From older versions, no longer written", "legacy"),
+    "sessions": ("One small file per running session", "keep"),
+    "jobs": ("Background session state", "keep"), "daemon": ("Background session state", "keep"),
+    "agent-memory": ("Sub-agent memory", "keep"),
+    "plugins": ("Installed plugins", "yours"), "skills": ("Your skills", "yours"),
+    "commands": ("Your slash commands", "yours"), "agents": ("Your sub-agents", "yours")}
+KIND_TEXT = {"auto": "deleted after the retention period", "keep": "Claude Code state, keep", "yours": "your files", "legacy": "from older versions, safe to remove",
+             "": "not described in Claude Code's docs"}
 
 @ttl_cache(900)
 def disk_report():
     rows = []
-    if not CLAUDE.exists(): return rows
+    if not CLAUDE.exists(): return {"rows": [], "small": [], "total": 0, "total_h": "0 B"}
     for p in CLAUDE.iterdir():
         if not p.is_dir(): continue
         size = files = 0
@@ -1210,10 +1286,15 @@ def disk_report():
             for f in fs:
                 try: size += os.lstat(os.path.join(root, f)).st_size; files += 1
                 except OSError: pass
-        note, clean = CLAUDE_DIR_NOTES.get(p.name, ("", None))
-        rows.append({"name": p.name, "size": size, "size_h": fmt_size(size), "files": files, "note": note, "clean": clean})
-    rows.sort(key=lambda r: -r["size"])
-    return rows
+        note, kind = CLAUDE_DIR_NOTES.get(p.name, ("", ""))
+        rows.append({"name": p.name, "size": size, "size_h": fmt_size(size), "files": files, "note": note, "kind": kind,
+                     "kind_h": KIND_TEXT[kind], "clean": "debug" if p.name == "debug" else None})
+    rows.sort(key=lambda r: -r["size"]); total = sum(r["size"] for r in rows) or 1
+    for r in rows: r["pct"] = r["size"] / total * 100
+    big = [r for r in rows if r["size"] >= 1_000_000]; small = [r for r in rows if r["size"] < 1_000_000]
+    auto = sum(r["size"] for r in rows if r["kind"] == "auto")
+    return {"rows": big, "small": small, "small_h": fmt_size(sum(r["size"] for r in small)), "total": total, "total_h": fmt_size(total),
+            "count": len(rows), "auto_h": fmt_size(auto), "auto_pct": round(auto / total * 100)}
 
 def clean_debug(older_than_days=7):
     """Move debug logs older than N days to the macOS Trash (recoverable), never delete outright."""
@@ -2224,7 +2305,9 @@ def render_extensions(request):
                            "scopes": g["scopes"], "source": g["source"], "key": name,
                            "config": json.dumps(g["config"], indent=2), "n_tools": len(names) if names else None,
                            "name_tokens": sum(len(n) for n in names) // 4 if names else None,
-                           "calls": stats["calls"].get(_mcp_key(name), 0), "off": name in disabled})
+                           "calls": stats["calls"].get(_mcp_key(name), 0), "off": name in disabled,
+                           "tool_rows": sorted([{"name": n.split("__", 2)[2], "calls": stats["tool_calls"].get(n, 0), "desc": stats["descs"].get(n, "")}
+                                                for n in names], key=lambda t: (-t["calls"], t["name"]))})
     plug_shown = [{"name": p["name"], "info": json.dumps(p["info"], indent=2)}
                   for p in plugins if not q or q in p["name"].lower()]
     return render(request, "extensions.html", "MCP & Plugins", tab=tab, q=request.query_params.get("q", ""),
@@ -2298,10 +2381,22 @@ def render_skills(request):
     push_msg = ""
     if not can_push:
         push_msg = "Push disabled: connect your GitHub account in Settings."
+    used = [x for x in skills if x["uses"]]; all_size = sum(x["size"] for x in skills) or 1
+    top = max(used, key=lambda x: (x["uses"], x["last_used"])) if used else None
+    big = max(skills, key=lambda x: x["size"]) if skills else None
+    newest = max(skills, key=lambda x: x["mtime"]) if skills else None
+    skill_kpis = [
+        {"label": "Most used", "value": top["name"] if top else "none yet", "sub": f"{top['uses']} uses · last {fmt_rel(top['last_used'])}" if top else "",
+         "href": "?sort=Most+used"},
+        {"label": "Largest", "value": big["name"] if big else "", "sub": f"{fmt_size(big['size'])} · {round(big['size'] / all_size * 100)}% of all skills" if big else "",
+         "href": "?sort=Size+(high+to+low)"},
+        {"label": "Never used", "value": str(sum(1 for x in skills if not x["uses"])), "sub": f"of {len(skills)} skills", "href": "?source=Unused"},
+        {"label": "Last edited", "value": newest["name"] if newest else "", "sub": fmt_rel(newest["mtime"]) if newest else "", "href": "?sort=Recently+modified"}]
     return render(request, "skills.html", "Skills", skills=chunk, count=len(f), total=total,
                   filt_size=filt_size, user_n=user_n, plugin_n=plugin_n, unused_n=unused_n, q=q, source=source, sort=sort,
                   recent=recent, edited=edited, edited_opts=list(EDITED_WINDOWS),
-                  cats_sel=cats_sel, cats=cats, page_n=page_n, total_pages=total_pages, can_push=can_push, push_msg=push_msg)
+                  cats_sel=cats_sel, cats=cats, page_n=page_n, total_pages=total_pages, can_push=can_push, push_msg=push_msg,
+                  skill_kpis=skill_kpis)
 
 def render_connectors(request):
     items = load_connectors(); q = request.query_params.get("q", "").lower()
@@ -2465,7 +2560,7 @@ def render_system(request):
     proj = request.query_params.get("proj") or str(HOME)
     ctx = {"tab": tab, "cfg": load_config_detail(), "mem": load_memory(), "proj": proj,
            "projects": _project_choices(), "home": str(HOME), "claude_dir": str(CLAUDE)}
-    if tab == "settings": ctx["layers"] = settings_layers(proj); ctx["eff"] = effective_settings(proj)
+    if tab == "settings": ctx["layers"] = settings_layers(proj); ctx["groups"] = settings_groups(proj); ctx["ref_meta"] = settings_ref()
     if tab == "hooks": ctx["hooks"] = hook_audit(proj)
     if tab == "disk": ctx["disk"] = disk_report()
     return render(request, "system.html", "System", **ctx)
@@ -3061,7 +3156,7 @@ def dialog_label(request: Request, path: str):
 
 @app.get("/dialog/clean-debug", response_class=HTMLResponse)
 def dialog_clean_debug(request: Request):
-    d = next((r for r in disk_report() if r["name"] == "debug"), {"size_h": "0 B", "files": 0})
+    rep = disk_report(); d = next((r for r in rep["rows"] + rep["small"] if r["name"] == "debug"), {"size_h": "0 B", "files": 0})
     return templates.TemplateResponse(request, "_dlg_clean_debug.html", {"request": request, "theme": theme_of(request), "d": d})
 
 @app.get("/dialog/mcp-toggle", response_class=HTMLResponse)

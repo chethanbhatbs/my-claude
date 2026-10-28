@@ -1,0 +1,1488 @@
+{
+ "source": "https://code.claude.com/docs/en/settings-reference",
+ "fetched": "2026-10-28",
+ "keys": {
+  "advisorModel": {
+   "d": "Pick which model answers when Claude asks the advisor tool",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#advisormodel"
+  },
+  "agent": {
+   "d": "Start every session as a named subagent with its prompt, tools, and model",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#agent"
+  },
+  "agentPushNotifEnabled": {
+   "d": "Let Claude send a push notification to your phone when it decides to",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#agentpushnotifenabled"
+  },
+  "allowAllClaudeAiMcps": {
+   "d": "Load the claude.ai connectors Claude Code fetches itself alongside a deployed managed-mcp.json",
+   "c": "MCP",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowallclaudeaimcps"
+  },
+  "allowClaudeInChromeWithManagedMcp": {
+   "d": "Let the built-in Claude in Chrome server run alongside a deployed managed-mcp.json",
+   "c": "MCP",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowclaudeinchromewithmanagedmcp"
+  },
+  "allowedChannelPlugins": {
+   "d": "Replace the default allowlist of channel plugins that can push messages",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowedchannelplugins"
+  },
+  "allowedHttpHookUrls": {
+   "d": "Limit which URLs HTTP hooks can target",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowedhttphookurls"
+  },
+  "allowedMcpServers": {
+   "d": "Allowlist which MCP servers users can add",
+   "c": "MCP",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowedmcpservers"
+  },
+  "allowedProviders": {
+   "d": "Limit which API providers a machine may use",
+   "c": "Authentication and providers",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowedproviders"
+  },
+  "allowManagedHooksOnly": {
+   "d": "Run only the hooks your organization deploys",
+   "c": "Hooks and automation",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowmanagedhooksonly"
+  },
+  "allowManagedMcpServersOnly": {
+   "d": "Make the managed MCP allowlist the only one that applies",
+   "c": "MCP",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowmanagedmcpserversonly"
+  },
+  "allowManagedPermissionRulesOnly": {
+   "d": "Make managed settings the only settings source of permission rules",
+   "c": "Permission settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#allowmanagedpermissionrulesonly"
+  },
+  "alwaysThinkingEnabled": {
+   "d": "Turn extended thinking off for every session",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#alwaysthinkingenabled"
+  },
+  "apiKeyHelper": {
+   "d": "Generate the API credential with your own command",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#apikeyhelper"
+  },
+  "askUserQuestionTimeout": {
+   "d": "Let an unanswered question auto-continue after idle time",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#askuserquestiontimeout"
+  },
+  "appendPlugins": {
+   "d": "Run your organization's mods after every mod a user installs",
+   "c": "Plugins and skills",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#appendplugins"
+  },
+  "attribution": {
+   "d": "Customize the attribution Claude Code adds to commits and pull requests",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#attribution"
+  },
+  "attribution.commit": {
+   "d": "Change or hide the trailer Claude Code adds to commits",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#attribution-commit"
+  },
+  "attribution.pr": {
+   "d": "Change or hide the attribution line in pull request descriptions",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#attribution-pr"
+  },
+  "attribution.sessionUrl": {
+   "d": "Omit the claude.ai session link from cloud and Remote Control commits",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#attribution-sessionurl"
+  },
+  "autoCompactEnabled": {
+   "d": "Turn automatic compaction off or on",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#autocompactenabled"
+  },
+  "autoCompactWindow": {
+   "d": "Set how full the context gets before Claude Code compacts",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#autocompactwindow"
+  },
+  "autoConnectIde": {
+   "d": "Connect to a running VS Code or JetBrains IDE automatically from an external terminal",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#autoconnectide"
+  },
+  "autoContinueAtUsageLimit": {
+   "d": "Wait in the open session and continue the task automatically after a claude.ai usage limit resets",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#autocontinueatusagelimit"
+  },
+  "autoInstallIdeExtension": {
+   "d": "Turn off automatic install of the IDE extension from a VS Code terminal",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#autoinstallideextension"
+  },
+  "autoMemoryDirectory": {
+   "d": "Store auto memory in a directory you choose",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#automemorydirectory"
+  },
+  "autoMemoryEnabled": {
+   "d": "Turn auto memory off or on",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#automemoryenabled"
+  },
+  "autoMode": {
+   "d": "Add your own allow and deny rules to the auto mode classifier",
+   "c": "Permission settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#automode"
+  },
+  "autoMode.classifyAllShell": {
+   "d": "Send every shell command through the auto mode classifier, even ones a narrow allow rule matches",
+   "c": "Permission settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#automode-classifyallshell"
+  },
+  "autoScrollEnabled": {
+   "d": "Follow new output to the bottom in fullscreen rendering",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#autoscrollenabled"
+  },
+  "autoUpdatesChannel": {
+   "d": "Follow the stable release channel instead of latest",
+   "c": "Updates and versioning",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#autoupdateschannel"
+  },
+  "availableModels": {
+   "d": "Restrict which models people can pick",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#availablemodels"
+  },
+  "availableModelsMatch": {
+   "d": "Make each availableModels model ID entry permit only the version it names",
+   "c": "Model and responses",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#availablemodelsmatch"
+  },
+  "awaySummaryEnabled": {
+   "d": "Turn off the session recap shown when you come back to the terminal",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#awaysummaryenabled"
+  },
+  "awsAuthRefresh": {
+   "d": "Refresh expired Bedrock credentials in .aws with your own command",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#awsauthrefresh"
+  },
+  "awsCredentialExport": {
+   "d": "Supply Bedrock credentials as JSON from your own command",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#awscredentialexport"
+  },
+  "axScreenReader": {
+   "d": "Render screen-reader friendly output",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#axscreenreader"
+  },
+  "bashEditDiffEnabled": {
+   "d": "Record the files that changed while a Bash command ran in every permission mode",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#basheditdiffenabled"
+  },
+  "bashOutputMaxChars": {
+   "d": "Set how much of a successful command's output Claude receives inline",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#bashoutputmaxchars"
+  },
+  "blockedMarketplaces": {
+   "d": "Block plugin marketplace sources for your organization",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#blockedmarketplaces"
+  },
+  "browserExternalPageTools": {
+   "d": "Keep Claude's tools off external pages in the desktop Browser pane",
+   "c": "Tools",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#browserexternalpagetools"
+  },
+  "channelsEnabled": {
+   "d": "Allow channels for your organization",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#channelsenabled"
+  },
+  "claudeInChromeDefaultEnabled": {
+   "d": "Turn on Chrome integration when a session starts, in the interactive CLI and the VS Code extension",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#claudeinchromedefaultenabled"
+  },
+  "claudeMd": {
+   "d": "Inject organization-wide CLAUDE.md instructions from managed settings",
+   "c": "Memory and context",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#claudemd"
+  },
+  "claudeMdExcludes": {
+   "d": "Skip specific CLAUDE.md files when memory loads",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#claudemdexcludes"
+  },
+  "cleanupPeriodDays": {
+   "d": "Choose how many days Claude Code keeps transcripts before deleting them",
+   "c": "Privacy and telemetry",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#cleanupperioddays"
+  },
+  "companyAnnouncements": {
+   "d": "Show your organization's announcements at startup",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#companyannouncements"
+  },
+  "copyFullResponse": {
+   "d": "Make /copy copy the full response without showing the picker",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#copyfullresponse"
+  },
+  "copyOnSelect": {
+   "d": "Turn off automatic copying of text you select with the mouse in fullscreen rendering and agent view",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#copyonselect"
+  },
+  "crossSessionInbound": {
+   "d": "Choose whether Claude Code delivers messages from your other sessions, shows a notice without delivering them, or refuses them",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#crosssessioninbound"
+  },
+  "defaultShell": {
+   "d": "Choose whether Bash or PowerShell runs the shell commands you type with the ! prefix",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#defaultshell"
+  },
+  "defaultToAgentsView": {
+   "d": "Open agent view instead of a new conversation when you run claude with no arguments",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#defaulttoagentsview"
+  },
+  "deniedMcpServers": {
+   "d": "Block specific MCP servers by URL, command, or name",
+   "c": "MCP",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#deniedmcpservers"
+  },
+  "deniedModels": {
+   "d": "Block specific models, even ones availableModels permits",
+   "c": "Model and responses",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#deniedmodels"
+  },
+  "desktopSessionCleanupPeriodDays": {
+   "d": "Set an age limit in days for Claude Desktop and Cowork transcripts",
+   "c": "Privacy and telemetry",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#desktopsessioncleanupperioddays"
+  },
+  "dialogExpiry": {
+   "d": "Set how long Claude Code waits for Remote Control or an SDK host to answer a forwarded dialog before it cancels the dialog",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#dialogexpiry"
+  },
+  "diffTool": {
+   "d": "Choose whether Claude's proposed file changes open in the VS Code or JetBrains diff viewer or stay in the terminal",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#difftool"
+  },
+  "disableAgentView": {
+   "d": "Turn off background agents and agent view",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableagentview"
+  },
+  "disableAllHooks": {
+   "d": "Turn off hooks, a custom status line, and a custom @ file suggestion command at once",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableallhooks"
+  },
+  "disableArtifact": {
+   "d": "Deprecated; use enableArtifact to turn the Artifact tool off",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableartifact"
+  },
+  "disableAutoMode": {
+   "d": "Remove auto mode from the permission mode cycle",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableautomode"
+  },
+  "disableBrowserExternalNavigation": {
+   "d": "Limit the desktop Browser pane to localhost for people and Claude",
+   "c": "Tools",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#disablebrowserexternalnavigation"
+  },
+  "disableBundledSkills": {
+   "d": "Turn off the skills and workflows included with Claude Code",
+   "c": "Plugins and skills",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disablebundledskills"
+  },
+  "disableClaudeAiConnectors": {
+   "d": "Turn off claude.ai connectors so Claude Code doesn't fetch them",
+   "c": "MCP",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableclaudeaiconnectors"
+  },
+  "disableCommandPluginSources": {
+   "d": "Block plugins that install by running a marketplace-declared command",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#disablecommandpluginsources"
+  },
+  "disableDeepLinkRegistration": {
+   "d": "Stop Claude Code from registering the claude-cli:// handler",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disabledeeplinkregistration"
+  },
+  "disableDesktopLocalSessions": {
+   "d": "Turn off Desktop Code sessions that run on the device, leaving SSH to other hosts and cloud",
+   "c": "Remote, desktop, and notifications",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#disabledesktoplocalsessions"
+  },
+  "disabledMcpjsonServers": {
+   "d": "Reject specific servers from a project's .mcp.json",
+   "c": "MCP",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disabledmcpjsonservers"
+  },
+  "disableMobileSimulatorTools": {
+   "d": "Block Claude's tools in the desktop iOS Simulator pane",
+   "c": "Tools",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#disablemobilesimulatortools"
+  },
+  "disableRemoteControl": {
+   "d": "Turn off Remote Control everywhere it can start",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableremotecontrol"
+  },
+  "disableSideloadFlags": {
+   "d": "Reject the CLI flags that sideload plugins, subagents, and MCP servers",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#disablesideloadflags"
+  },
+  "disableSkillShellExecution": {
+   "d": "Stop skills and custom commands from running inline shell",
+   "c": "Plugins and skills",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableskillshellexecution"
+  },
+  "disableWorkflows": {
+   "d": "Turn dynamic workflows off for everyone; use enableWorkflows for yourself",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#disableworkflows"
+  },
+  "editorMode": {
+   "d": "Use vim key bindings in the input prompt",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#editormode"
+  },
+  "effortLevel": {
+   "d": "Set a default effort level for models without a saved level of their own",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#effortlevel"
+  },
+  "emojiCompletionEnabled": {
+   "d": "Turn off :shortcode: emoji suggestions and replacement in the prompt input",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#emojicompletionenabled"
+  },
+  "enableAllProjectMcpServers": {
+   "d": "Approve every server in project .mcp.json files without a prompt",
+   "c": "MCP",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#enableallprojectmcpservers"
+  },
+  "enableArtifact": {
+   "d": "Turn the Artifact tool off with a false in any file; no file can turn it back on",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#enableartifact"
+  },
+  "enabledMcpjsonServers": {
+   "d": "Approve specific servers from a project's .mcp.json",
+   "c": "MCP",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#enabledmcpjsonservers"
+  },
+  "enabledPlugins": {
+   "d": "Turn individual plugins on or off per scope",
+   "c": "Plugins and skills",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#enabledplugins"
+  },
+  "enableWorkflows": {
+   "d": "Turn dynamic workflows on or off against your plan's default",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#enableworkflows"
+  },
+  "enforceAvailableModels": {
+   "d": "Keep the /model Default choice inside your availableModels allowlist",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#enforceavailablemodels"
+  },
+  "env": {
+   "d": "Set environment variables for every session and its subprocesses",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#env"
+  },
+  "externalEditorContext": {
+   "d": "Show Claude's last response as comments when you press Ctrl+G to edit",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#externaleditorcontext"
+  },
+  "extraKnownMarketplaces": {
+   "d": "Register marketplaces for a repository or an organization",
+   "c": "Plugins and skills",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#extraknownmarketplaces"
+  },
+  "fallbackModel": {
+   "d": "Name backup models for when the primary is overloaded",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#fallbackmodel"
+  },
+  "fastMode": {
+   "d": "Turn fast mode on for sessions where it's available",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#fastmode"
+  },
+  "fastModePerSessionOptIn": {
+   "d": "Require people to turn fast mode on each session",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#fastmodepersessionoptin"
+  },
+  "feedbackDrafts": {
+   "d": "Control whether Claude queues feedback drafts for you to review",
+   "c": "Privacy and telemetry",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#feedbackdrafts"
+  },
+  "feedbackSurveyRate": {
+   "d": "Change how often the session quality survey appears",
+   "c": "Privacy and telemetry",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#feedbacksurveyrate"
+  },
+  "fileCheckpointingEnabled": {
+   "d": "Turn off or on the file snapshots that /rewind restores",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#filecheckpointingenabled"
+  },
+  "fileSuggestion": {
+   "d": "Supply @ file autocomplete from your own command",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#filesuggestion"
+  },
+  "footerLinksRegexes": {
+   "d": "Make issue or review IDs in output into clickable links below the input box",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#footerlinksregexes"
+  },
+  "forceLoginGatewayUrl": {
+   "d": "Set the gateway URL the login screen connects to",
+   "c": "Authentication and providers",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#forcelogingatewayurl"
+  },
+  "forceLoginMethod": {
+   "d": "Restrict login to claude.ai, Claude Console, or a cloud gateway",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#forceloginmethod"
+  },
+  "forceLoginOrgUUID": {
+   "d": "Pin claude.ai logins to your organization; only a managed source enforces it",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#forceloginorguuid"
+  },
+  "forceRemoteSettingsRefresh": {
+   "d": "Block startup until server-managed settings are freshly fetched",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#forceremotesettingsrefresh"
+  },
+  "gatewayInternalNetworks": {
+   "d": "Let /login reach a cloud gateway on public IPv4 space your organization uses internally",
+   "c": "Authentication and providers",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#gatewayinternalnetworks"
+  },
+  "gcpAuthRefresh": {
+   "d": "Refresh Google Cloud credentials with your own command",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#gcpauthrefresh"
+  },
+  "hooks": {
+   "d": "Run your own commands as hooks at points in Claude Code's lifecycle",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#hooks"
+  },
+  "httpHookAllowedEnvVars": {
+   "d": "Limit which env vars HTTP hooks can put in headers",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#httphookallowedenvvars"
+  },
+  "idleCompaction": {
+   "d": "Stop Claude Code from compacting a long conversation that you've stepped away from",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#idlecompaction"
+  },
+  "includeCoAuthoredBy": {
+   "d": "Deprecated; use attribution to hide or change commit and PR attribution",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#includecoauthoredby"
+  },
+  "includeGitInstructions": {
+   "d": "Remove the built-in commit and PR instructions from Claude's context",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#includegitinstructions"
+  },
+  "inputNeededNotifEnabled": {
+   "d": "Get a push notification when Claude is waiting on you",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#inputneedednotifenabled"
+  },
+  "isolatePeerMachines": {
+   "d": "Ask you before Claude messages one of your sessions on another machine",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#isolatepeermachines"
+  },
+  "keybindingFlavor": {
+   "d": "Deprecated and has no effect; the word-editing shortcuts always follow readline conventions",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#keybindingflavor"
+  },
+  "language": {
+   "d": "Have Claude respond in a language other than English",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#language"
+  },
+  "leftArrowOpensAgents": {
+   "d": "Turn off the ← shortcut that backgrounds the session and opens agent view",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#leftarrowopensagents"
+  },
+  "managedMcpServers": {
+   "d": "Provide remote MCP servers to every user alongside the ones they add",
+   "c": "MCP",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#managedmcpservers"
+  },
+  "managedSourcesBehavior": {
+   "d": "Compose every managed source you deploy instead of using the highest-priority one alone",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#managedsourcesbehavior"
+  },
+  "maxEffortLevel": {
+   "d": "Cap the effort level for every model or per model, on every provider",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#maxeffortlevel"
+  },
+  "maxProseWidth": {
+   "d": "Cap how wide the prose in Claude's responses runs in a wide terminal",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#maxprosewidth"
+  },
+  "minimumVersion": {
+   "d": "Keep auto-updates from installing anything below a version",
+   "c": "Updates and versioning",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#minimumversion"
+  },
+  "model": {
+   "d": "Change the model Claude Code starts with",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#model"
+  },
+  "modelOverrides": {
+   "d": "Map model IDs to your provider's IDs, such as Bedrock ARNs",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#modeloverrides"
+  },
+  "modelPicker": {
+   "d": "Choose which models the /model picker lists, in your own order and with your own labels",
+   "c": "Model and responses",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#modelpicker"
+  },
+  "modelPricing": {
+   "d": "Report spend at your organization's contracted rates instead of list price",
+   "c": "Model and responses",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#modelpricing"
+  },
+  "modelSettings": {
+   "d": "Keep a saved effort level or auto-compact window per model, or cap one model's effort",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#modelsettings"
+  },
+  "otelHeadersHelper": {
+   "d": "Generate rotating OpenTelemetry headers with your own command",
+   "c": "Authentication and providers",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#otelheadershelper"
+  },
+  "outputStyle": {
+   "d": "Change Claude's role, tone, and output format with an output style",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#outputstyle"
+  },
+  "parentSettingsBehavior": {
+   "d": "Apply or drop restrictions an SDK or IDE host passes when you deploy managed settings",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#parentsettingsbehavior"
+  },
+  "permissionExplainerEnabled": {
+   "d": "Removed in v2.1.257, together with the Ctrl+E command explanation on shell permission prompts",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissionexplainerenabled"
+  },
+  "permissions": {
+   "d": "Set allow, ask, and deny rules and the starting permission mode",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions"
+  },
+  "permissions.additionalDirectories": {
+   "d": "Give Claude file access to directories outside the current one",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-additionaldirectories"
+  },
+  "permissions.allow": {
+   "d": "Approve listed tool uses without a prompt",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-allow"
+  },
+  "permissions.ask": {
+   "d": "Always prompt before listed tool uses",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-ask"
+  },
+  "permissions.blockReadsOutsideWorkingDirectories": {
+   "d": "Make the file tools refuse reads outside the working directories in every permission mode",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-blockreadsoutsideworkingdirectories"
+  },
+  "permissions.defaultMode": {
+   "d": "Set the permission mode new sessions start in",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-defaultmode"
+  },
+  "permissions.deny": {
+   "d": "Block listed tool uses, including reads of files that hold secrets",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-deny"
+  },
+  "permissions.disableBypassPermissionsMode": {
+   "d": "Prevent anyone from entering bypassPermissions mode",
+   "c": "Permission settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#permissions-disablebypasspermissionsmode"
+  },
+  "plansDirectory": {
+   "d": "Choose where plan mode writes plan files",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#plansdirectory"
+  },
+  "pluginConfigs": {
+   "d": "Store the answers you gave a plugin's configuration dialog",
+   "c": "Plugins and skills",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#pluginconfigs"
+  },
+  "pluginSuggestionMarketplaces": {
+   "d": "Choose which marketplaces can surface plugin install suggestions in /plugin",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#pluginsuggestionmarketplaces"
+  },
+  "pluginTrustMessage": {
+   "d": "Add your own text to the plugin trust warning",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#plugintrustmessage"
+  },
+  "policyHelper": {
+   "d": "Run an executable that computes managed settings at startup",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#policyhelper"
+  },
+  "policyHelper.path": {
+   "d": "Name the helper executable Claude Code runs",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#policyhelper-path"
+  },
+  "policyHelper.refreshIntervalMs": {
+   "d": "Re-run the helper in the background on an interval",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#policyhelper-refreshintervalms"
+  },
+  "policyHelper.timeoutMs": {
+   "d": "Set how long Claude Code waits for the helper",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#policyhelper-timeoutms"
+  },
+  "preferredNotifChannel": {
+   "d": "Choose a terminal bell or desktop notification for task completion",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#preferrednotifchannel"
+  },
+  "prefersReducedMotion": {
+   "d": "Reduce or turn off spinner, shimmer, and flash animations",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#prefersreducedmotion"
+  },
+  "prependPlugins": {
+   "d": "Run your organization's mods before every mod a user installs",
+   "c": "Plugins and skills",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#prependplugins"
+  },
+  "processWrapper": {
+   "d": "Run Claude Code's background processes through a corporate launcher on macOS and Linux",
+   "c": "Agents, sessions, and worktrees",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#processwrapper"
+  },
+  "promptCacheTtl": {
+   "d": "Choose the prompt cache lifetime for the main conversation",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#promptcachettl"
+  },
+  "promptSuggestionEnabled": {
+   "d": "Hide the grayed-out prompt suggestions in the input box",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#promptsuggestionenabled"
+  },
+  "prStatusFooterEnabled": {
+   "d": "Turn off the prompt footer's PR review status badge and the pull request check behind it",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#prstatusfooterenabled"
+  },
+  "prUrlTemplate": {
+   "d": "Point PR links at an internal code-review tool instead of github.com",
+   "c": "Git and attribution",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#prurltemplate"
+  },
+  "remote.defaultEnvironmentId": {
+   "d": "Pick the default cloud environment for claude --cloud; a self-hosted ccpool_ ID is read only from user and managed settings and --settings",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#remote-defaultenvironmentid"
+  },
+  "remoteControlAtStartup": {
+   "d": "Connect Remote Control automatically when a session starts",
+   "c": "Remote, desktop, and notifications",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#remotecontrolatstartup"
+  },
+  "requiredMaximumVersion": {
+   "d": "Refuse to start on a version newer than your organization allows",
+   "c": "Updates and versioning",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#requiredmaximumversion"
+  },
+  "requiredMinimumVersion": {
+   "d": "Refuse to start on a version older than your organization requires",
+   "c": "Updates and versioning",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#requiredminimumversion"
+  },
+  "respectGitignore": {
+   "d": "Keep gitignored files out of the @ file picker",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#respectgitignore"
+  },
+  "respondToBashCommands": {
+   "d": "Stop Claude from responding after a ! shell command runs",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#respondtobashcommands"
+  },
+  "sandbox": {
+   "d": "Isolate Bash commands from your filesystem and network on macOS, Linux, and WSL2",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox"
+  },
+  "sandbox.allowAppleEvents": {
+   "d": "Let sandboxed commands send Apple Events on macOS",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-allowappleevents"
+  },
+  "sandbox.allowNestedUserNamespaces": {
+   "d": "Let sandboxed commands create user namespaces on Linux and WSL2",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-allownestedusernamespaces"
+  },
+  "sandbox.allowUnsandboxedCommands": {
+   "d": "Let Claude retry a blocked command outside the sandbox, or forbid it",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-allowunsandboxedcommands"
+  },
+  "sandbox.autoAllowBashIfSandboxed": {
+   "d": "Run sandboxed commands without a permission prompt",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-autoallowbashifsandboxed"
+  },
+  "sandbox.bwrapPath": {
+   "d": "Point the sandbox at a bubblewrap binary outside PATH",
+   "c": "Sandbox settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-bwrappath"
+  },
+  "sandbox.credentials": {
+   "d": "Hide or mask credential files and variables inside the sandbox",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-credentials"
+  },
+  "sandbox.credentials.allowPlaintextInject": {
+   "d": "Let masked credentials reach plain HTTP services on trusted test networks",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-credentials-allowplaintextinject"
+  },
+  "sandbox.credentials.awsPairs": {
+   "d": "Link custom-named AWS key variables into one credential for re-signing",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-credentials-awspairs"
+  },
+  "sandbox.credentials.envVars": {
+   "d": "Unset or mask an environment variable inside the sandbox",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-credentials-envvars"
+  },
+  "sandbox.credentials.files": {
+   "d": "Block or mask reads of a credential file inside the sandbox",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-credentials-files"
+  },
+  "sandbox.credentials.sigv4": {
+   "d": "Choose whether streaming, presigned, or SigV4A AWS requests fail or pass through",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-credentials-sigv4"
+  },
+  "sandbox.enabled": {
+   "d": "Turn on Bash sandboxing on macOS, Linux, and WSL2",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-enabled"
+  },
+  "sandbox.enableWeakerNestedSandbox": {
+   "d": "Run the Linux sandbox inside an unprivileged container",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-enableweakernestedsandbox"
+  },
+  "sandbox.enableWeakerNetworkIsolation": {
+   "d": "Let gh, gcloud, and terraform verify TLS behind a MITM proxy inside the sandbox on macOS",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-enableweakernetworkisolation"
+  },
+  "sandbox.excludedCommands": {
+   "d": "Name commands Claude Code can run outside the sandbox",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-excludedcommands"
+  },
+  "sandbox.failIfUnavailable": {
+   "d": "Refuse to start when the sandbox can't, instead of running unsandboxed",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-failifunavailable"
+  },
+  "sandbox.filesystem": {
+   "d": "Control which paths sandboxed commands can read and write",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem"
+  },
+  "sandbox.filesystem.allowManagedReadPathsOnly": {
+   "d": "Stop developers from re-opening read paths your organization blocked",
+   "c": "Sandbox settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem-allowmanagedreadpathsonly"
+  },
+  "sandbox.filesystem.allowRead": {
+   "d": "Re-open reading inside a region denyRead blocks",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem-allowread"
+  },
+  "sandbox.filesystem.allowWrite": {
+   "d": "Add paths sandboxed commands can write to",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem-allowwrite"
+  },
+  "sandbox.filesystem.denyRead": {
+   "d": "Block sandboxed commands from reading specific paths",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem-denyread"
+  },
+  "sandbox.filesystem.denyWrite": {
+   "d": "Block sandboxed commands from writing to specific paths",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem-denywrite"
+  },
+  "sandbox.filesystem.disabled": {
+   "d": "Turn off filesystem isolation while keeping network isolation",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-filesystem-disabled"
+  },
+  "sandbox.ignoreViolations": {
+   "d": "Silence violation reports for paths a command is expected to probe",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-ignoreviolations"
+  },
+  "sandbox.network": {
+   "d": "Control which hosts, ports, and sockets sandboxed commands reach",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network"
+  },
+  "sandbox.network.allowAllUnixSockets": {
+   "d": "Let sandboxed commands connect to every Unix socket",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-allowallunixsockets"
+  },
+  "sandbox.network.allowedDomains": {
+   "d": "Pre-allow domains so sandboxed commands don't prompt for them",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-alloweddomains"
+  },
+  "sandbox.network.allowLocalBinding": {
+   "d": "Let sandboxed commands listen on network ports and connect to localhost on macOS",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-allowlocalbinding"
+  },
+  "sandbox.network.allowMachLookup": {
+   "d": "Let macOS sandboxed tools like the iOS Simulator or Playwright reach their XPC services",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-allowmachlookup"
+  },
+  "sandbox.network.allowManagedDomainsOnly": {
+   "d": "Lock the network allowlist to managed settings",
+   "c": "Sandbox settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-allowmanageddomainsonly"
+  },
+  "sandbox.network.allowUnixSockets": {
+   "d": "List Unix socket paths sandboxed commands can use on macOS",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-allowunixsockets"
+  },
+  "sandbox.network.deniedDomains": {
+   "d": "Block domains for sandboxed commands, even inside an allowed wildcard",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-denieddomains"
+  },
+  "sandbox.network.httpProxyPort": {
+   "d": "Route sandbox HTTP traffic through your own proxy",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-httpproxyport"
+  },
+  "sandbox.network.socksProxyPort": {
+   "d": "Route sandbox SOCKS traffic through your own proxy",
+   "c": "Sandbox settings",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-socksproxyport"
+  },
+  "sandbox.network.strictAllowlist": {
+   "d": "Deny hosts outside the allowlist instead of prompting",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-strictallowlist"
+  },
+  "sandbox.network.tlsTerminate": {
+   "d": "Have the sandbox proxy terminate TLS so it can read HTTPS requests",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-network-tlsterminate"
+  },
+  "sandbox.ripgrep": {
+   "d": "Use your own ripgrep binary inside the sandbox",
+   "c": "Sandbox settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-ripgrep"
+  },
+  "sandbox.socatPath": {
+   "d": "Point the sandbox proxy at a socat binary outside PATH",
+   "c": "Sandbox settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sandbox-socatpath"
+  },
+  "showClearContextOnPlanAccept": {
+   "d": "Show a \"clear context\" option on the plan accept screen",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#showclearcontextonplanaccept"
+  },
+  "showThinkingSummaries": {
+   "d": "See summaries of Claude's thinking instead of a collapsed stub",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#showthinkingsummaries"
+  },
+  "showTurnDuration": {
+   "d": "Hide the \"Cooked for\" duration after each response",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#showturnduration"
+  },
+  "skillListingBudgetFraction": {
+   "d": "Reserve more or less context for the skill listing",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#skilllistingbudgetfraction"
+  },
+  "skillListingMaxDescChars": {
+   "d": "Cap each skill's description length in the skill listing",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#skilllistingmaxdescchars"
+  },
+  "skillOverrides": {
+   "d": "Hide or collapse a skill without editing its SKILL.md",
+   "c": "Plugins and skills",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#skilloverrides"
+  },
+  "skipAutoPermissionPrompt": {
+   "d": "Skip the one-time notice Claude Code shows when you first enter auto mode yourself rather than through the built-in default",
+   "c": "Permission settings",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#skipautopermissionprompt"
+  },
+  "skipDangerousModePermissionPrompt": {
+   "d": "Skip the confirmation dialog before bypassPermissions mode",
+   "c": "Permission settings",
+   "s": "User, local, or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#skipdangerousmodepermissionprompt"
+  },
+  "skipWebFetchPreflight": {
+   "d": "Skip the WebFetch hostname check when Anthropic is unreachable",
+   "c": "Privacy and telemetry",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#skipwebfetchpreflight"
+  },
+  "spellcheck": {
+   "d": "Underline misspelled words in the prompt input with a spell checker you install",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#spellcheck"
+  },
+  "spinnerTipsEnabled": {
+   "d": "Hide tips in the spinner while Claude works",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#spinnertipsenabled"
+  },
+  "spinnerTipsOverride": {
+   "d": "Add your own tips to the spinner rotation, or replace the built-in tips",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#spinnertipsoverride"
+  },
+  "spinnerVerbs": {
+   "d": "Add or replace the verbs shown while a turn runs",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#spinnerverbs"
+  },
+  "sshConfigs": {
+   "d": "Add SSH connections to the Desktop environment selector",
+   "c": "Remote, desktop, and notifications",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sshconfigs"
+  },
+  "sshHostAllowlist": {
+   "d": "Limit which hosts Desktop SSH sessions can reach",
+   "c": "Remote, desktop, and notifications",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sshhostallowlist"
+  },
+  "sshHostCommands": {
+   "d": "Add SSH connections whose host comes from a command to the Desktop environment selector",
+   "c": "Remote, desktop, and notifications",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#sshhostcommands"
+  },
+  "statusLine": {
+   "d": "Run your own command to render a status line below the prompt",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#statusline"
+  },
+  "strictKnownMarketplaces": {
+   "d": "Allowlist the marketplace sources users can add and install from",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#strictknownmarketplaces"
+  },
+  "strictPluginOnlyCustomization": {
+   "d": "Block skills, agents, hooks, and MCP servers from user and project sources",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#strictpluginonlycustomization"
+  },
+  "strictPluginOnlyCustomization.agents": {
+   "d": "Lock agents to plugin and managed sources",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#strictpluginonlycustomization-agents"
+  },
+  "strictPluginOnlyCustomization.hooks": {
+   "d": "Lock hooks to plugin and managed sources",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#strictpluginonlycustomization-hooks"
+  },
+  "strictPluginOnlyCustomization.mcp": {
+   "d": "Lock MCP servers to plugin and managed sources",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#strictpluginonlycustomization-mcp"
+  },
+  "strictPluginOnlyCustomization.skills": {
+   "d": "Lock skills to plugin and managed sources",
+   "c": "Plugins and skills",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#strictpluginonlycustomization-skills"
+  },
+  "subagentPromptCacheTtl": {
+   "d": "Choose the prompt cache lifetime for subagents and other requests outside the main conversation",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#subagentpromptcachettl"
+  },
+  "subagentStatusLine": {
+   "d": "Rewrite rows in the subagent task display with your own command",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#subagentstatusline"
+  },
+  "switchModelsOnFlag": {
+   "d": "Switch models automatically or pause when a safety classifier flags a request",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#switchmodelsonflag"
+  },
+  "syncClaudeAiPlugins": {
+   "d": "Stop loading the plugins enabled on your claude.ai account and stop downloading new ones",
+   "c": "Plugins and skills",
+   "s": "User, local, or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#syncclaudeaiplugins"
+  },
+  "syncClaudeAiSkills": {
+   "d": "Stop loading the skills enabled on your claude.ai account and stop downloading new ones",
+   "c": "Plugins and skills",
+   "s": "User, local, or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#syncclaudeaiskills"
+  },
+  "syntaxHighlightingDisabled": {
+   "d": "Turn off syntax highlighting in diffs and code blocks",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#syntaxhighlightingdisabled"
+  },
+  "taskOutputMaxChars": {
+   "d": "Removed in v2.1.277, together with the TaskOutput tool it sized",
+   "c": "Memory and context",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#taskoutputmaxchars"
+  },
+  "teammateDefaultModel": {
+   "d": "Removed in v2.1.234; see Specify teammates and models for how Claude Code picks a teammate's model",
+   "c": "Global config settings",
+   "s": "Global config",
+   "u": "https://code.claude.com/docs/en/settings-reference#teammatedefaultmodel"
+  },
+  "teammateMode": {
+   "d": "Choose how agent team teammates display",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#teammatemode"
+  },
+  "terminalProgressBarEnabled": {
+   "d": "Hide the terminal progress bar in terminals that support it",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#terminalprogressbarenabled"
+  },
+  "terminalTitleFromRename": {
+   "d": "Stop /rename and --name from changing the terminal tab title",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#terminaltitlefromrename"
+  },
+  "theme": {
+   "d": "Pick the interface color theme, built-in or custom",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#theme"
+  },
+  "timeFormat": {
+   "d": "Show the times in the interface on a 12-hour or 24-hour clock, in UTC, or with a strftime pattern",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#timeformat"
+  },
+  "timeZone": {
+   "d": "Show the times in the interface in a time zone other than your system's",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#timezone"
+  },
+  "tui": {
+   "d": "Choose the fullscreen or classic terminal renderer",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#tui"
+  },
+  "ultracode": {
+   "d": "Have Claude plan a workflow for each substantive task without being asked",
+   "c": "Model and responses",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#ultracode"
+  },
+  "useAutoModeDuringPlan": {
+   "d": "Let the auto mode classifier review shell commands in plan mode; set false to get prompts instead",
+   "c": "Permission settings",
+   "s": "User, local, or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#useautomodeduringplan"
+  },
+  "verbose": {
+   "d": "Show full tool output instead of truncated summaries; viewMode takes precedence when both are set",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#verbose"
+  },
+  "viewMode": {
+   "d": "Start every session in default, verbose, or focus view",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#viewmode"
+  },
+  "vimInsertModeRemaps": {
+   "d": "Map a two-key INSERT-mode sequence such as jj to Escape",
+   "c": "Interface and terminal",
+   "s": "User or managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#viminsertmoderemaps"
+  },
+  "voice": {
+   "d": "Turn on voice dictation and pick hold or tap mode",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#voice"
+  },
+  "voiceEnabled": {
+   "d": "Turn on voice dictation with the older single-key form",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#voiceenabled"
+  },
+  "wheelScrollAccelerationEnabled": {
+   "d": "Turn off mouse-wheel acceleration in fullscreen rendering",
+   "c": "Interface and terminal",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#wheelscrollaccelerationenabled"
+  },
+  "workflowKeywordTriggerEnabled": {
+   "d": "Let the word ultracode in a prompt start a workflow; set false to type it without starting one",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#workflowkeywordtriggerenabled"
+  },
+  "workflowSizeGuideline": {
+   "d": "Set the agent count Claude aims for in dynamic workflows",
+   "c": "Hooks and automation",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#workflowsizeguideline"
+  },
+  "worktree": {
+   "d": "Configure how Claude Code creates git worktrees",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#worktree"
+  },
+  "worktree.baseRef": {
+   "d": "Branch new worktrees from the remote default branch or your local HEAD",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#worktree-baseref"
+  },
+  "worktree.bgIsolation": {
+   "d": "Let background sessions edit the working copy without a worktree",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#worktree-bgisolation"
+  },
+  "worktree.location": {
+   "d": "Choose where Desktop SSH sessions create their worktrees on a remote machine",
+   "c": "Agents, sessions, and worktrees",
+   "s": "User",
+   "u": "https://code.claude.com/docs/en/settings-reference#worktree-location"
+  },
+  "worktree.sparsePaths": {
+   "d": "Check out only the directories you need in each worktree",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#worktree-sparsepaths"
+  },
+  "worktree.symlinkDirectories": {
+   "d": "Symlink large directories into each worktree instead of duplicating them",
+   "c": "Agents, sessions, and worktrees",
+   "s": "Any file",
+   "u": "https://code.claude.com/docs/en/settings-reference#worktree-symlinkdirectories"
+  },
+  "wslInheritsWindowsSettings": {
+   "d": "Have WSL read managed settings from the Windows policy chain",
+   "c": "Enterprise and managed settings",
+   "s": "Managed",
+   "u": "https://code.claude.com/docs/en/settings-reference#wslinheritswindowssettings"
+  }
+ }
+}

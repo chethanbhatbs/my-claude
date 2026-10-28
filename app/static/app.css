@@ -88,10 +88,7 @@ body.dark .brand-mark { color: #1a1a19; }
 .nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .nav a .radio { display: none; }
 .hr { border: 0; border-top: 1px solid var(--line); margin: 16px 6px; }
-.side-btns { display: grid; grid-template-columns: 1fr; gap: 7px; }
-.side-btns .btn { width: 100%; justify-content: center; }
 .side-spacer { flex: 1 1 auto; min-height: 16px; }
-.gh-chip.foot { margin-top: 12px; }
 .spin { display:inline-block; width:13px; height:13px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .6s linear infinite; vertical-align:-2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .btn.loading { opacity:.8; pointer-events:none; }
@@ -287,7 +284,6 @@ body.dark .mono { color: inherit; }
 .help-section .help-points li { color: var(--dim); font-size: 13px; line-height: 1.65; margin: 2px 0; }
 /* CLAUDE.md card with a bottom-right Edit button */
 .cm-card { position: relative; padding-bottom: 52px; }
-.cm-edit-fab { position: absolute; right: 14px; bottom: 14px; }
 /* GitHub device-code login block */
 .gh-device { border: 1px solid var(--line); background: var(--surface-2); border-radius: var(--radius-lg); padding: 14px 16px; margin: 6px 0 4px; }
 .gh-code-row { display: flex; align-items: center; gap: 10px; }
@@ -557,4 +553,32 @@ pre.diff .dl.hunk { color: var(--dim); }
 body.privacy :is(.brand-sub, .ci-title, .ci-sub, .ci-meta > span:first-child, .lr-title, .lr-sub, .lr-proj, .live-title,
   .msg-text, .mem-item summary > span:first-child, .mcp-scope, table.data td a, .pv, #convDetail .caption .mono,
   #convDetail div[style*="font-weight:600"], #ghChipText) { filter: blur(6px); }
+/* effective settings */
+.set-tbl td { vertical-align: top; }
+.set-key { display: flex; align-items: center; gap: 8px; }
+.set-key .mono { font-size: 12.5px; word-break: break-all; }
+.info-btn { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--dim);
+  font: italic 600 11px/1 Georgia, serif; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.info-btn:hover, .info-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.kv-line { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; line-height: 1.5; padding: 2px 0; cursor: pointer;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.kv-line.open { display: block; }
+.kv-more > summary { font-size: 12px; color: var(--accent); cursor: pointer; list-style: none; padding: 2px 0; }
+.kv-more > summary::-webkit-details-marker { display: none; }
+.set-from { font-size: 12px; color: var(--dim); word-break: break-all; }
+.set-ref > td { padding-top: 0 !important; }
+.set-ref-box { background: var(--surface-2); border-radius: var(--radius); padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+.sk-kpis .sk-val { font-size: 1.15rem; letter-spacing: -0.2px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-kpis a.metric:hover { border-color: var(--accent); text-decoration: none; }
+/* sidebar: one Settings button, everything else in its menu */
+.side-menu { position: relative; }
+.side-set { width: 100%; justify-content: center; }
+.side-pop { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 20; padding: 6px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.18); display: grid; gap: 2px; }
+.side-pop[hidden] { display: none; }
+.sp-item { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: calc(var(--radius) - 2px); background: transparent;
+  color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.sp-item:hover, .sp-item:focus-visible { background: var(--surface-2); text-decoration: none; outline: none; }
+.sp-item.on { background: var(--accent-soft); color: var(--accent); }
+.side-pop .sp-gh { margin-top: 4px; }
 

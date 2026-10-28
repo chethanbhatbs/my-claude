@@ -1,6 +1,6 @@
 <button class="close" onclick="closeDialog()">×</button>
 <h3>Clean up debug logs</h3>
-<div class="caption"><code>~/.claude/debug</code> holds {{ d.files }} file{{ '' if d.files == 1 else 's' }}, {{ d.size_h }}. Claude Code never removes them. Older logs move to the Trash, so you can put them back.</div>
+<div class="caption"><code>~/.claude/debug</code> holds {{ d.files }} file{{ '' if d.files == 1 else 's' }}, {{ d.size_h }}. Claude Code deletes them after the retention period; this clears them sooner. Logs move to the Trash, so you can put them back.</div>
 <div class="row" style="margin:14px 0;gap:8px">
   <label class="fld" for="cdDays" style="margin:0;flex:0 0 auto">Older than</label>
   <select class="input" id="cdDays" style="flex:0 0 auto;width:auto"><option value="7">7 days</option><option value="30">30 days</option><option value="1">1 day</option></select>

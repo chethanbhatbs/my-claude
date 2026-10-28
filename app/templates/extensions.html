@@ -34,6 +34,19 @@
   </summary>
   <div class="exp-body">
     <div class="caption" style="margin:6px 0">registered in: {{ c.scopes | join(', ') }} · from {{ c.source }}</div>
+    {% if c.tool_rows %}
+    <div class="row" style="margin:10px 0 6px;gap:10px">
+      <h3 style="margin:0;font-size:13px;flex:0 0 auto">Tools ({{ c.tool_rows|length }})</h3>
+      <input class="input" type="text" placeholder="Filter tools" oninput="toolFilter(this)" style="flex:0 1 260px" aria-label="Filter tools">
+      <span class="caption" style="margin:0;flex:1">{% set nd = c.tool_rows|selectattr('desc')|list|length %}Descriptions known for {{ nd }} of {{ c.tool_rows|length }}: only tools Claude loaded in your recent conversations.</span>
+    </div>
+    <table class="data tool-tbl">
+      <thead><tr><th style="width:30%">Tool</th><th>What it does</th><th class="num">Calls, 30 days</th></tr></thead>
+      <tbody>{% for t in c.tool_rows %}<tr data-q="{{ (t.name ~ ' ' ~ t.desc)|lower }}"><td class="mono" style="font-size:12px;word-break:break-all">{{ t.name }}</td>
+        <td style="font-size:12.5px">{{ t.desc }}</td>
+        <td class="num">{{ t.calls or '' }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% endif %}
     <pre class="code-json"><code class="language-json">{{ c.config }}</code></pre>
   </div>
 </details>
@@ -55,6 +68,8 @@ async function checkHealth(){
   if(btn){ btn.textContent='Re-check health'; btn.classList.remove('disabled'); }
 }
 checkHealth();
+function toolFilter(inp){ const q=inp.value.toLowerCase().trim();
+  inp.closest('.exp-body').querySelectorAll('.tool-tbl tbody tr').forEach(r=>{ r.style.display=!q||r.dataset.q.includes(q)?'':'none'; }); }
 </script>
 
 {% else %}
