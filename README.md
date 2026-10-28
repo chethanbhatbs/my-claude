@@ -1,79 +1,78 @@
 # My Claude
 
-A private, **local** dashboard for everything Claude Code keeps on your machine - skills, MCP
-connectors, plugins, token usage and cost, and your full conversation history - in one place you can
-actually read.
+A local dashboard for everything Claude Code keeps in `~/.claude`: your conversations, token usage, skills, MCP servers, settings and memory. It runs on your Mac and reads your files there.
 
-**Website:** https://my-claude.pages.dev/ · **Live demo:** https://my-claude.pages.dev/demo.html
+**Website:** https://my-claude.pages.dev · **Demo with sample data:** https://my-claude.pages.dev/demo.html
 
 ![My Claude dashboard](assets/overview.png)
 
-## Install (one command)
+## Install
+
+Paste this into Terminal:
 
 ```bash
 curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash
 ```
 
-Paste that into your terminal. It downloads the app, sets up an isolated Python environment
-(one-time, ~20 seconds), and opens the dashboard at `http://127.0.0.1:8766` - or the next free port
-if that one's busy.
+It opens the dashboard at **http://127.0.0.1:8766** (or the next free port).
 
-> **First launch can take a moment.** The browser opens once the server is ready, but the very first
-> run builds a Python environment and indexes your `~/.claude` folder. If your browser briefly shows
-> **"This site can't be reached"**, the local server is just still starting - wait a few seconds and
-> refresh, and it will load.
+- **Needs:** macOS and Python 3.
+- **First run** takes about 20 seconds while it sets up. If the browser says "This site can't be reached", wait a few seconds and refresh.
+- **Read the script first** if you like: [`install.sh`](install.sh).
 
-**Needs:** Python 3.9+ on macOS. Inspect the script first:
-[`install.sh`](https://github.com/chethanbhatbs/my-claude/blob/main/install.sh).
+## What you can do
 
-## Your transcripts never leave your machine
+| Page | What it shows |
+|---|---|
+| **Overview** | Key numbers, conversations running now, recent conversations and skills, disk use |
+| **Usage** | Your live plan limits, what used the current window, a pace forecast, tokens by day and model, cache cost after pauses, sub-agent use, a year-in-review card, export to CSV/JSON, totals from your other Macs |
+| **History** | Every conversation with its real title, full-text search, a custom date range, rename and tag, compaction points, a sub-agent timeline, resume in your terminal, export to Markdown, and how long Claude Code keeps conversations |
+| **Skills** | Every skill with use counts, most used, largest, never used, a reader for `SKILL.md`, push to GitHub or share as a zip |
+| **MCP & Plugins** | Each server's health, its tools and how often you call them, and an on/off switch per project |
+| **System** | The settings Claude Code actually uses (each key explained), hooks and whether they fail, disk use per folder, `CLAUDE.md` with its edit history, and memory |
 
-It binds to `127.0.0.1` only and computes everything - skills, usage, costs, history - from files
-already on your disk. No telemetry, no cloud, no analytics.
+**Hide names** (under Settings in the sidebar) blurs titles, paths and messages so you can share a screenshot.
 
-Two things do go out, both of them yours and both plainly visible in the source:
+## Privacy
 
-- **A skill you choose to push** to your own GitHub, via your own `gh` login. Never automatic.
-- **Your plan limits**, while the Usage page is open. One request to
-  `GET https://api.anthropic.com/api/oauth/usage`, authorised with the Claude Code OAuth token
-  already in your macOS keychain (entry `Claude Code-credentials`, created by the `claude` CLI). It
-  sends that token and nothing else - no transcripts, no prompts, no filenames. The token is held in
-  memory for 10 minutes and never written to disk. Decline the keychain prompt and nothing breaks:
-  the panel falls back to the copy Claude Code already cached in `~/.claude.json` and tells you how
-  old those numbers are.
+Your transcripts never leave your Mac. The server only listens on `127.0.0.1`.
 
-Secrets in MCP configs are auto-redacted before they're shown. You share the tool, not your data.
+These are the only network requests, and what each one sends:
 
-## What you get
+| Request | When | What it sends |
+|---|---|---|
+| Your plan limits from `api.anthropic.com` | While the Usage page is open, or every 10 minutes if you turn on alerts | Your Claude Code login token from the macOS keychain, nothing else |
+| A health check to each MCP server's URL | When you open MCP & Plugins | A plain request, no data |
+| Pushing a skill to your GitHub | Only when you click Push | That skill's files, through your own `gh` login |
+| Chart, font and image libraries from public CDNs | When a page loads | Nothing of yours |
 
-- **Overview** - skills, conversations, token spend, and disk use at a glance.
-- **Usage** - your live plan limits (session, weekly, per-model) plus tokens by day, model and
-  project. API-price costs are there too, clearly marked as an estimate rather than your bill.
-- **Skills** - every skill, how often you use it, and which ones you never touch; search across all
-  of them, read any `SKILL.md`, and push to GitHub or share as a `.zip`.
-- **MCP & Plugins** - your connectors (global and per-project) with a one-click health check.
-- **History** - every session, including ones whose transcript Claude Code has already rotated away
-  (prompts recovered from `history.jsonl`). Indexed full-text search that jumps to the matching
-  message, per-conversation cost, resume in the terminal of your choice, or export to Markdown.
-- **System** - permissions, hooks, `CLAUDE.md`, and the memory Claude carries between sessions.
+Secrets in MCP configs are hidden before they're shown.
 
-Connect GitHub straight from the app (device-code flow via your `gh` CLI - no tokens stored),
-copy any code block, and switch between light and dark themes.
+## Where it keeps its own data
 
-## Try it first
+| Folder | What's in it |
+|---|---|
+| `~/.my-claude` | The app. Reinstalling replaces it. |
+| `~/.config/my-claude` | Your names and tags, transcript backups, memory history, imported machines. Reinstalling keeps it. |
 
-Open the [live demo](https://my-claude.pages.dev/demo.html) - the real UI with sample
-data, nothing from your machine.
+It only changes Claude Code's own files when you ask it to: how long conversations are kept and `CLAUDE.md` (in `~/.claude`), an MCP server's on/off switch (in `~/.claude.json`), and cleaning debug logs (moved to the Trash). It backs up a file before changing it.
 
-## Prefer to install manually?
+## If something goes wrong
 
-Download [`my-claude-dashboard.zip`](https://my-claude.pages.dev/my-claude-dashboard.zip),
-unzip it, and run `./run.sh`.
+| Problem | Fix |
+|---|---|
+| The install command fails to download | Use the GitHub copy: `curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh \| MY_CLAUDE_BASE=https://chethanbhatbs.github.io/my-claude bash` |
+| The page doesn't load right after install | Wait a few seconds and refresh. The first run is still setting up. |
+| Port 8766 is busy | It picks the next free port and opens that one. |
+
+**Install by hand:** download [`my-claude-dashboard.zip`](https://my-claude.pages.dev/my-claude-dashboard.zip), unzip it, run `./run.sh`.
+
+**Remove it:** `rm -rf ~/.my-claude ~/.config/my-claude`
+
+## For developers
+
+The app's code is in [`app/`](app/). Run the tests with `cd app && python3 -m pytest tests -q` after `pip install -r requirements-dev.txt`. `build-bundle.sh` builds the zip that the installer downloads.
 
 ## License
 
-MIT.
-
----
-
-Built with Claude Code.
+MIT. Built with Claude Code.
