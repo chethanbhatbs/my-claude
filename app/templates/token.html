@@ -107,11 +107,11 @@ async function loadLimits(fresh){
     <a class="{{ 'active' if win==w and not d_from and not d_to }}" href="?win={{ w|urlencode }}&family={{ family|urlencode }}">{{ w }}</a>
     {% endfor %}
   </div>
-  <div class="seg" style="flex:0 0 auto;flex-wrap:wrap">
-    {% for fm in models %}
-    <a class="{{ 'active' if family==fm }}" href="?win={{ win|urlencode }}&family={{ fm|urlencode }}">{{ fm }}</a>
-    {% endfor %}
-  </div>
+  <label class="fld" for="modelSel" style="margin:0;flex:0 0 auto">Model</label>
+  <select class="input" id="modelSel" style="flex:0 0 auto;width:auto;min-width:150px"
+    onchange="navigate(location.pathname+'?win={{ win|urlencode }}&family='+encodeURIComponent(this.value)+'{% if d_from %}&from={{ d_from }}{% endif %}{% if d_to %}&to={{ d_to }}{% endif %}')">
+    {% for fm in models %}<option value="{{ fm }}" {{ 'selected' if family==fm }}>{{ 'All models' if fm == 'All' else fm }}</option>{% endfor %}
+  </select>
   <form method="get" class="row" style="flex:0 0 auto;gap:6px">
     <input type="hidden" name="family" value="{{ family }}">
     <input type="date" name="from" value="{{ d_from }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()">
@@ -119,9 +119,12 @@ async function loadLimits(fresh){
     <input type="date" name="to" value="{{ d_to }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()">
   </form>
   {% set q = 'win=' ~ (win|urlencode) ~ '&family=' ~ (family|urlencode) ~ '&d_from=' ~ (d_from|urlencode) ~ '&d_to=' ~ (d_to|urlencode) %}
-  <button class="btn" style="flex:0 0 auto;margin-left:auto" onclick="openDialog('/dialog/wrapped')">Year in review</button>
-  <a class="btn" style="flex:0 0 auto" href="/export/usage?fmt=csv&{{ q }}">Export CSV</a>
-  <a class="btn" style="flex:0 0 auto" href="/export/usage?fmt=json&{{ q }}">Export JSON</a>
+  <div style="display:flex;gap:8px;flex:0 0 auto;margin-left:auto">
+    <button class="btn" onclick="openDialog('/dialog/wrapped')">Year in review</button>
+    <details class="dd"><summary class="btn">Export</summary><div class="dd-pop" role="menu">
+      <a class="sp-item" role="menuitem" href="/export/usage?fmt=csv&{{ q }}">CSV, for spreadsheets</a>
+      <a class="sp-item" role="menuitem" href="/export/usage?fmt=json&{{ q }}">JSON, to import on another Mac</a></div></details>
+  </div>
 </div>
 
 {% if empty %}

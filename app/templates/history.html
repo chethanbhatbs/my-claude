@@ -12,23 +12,32 @@
 <div class="row" style="margin-bottom:12px;gap:10px">
   <div class="seg" style="flex:0 0 auto">
     {% for w in ["All time","30 days","7 days"] %}
-    <a class="{{ 'active' if win==w and year=='All' }}" href="?win={{ w|urlencode }}&year=All{% if q %}&q={{ q|urlencode }}{% endif %}">{{ w }}</a>
+    <a class="{{ 'active' if win==w and year=='All' and not d_from and not d_to }}" href="?win={{ w|urlencode }}&year=All{% if q %}&q={{ q|urlencode }}{% endif %}">{{ w }}</a>
     {% endfor %}
   </div>
   {% if years %}
   <div class="seg" style="flex:0 0 auto">
     {% for y in years %}
-    <a class="{{ 'active' if year==y|string }}" href="?year={{ y }}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ y }}</a>
+    <a class="{{ 'active' if year==y|string and not d_from and not d_to }}" href="?year={{ y }}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ y }}</a>
     {% endfor %}
   </div>
   {% endif %}
+  <form method="get" class="row" style="flex:0 0 auto;gap:6px" aria-label="Custom date range">
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    <input type="date" name="from" value="{{ d_from }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()" aria-label="From">
+    <span class="caption" style="margin:0">to</span>
+    <input type="date" name="to" value="{{ d_to }}" max="{{ today }}" style="width:auto" onchange="this.form.requestSubmit()" aria-label="To">
+    {% if d_from or d_to %}<a class="btn" href="?{% if q %}q={{ q|urlencode }}{% endif %}">Clear</a>{% endif %}
+  </form>
   <label class="toggle" style="flex:0 0 auto" title="Sessions whose transcript file was rotated away — prompts recovered from ~/.claude/history.jsonl">
     <input type="checkbox" {{ 'checked' if show_arch }} onchange="histToggle('arch', this.checked)"><span class="track"></span>Archived ({{ arch_n }})</label>
   <label class="toggle" style="flex:0 0 auto" title="Sub-agent and workflow transcripts spawned inside your conversations">
     <input type="checkbox" {{ 'checked' if include_sub }} onchange="histToggle('sub', this.checked)"><span class="track"></span>Sub-agents ({{ sub_n }})</label>
-  <button class="btn" style="flex:0 0 auto;margin-left:auto" onclick="openDialog('/dialog/retention')">{% if ret.error %}Keep conversations: unreadable{% else %}Keep conversations: {{ '10 years' if ret.days == 3650 else (ret.days|string + ' days') }}{% if ret.lowest is not none and ret.lowest < ret.days %} · {{ ret.lowest }} days elsewhere{% endif %}{% endif %}</button>
+
 </div>
-<div class="caption"><strong>{{ conv_total }}</strong> conversations · {{ total_msgs }} messages{% if content_hits is not none %} · {{ content_hits }} with text matches{% endif %}{% if sub_n and not include_sub and content_hits is none %} · <span title="Sub-agent and workflow transcripts spawned inside your conversations, not separate chats.">+{{ sub_n }} sub-agent / workflow transcripts hidden</span>{% endif %}{% if not show_arch and arch_n %} · {{ arch_n }} archived hidden{% endif %}</div>
+<div class="row" style="justify-content:space-between;gap:12px;margin-bottom:8px"><div class="caption" style="margin:0;flex:1"><strong>{{ conv_total }}</strong> conversations · {{ total_msgs }} messages{% if content_hits is not none %} · {{ content_hits }} with text matches{% endif %}{% if sub_n and not include_sub and content_hits is none %} · <span title="Sub-agent and workflow transcripts spawned inside your conversations, not separate chats.">+{{ sub_n }} sub-agent / workflow transcripts hidden</span>{% endif %}{% if not show_arch and arch_n %} · {{ arch_n }} archived hidden{% endif %}</div>
+  <button class="btn" style="flex:0 0 auto" onclick="openDialog('/dialog/retention')">{% if ret.error %}Keep conversations: unreadable{% else %}Keep conversations: {{ '10 years' if ret.days == 3650 else (ret.days|string + ' days') }}{% if ret.lowest is not none and ret.lowest < ret.days %} · {{ ret.lowest }} days elsewhere{% endif %}{% endif %}</button>
+</div>
 {% if search_capped %}<div class="alert info" style="margin:8px 0 0">Full-text search stopped at its 500-match cap, so there may be more matches than listed. Narrow the query to see the rest.</div>{% endif %}
 
 <div class="conv">

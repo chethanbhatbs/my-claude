@@ -77,7 +77,8 @@ function toggleSideMenu(force){
   if(open){ const f=pop.querySelector('.sp-item'); if(f) f.focus(); }
 }
 function closeSideMenu(){ toggleSideMenu(false); }
-document.addEventListener('click',e=>{ const m=document.querySelector('.side-menu'); if(m && !m.contains(e.target)) closeSideMenu(); });
+document.addEventListener('click',e=>{ const m=document.querySelector('.side-menu'); if(m && !m.contains(e.target)) closeSideMenu();
+  document.querySelectorAll('details.dd[open]').forEach(d=>{ if(!d.contains(e.target)) d.open=false; }); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSideMenu(); });
 function togglePrivacy(force){
   const on = force===undefined ? !document.body.classList.contains('privacy') : force;

@@ -1151,7 +1151,21 @@ def settings_groups(project=None):
             if f not in g["from"]: g["from"].append(f)
         for f in r["overrides"]:
             if f not in g["overrides"]: g["overrides"].append(f)
-    return sorted(groups.values(), key=lambda g: g["key"].lower())
+    levels = {l["path"]: l["level"] for l in settings_layers(project)}
+    for g in groups.values():
+        its = g["items"]
+        if len(its) == 1 and not its[0]["sub"]:
+            v = its[0]["lines"]
+            g["summary"] = (f"{len(v)} item" + ("" if len(v) == 1 else "s")) if its[0]["list"] else (v[0] if len(v[0]) <= 40 else v[0][:38] + "…")
+        else:
+            g["summary"] = f"{len(its)} entr" + ("y" if len(its) == 1 else "ies")
+        g["levels"] = [levels.get(f, f) for f in g["from"]]
+        g["category"] = (g["ref"] or {}).get("c") or "Not in the settings reference"
+        g["desc"] = (g["ref"] or {}).get("d") or ""
+    out = sorted(groups.values(), key=lambda g: g["key"].lower())
+    cats = {}
+    for g in out: cats.setdefault(g["category"], []).append(g)
+    return sorted(cats.items(), key=lambda kv: (kv[0] == "Not in the settings reference", kv[0]))
 
 _PATH_RE = re.compile(r"""(?:~|\$HOME|/)[\w./@-]+\.(?:sh|py|js|mjs|ts|rb|pl)\b""")
 
@@ -1200,6 +1214,16 @@ def hook_audit(project=None):
                      "runs": r["runs"], "fails": r["fails"], "last_h": fmt_rel(r["last"]), "missing": [],
                      "avg_ms": int(sum(r["ms"]) / len(r["ms"])) if r["ms"] else None})
     return rows
+
+def hook_groups(project=None):
+    """hook_audit rows grouped by event, each with a short readable name (the script it runs)."""
+    groups = {}
+    for h in hook_audit(project):
+        paths = _PATH_RE.findall(h["command"]) or re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/[\w./-]+", h["command"])
+        h["label"] = Path(paths[0]).name if paths else (h["command"][:60] + ("…" if len(h["command"]) > 60 else ""))
+        h["source_short"] = "plugin" if h["source"] == "plugin" else ("settings" if "settings" in h["source"] else h["source"])
+        groups.setdefault(h["event"] or "Unknown event", []).append(h)
+    return sorted(groups.items())
 
 # ---------- MCP: tools per server, calls, per-project on/off (code.claude.com/docs/en/mcp#disable-a-server-without-removing-it) ----------
 @ttl_cache(900)
@@ -2476,7 +2500,14 @@ def render_history(request):
     if show_arch:
         convs = sorted(convs + arch, key=lambda c: c["last_ts"] or 0, reverse=True)
     years = sorted({datetime.fromtimestamp(c["last_ts"]).year for c in convs if c["last_ts"]}, reverse=True)
-    if year != "All":
+    d_from = request.query_params.get("from", ""); d_to = request.query_params.get("to", "")
+    if d_from or d_to:          # custom range on the conversation's last activity, local dates, both ends inclusive
+        try:
+            lo = datetime.fromisoformat(d_from).timestamp() if d_from else 0
+            hi = (datetime.fromisoformat(d_to) + timedelta(days=1)).timestamp() if d_to else float("inf")
+            convs = [c for c in convs if c["last_ts"] and lo <= c["last_ts"] < hi]
+        except ValueError: d_from = d_to = ""
+    elif year != "All":
         try:
             yi = int(year); convs = [c for c in convs if c["last_ts"] and datetime.fromtimestamp(c["last_ts"]).year == yi]
         except ValueError: pass
@@ -2517,6 +2548,7 @@ def render_history(request):
     for r in cache: r["path_q"] = r["path"]
     return render(request, "history.html", "History", convs=shown, conv_total=len(convs),
                   total_msgs=total_msgs, win=win, year=year, years=years, q=request.query_params.get("q", ""), ret=retention_info(),
+                  d_from=d_from, d_to=d_to, today=datetime.now().date().isoformat(),
                   content_hits=content_hits, cache=cache, sub_n=sub_n, include_sub=include_sub,
                   arch_n=arch_n, show_arch=show_arch, search_capped=search_capped)
 
@@ -2561,7 +2593,7 @@ def render_system(request):
     ctx = {"tab": tab, "cfg": load_config_detail(), "mem": load_memory(), "proj": proj,
            "projects": _project_choices(), "home": str(HOME), "claude_dir": str(CLAUDE)}
     if tab == "settings": ctx["layers"] = settings_layers(proj); ctx["groups"] = settings_groups(proj); ctx["ref_meta"] = settings_ref()
-    if tab == "hooks": ctx["hooks"] = hook_audit(proj)
+    if tab == "hooks": ctx["hook_groups"] = hook_groups(proj)
     if tab == "disk": ctx["disk"] = disk_report()
     return render(request, "system.html", "System", **ctx)
 
