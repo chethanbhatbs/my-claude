@@ -4,6 +4,8 @@
 <div class="page-head"><div class="caption" style="margin:0">Capabilities loaded into Claude; usage counts come from your transcripts.</div>
   <button type="button" class="btn primary" style="flex:none" onclick="openDialog('/dialog/install')">+ Install skill</button></div>
 
+<div class="metrics sk-kpis">{% for k in skill_kpis %}<a class="metric" href="{{ k.href }}">
+  <div class="m-label">{{ k.label }}</div><div class="m-value sk-val" title="{{ k.value }}">{{ k.value }}</div>{% if k.sub %}<div class="m-delta">{{ k.sub }}</div>{% endif %}</a>{% endfor %}</div>
 <form method="get" id="skf">
   <input class="input" type="text" name="q" value="{{ q }}" placeholder="Search all skills by name or description (e.g. testing, security, react)" oninput="skSearch(this.value)" autocomplete="off" style="margin-bottom:10px">
   <div class="row" style="margin-bottom:16px">

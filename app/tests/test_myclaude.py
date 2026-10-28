@@ -764,3 +764,41 @@ def test_year_review_counts_streak_and_busiest_day(monkeypatch):
     w = mc.year_review(2026)
     assert (w["tokens"], w["active_days"], w["streak"], w["busiest_day"], w["top_model_share"]) == (75, 4, 3, "2 Mar", 100)
     assert mc.year_review(2024)["empty"] is True
+
+
+def test_settings_groups_one_row_per_key_with_docs(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    (claude / "settings.json").write_text(json.dumps({"effortLevel": "high", "enabledPlugins": {"a@x": True, "b@y": False},
+        "autoMode": {"soft_deny": ["Bash(rm) — risky"]}, "madeUpKey": 1}))
+    g = {r["key"]: r for r in mc.settings_groups(str(home))}
+    assert set(g) == {"autoMode", "effortLevel", "enabledPlugins", "madeUpKey"}
+    assert g["effortLevel"]["items"][0]["lines"] == ["high"]                       # no JSON quotes
+    assert [i["sub"] for i in g["enabledPlugins"]["items"]] == ["a@x", "b@y"]
+    assert g["autoMode"]["items"][0]["lines"] == ["Bash(rm) — risky"]         # no \\u escapes
+    assert g["effortLevel"]["ref"]["u"].endswith("#effortlevel") and g["madeUpKey"]["ref"] is None
+
+
+def test_disk_report_uses_docs_kinds_and_folds_small_folders(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    for k in [k for k in list(mc._CACHE) if k[0] == "disk_report"]: mc._CACHE.pop(k, None)
+    (claude / "projects").mkdir(); (claude / "projects" / "a.jsonl").write_bytes(b"x" * 2_000_000)
+    (claude / "mystery").mkdir(); (claude / "mystery" / "f").write_bytes(b"y" * 10)
+    r = mc.disk_report()
+    assert [x["name"] for x in r["rows"]] == ["projects"] and r["rows"][0]["kind"] == "auto"
+    assert r["small"][0]["name"] == "mystery" and r["small"][0]["kind_h"] == "not described in Claude Code's docs"
+    assert r["auto_pct"] == 100
+
+
+def test_mcp_stats_record_per_tool_calls_and_descriptions(tmp_path, monkeypatch):
+    home, claude = _cfg_home(tmp_path, monkeypatch)
+    pj = claude / "projects" / "-x"; pj.mkdir(parents=True)
+    fn = '<function>{"description": "List issues", "name": "mcp__doit__list_issues", "parameters": {}}</function>'
+    rows = [{"type": "attachment", "attachment": {"type": "deferred_tools_delta", "addedNames": ["mcp__doit__list_issues", "mcp__doit__get_issue"],
+             "surfacedDefinitions": [{"name": "mcp__doit__get_issue", "definition": {"name": "mcp__doit__get_issue", "description": "Get one issue"}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "content": "<functions>" + fn + "</functions>"}]}},
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "t1", "name": "mcp__doit__list_issues", "input": {}}]}},
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "t2", "name": "mcp__doit__list_issues", "input": {}}]}}]
+    (pj / "s.jsonl").write_text("\n".join(json.dumps(r, separators=(",", ":")) for r in rows))
+    st = mc.mcp_tool_stats()
+    assert st["tool_calls"] == {"mcp__doit__list_issues": 2}
+    assert st["descs"] == {"mcp__doit__list_issues": "List issues", "mcp__doit__get_issue": "Get one issue"}
