@@ -61,7 +61,7 @@ PY
 chmod +x "$DIR"/macos/*.sh
 bash "$DIR/macos/setup_mac_app.sh" "$DIR" "$PORT"
 say "Starting My Claude…"
-bash "$DIR/macos/launcher.sh"
+[ -n "$MY_CLAUDE_NO_OPEN" ] || bash "$DIR/macos/launcher.sh"   # MY_CLAUDE_NO_OPEN=1: install without opening a tab
 printf "\n  \033[32m✓\033[0m \033[1mMy Claude is installed.\033[0m\n\n"
 printf "     Open it any time from \033[1mApplications\033[0m, Spotlight or the Dock: \033[1mMy Claude\033[0m.\n"
 printf "     It starts on its own when you log in, at http://127.0.0.1:%s\n" "$PORT"

@@ -53,7 +53,7 @@ Secrets in MCP configs are hidden before they're shown.
 | Folder | What's in it |
 |---|---|
 | `~/.my-claude` | The program. Reinstalling replaces it. |
-| `~/Applications/My Claude.app` and `~/Library/LaunchAgents/dev.myclaude.server.plist` | The app icon, and the login item that keeps it running (Mac only). |
+| `/Applications/My Claude.app` and `~/Library/LaunchAgents/dev.myclaude.server.plist` | The app, and the login item that keeps it running (Mac only). |
 | `~/.config/my-claude` | Your names and tags, transcript backups, memory history, imported machines. Reinstalling keeps it. |
 
 It only changes Claude Code's own files when you ask it to: how long conversations are kept and `CLAUDE.md` (in `~/.claude`), an MCP server's on/off switch (in `~/.claude.json`), and cleaning debug logs (moved to the Trash). It backs up a file before changing it.

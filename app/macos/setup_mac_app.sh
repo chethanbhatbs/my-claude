@@ -7,10 +7,13 @@ set -e
 DIR="$1"; PORT="$2"
 LABEL="dev.myclaude.server"
 AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
-APP="$HOME/Applications/My Claude.app"
+# the main Applications folder (what Finder and Launchpad show) when it's writable, else your own
+if [ -w /Applications ]; then APP="/Applications/My Claude.app"; else APP="$HOME/Applications/My Claude.app"; fi
+rm -rf "$HOME/Applications/My Claude.app"    # an earlier install put it here
 DATA="${XDG_CONFIG_HOME:-$HOME/.config}/my-claude"
 LOG="$HOME/Library/Logs/my-claude.log"
-mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Applications" "$DATA" "$HOME/Library/Logs"
+mkdir -p "$HOME/Library/LaunchAgents" "$DATA" "$HOME/Library/Logs"
+[ -w /Applications ] || mkdir -p "$HOME/Applications"
 echo "$PORT" > "$DATA/port"
 sed "s/__PORT__/$PORT/" "$DIR/macos/starting.html" > "$DATA/starting.html"
 
