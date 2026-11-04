@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Claude</title>
+<style>
+  :root { --bg:#f5f3ee; --text:#211d18; --dim:#7a7064; --accent:#D97757; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --text:#e4e4e4; --dim:#8a8a8a; } }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--text);
+         font:15px/1.5 -apple-system, BlinkMacSystemFont, "Inter", sans-serif; }
+  .box { text-align:center; padding:24px; max-width:460px; }
+  .mark { width:56px; height:56px; border-radius:13px; background:var(--accent); color:#1a1a19; display:grid; place-items:center;
+          font:700 30px/1 Menlo, monospace; margin:0 auto 20px; }
+  h1 { font-size:20px; font-weight:600; margin:0 0 6px; }
+  p { color:var(--dim); margin:0; }
+  .bar { height:3px; width:160px; margin:22px auto 0; border-radius:2px; background:color-mix(in srgb, var(--accent) 20%, transparent); overflow:hidden; }
+  .bar i { display:block; height:100%; width:40%; background:var(--accent); animation:slide 1.2s ease-in-out infinite; }
+  @keyframes slide { 0% { transform:translateX(-100%); } 100% { transform:translateX(250%); } }
+  @media (prefers-reduced-motion: reduce) { .bar i { animation:none; width:100%; } }
+</style></head>
+<body><div class="box" role="status" aria-live="polite">
+  <div class="mark">C</div>
+  <h1 id="t">Starting My Claude…</h1>
+  <p id="m">The first start after an install reads your conversations once. This page opens the dashboard when it's ready.</p>
+  <div class="bar"><i></i></div>
+</div>
+<script>
+const port = parseInt('__PORT__', 10) || 8766, url = 'http://127.0.0.1:' + port + '/p/overview', t0 = Date.now();
+async function poll(){
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 15000);
+  try { await fetch(url, { mode: 'no-cors', signal: ctl.signal, cache: 'no-store' }); location.replace(url); return; }
+  catch (e) {} finally { clearTimeout(timer); }
+  if (Date.now() - t0 > 10 * 60 * 1000) {
+    document.getElementById('t').textContent = 'My Claude is taking longer than usual';
+    document.getElementById('m').textContent = 'Its log is in ~/Library/Logs/my-claude.log. Running the install command again usually fixes it.';
+    return;
+  }
+  setTimeout(poll, 2000);
+}
+poll();
+</script></body></html>

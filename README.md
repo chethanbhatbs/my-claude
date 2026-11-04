@@ -14,7 +14,7 @@ Paste this into Terminal:
 curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash
 ```
 
-It opens the dashboard at **http://127.0.0.1:8766** (or the next free port).
+On a Mac this adds **My Claude** to your Applications folder. Open it any time from Applications, Spotlight or the Dock. It starts on its own when you log in, so you never need this command again. The dashboard is at **http://127.0.0.1:8766** (or the next free port).
 
 - **Needs:** macOS and Python 3.
 - **First run** takes about 20 seconds while it sets up. If the browser says "This site can't be reached", wait a few seconds and refresh.
@@ -52,7 +52,8 @@ Secrets in MCP configs are hidden before they're shown.
 
 | Folder | What's in it |
 |---|---|
-| `~/.my-claude` | The app. Reinstalling replaces it. |
+| `~/.my-claude` | The program. Reinstalling replaces it. |
+| `~/Applications/My Claude.app` and `~/Library/LaunchAgents/dev.myclaude.server.plist` | The app icon, and the login item that keeps it running (Mac only). |
 | `~/.config/my-claude` | Your names and tags, transcript backups, memory history, imported machines. Reinstalling keeps it. |
 
 It only changes Claude Code's own files when you ask it to: how long conversations are kept and `CLAUDE.md` (in `~/.claude`), an MCP server's on/off switch (in `~/.claude.json`), and cleaning debug logs (moved to the Trash). It backs up a file before changing it.
@@ -64,10 +65,11 @@ It only changes Claude Code's own files when you ask it to: how long conversatio
 | The install command fails to download | Use the GitHub copy: `curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh \| MY_CLAUDE_BASE=https://chethanbhatbs.github.io/my-claude bash` |
 | The page doesn't load right after install | Wait a few seconds and refresh. The first run is still setting up. |
 | Port 8766 is busy | It picks the next free port and opens that one. |
+| The app says it did not start | Its log is `~/Library/Logs/my-claude.log`. Running the install command again usually fixes it. |
 
 **Install by hand:** download [`my-claude-dashboard.zip`](https://my-claude.pages.dev/my-claude-dashboard.zip), unzip it, run `./run.sh`.
 
-**Remove it:** `rm -rf ~/.my-claude ~/.config/my-claude`
+**Remove it:** `~/.my-claude/macos/uninstall.sh` removes the app, the login item and the program. Add `--all` to also delete your data in `~/.config/my-claude`.
 
 ## For developers
 
