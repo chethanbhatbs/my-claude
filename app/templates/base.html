@@ -219,6 +219,7 @@ async function doRefresh(silent){
   const ua=document.getElementById('updatedAt'); if(ua) ua.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   if(rb && !silent){ rb.classList.remove('loading'); rb.textContent=rb.dataset.lbl||'Refresh'; }
   if(!silent) toast('Refreshed');
+  _dataVer=null; const sc=document.getElementById('syncChip'); if(sc) sc.classList.remove('on','click');
 }
 /* Auto-refresh: interval stored in localStorage (seconds; 0 = off). Timers only fire while the tab is open and the laptop is awake. */
 function autoRefreshSeconds(){ return parseInt(localStorage.getItem('mc_autorefresh')||'0',10)||0; }
@@ -263,10 +264,9 @@ document.addEventListener('click', function(e){ const b=e.target.closest && e.ta
 });
 highlightMain();
 applyAutoRefresh();
-/* ---- live sync: the open page notices new transcripts/skills and pulls them in ----
-   Polls a stat-only fingerprint (~6ms server-side). When it changes, the server rebuilds in the
-   background and we silently re-render once it's done, so the page you're staring at stops being a
-   snapshot of whenever you opened it. */
+/* ---- live sync: the open page notices new transcripts/skills ----
+   Polls a stat-only fingerprint (~6ms server-side). When it changes, a "new data · refresh" link
+   appears in the sidebar; the page itself is only re-rendered when the person clicks it. */
 let _dataVer=null, _syncBusy=false;
 async function syncTick(){
   if(_syncBusy || document.hidden) return;
@@ -275,22 +275,10 @@ async function syncTick(){
     const r=await fetch('/api/data-version'); const j=await r.json();
     if(_dataVer===null){ _dataVer=j.version; return; }
     if(j.version===_dataVer) return;
-    // Don't yank the page out from under someone who is reading a conversation or typing —
-    // offer the refresh instead of forcing it.
-    if(document.querySelector('#convDetail .cvm') || (document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))){
-      const chip=document.getElementById('syncChip');
-      if(chip){ chip.textContent='new data · refresh'; chip.classList.add('on','click'); chip.onclick=()=>doRefresh(); }
-      return;
-    }
-    _syncBusy=true;
-    const chip=document.getElementById('syncChip'); if(chip){ chip.textContent='syncing…'; chip.classList.remove('click'); chip.onclick=null; chip.classList.add('on'); }
-    _prefetch.clear();
-    const y=window.scrollY;
-    await navigate(location.pathname+location.search, false, true);
-    window.scrollTo(0, y);                                        // stay where you were reading
-    _dataVer=j.version;
-    const ua=document.getElementById('updatedAt'); if(ua) ua.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    if(chip) chip.classList.remove('on');
+    // New data: say so and let the person refresh when they choose. Re-rendering on its own showed
+    // the loading screen every ~15s whenever any Claude session was running.
+    const chip=document.getElementById('syncChip');
+    if(chip){ chip.textContent='new data · refresh'; chip.classList.add('on','click'); chip.onclick=()=>{ _dataVer=null; chip.classList.remove('on','click'); doRefresh(); }; }
   }catch(e){}
   finally{ _syncBusy=false; }
 }
