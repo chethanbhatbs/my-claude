@@ -46,6 +46,9 @@ launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1 || { echo "Could not start
 rm -rf "$APP"
 osacompile -o "$APP" -e 'do shell script quoted form of (POSIX path of (path to home folder)) & ".my-claude/macos/launcher.sh"'
 cp "$DIR/macos/AppIcon.icns" "$APP/Contents/Resources/applet.icns"
+# osacompile also writes Assets.car with the default script icon, and macOS prefers it over applet.icns
+rm -f "$APP/Contents/Resources/Assets.car"
+/usr/libexec/PlistBuddy -c "Delete :CFBundleIconName" "$APP/Contents/Info.plist" 2>/dev/null || true
 PB=/usr/libexec/PlistBuddy
 $PB -c "Set :CFBundleName My Claude" "$APP/Contents/Info.plist" 2>/dev/null || $PB -c "Add :CFBundleName string My Claude" "$APP/Contents/Info.plist"
 $PB -c "Add :CFBundleIdentifier string dev.myclaude.app" "$APP/Contents/Info.plist" 2>/dev/null || $PB -c "Set :CFBundleIdentifier dev.myclaude.app" "$APP/Contents/Info.plist"
