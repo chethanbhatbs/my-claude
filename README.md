@@ -14,7 +14,7 @@ Paste this into Terminal:
 curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash
 ```
 
-On a Mac this adds **My Claude** to your Applications folder. Open it any time from Applications, Spotlight or the Dock. It starts on its own when you log in, so you never need this command again. The dashboard is at **http://127.0.0.1:8766** (or the next free port).
+On a Mac this adds **My Claude** to your Applications folder. It opens in its own window, with its own icon in the Dock and Cmd-Tab, and you can open it any time from Applications, Spotlight or the Dock. It starts on its own when you log in, so you never need this command again. The dashboard is at **http://127.0.0.1:8766** (or the next free port).
 
 - **Needs:** macOS and Python 3.
 - **First run** takes about 20 seconds while it sets up. If the browser says "This site can't be reached", wait a few seconds and refresh.

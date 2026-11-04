@@ -54,3 +54,29 @@ $PB -c "Set :CFBundleName My Claude" "$APP/Contents/Info.plist" 2>/dev/null || $
 $PB -c "Add :CFBundleIdentifier string dev.myclaude.app" "$APP/Contents/Info.plist" 2>/dev/null || $PB -c "Set :CFBundleIdentifier dev.myclaude.app" "$APP/Contents/Info.plist"
 codesign --force --deep -s - "$APP" >/dev/null 2>&1
 touch "$APP"   # so Finder and Spotlight pick up the new icon
+
+# 3. the window's own process identity. The window (window.py) needs Python; run from Python's own
+#    app it shows as "Python" in the Dock and Cmd-Tab. A copy of Python's small app launcher inside a
+#    bundle named My Claude makes macOS show our name and icon instead. Kept in the hidden program
+#    folder so Spotlight doesn't list a second "My Claude". Skipped if this Python has no such launcher.
+WIN="$DIR/MyClaudeWindow.app"; rm -rf "$WIN"
+PYBIN="$("$DIR/.venv/bin/python" -c 'import os,sys; print(os.path.join(sys.base_prefix,"Resources/Python.app/Contents/MacOS/Python"))' 2>/dev/null)"
+if [ -x "$PYBIN" ]; then
+  mkdir -p "$WIN/Contents/MacOS" "$WIN/Contents/Resources"
+  cp "$PYBIN" "$WIN/Contents/MacOS/My Claude"
+  cp "$DIR/macos/AppIcon.icns" "$WIN/Contents/Resources/AppIcon.icns"
+  cat > "$WIN/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleName</key><string>My Claude</string>
+  <key>CFBundleDisplayName</key><string>My Claude</string>
+  <key>CFBundleIdentifier</key><string>dev.myclaude.window</string>
+  <key>CFBundleExecutable</key><string>My Claude</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>NSHighResolutionCapable</key><true/>
+</dict></plist>
+PLIST
+  codesign --force --deep -s - "$WIN" >/dev/null 2>&1
+fi

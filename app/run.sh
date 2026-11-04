@@ -35,6 +35,10 @@ if [ ! -x "$VENV/bin/uvicorn" ]; then
   [ "${rc:-0}" -ne 0 ] && { printf 'Setup failed — check your internet connection and re-run.\n'; exit 1; }
 fi
 
+# macOS: the library that gives My Claude its own window (falls back to the browser without it)
+if [ "$(uname)" = "Darwin" ] && [ -f "$DIR/requirements-mac.txt" ] && ! "$VENV/bin/python" -c "import webview" >/dev/null 2>&1; then
+  "$VENV/bin/pip" install --quiet --disable-pip-version-check --no-cache-dir -r "$DIR/requirements-mac.txt" || true
+fi
 [ "$MODE" = "--setup-only" ] && exit 0
 if [ "$MODE" = "--serve" ]; then
   exec "$VENV/bin/uvicorn" myclaude:app --host 127.0.0.1 --port "${1:-8766}" --app-dir "$DIR" --log-level warning --no-access-log
