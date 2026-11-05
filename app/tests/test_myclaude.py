@@ -817,3 +817,12 @@ def test_history_custom_date_range_is_inclusive(monkeypatch):
     monkeypatch.setattr(mc, "archived_sessions", lambda: [])
     html = TestClient(mc.app).get("/p/history?from=2026-10-19&to=2026-10-20").text
     assert "in.jsonl" in html and "before.jsonl" not in html and "after.jsonl" not in html
+
+
+def test_skill_size_leaves_out_hidden_and_dependency_folders(tmp_path):
+    sk = tmp_path / "s"; (sk / ".git").mkdir(parents=True); (sk / ".cache").mkdir(); (sk / "node_modules").mkdir(); (sk / "scripts").mkdir()
+    (sk / "SKILL.md").write_text("x" * 100); (sk / "scripts" / "a.py").write_text("x" * 50)
+    (sk / ".git" / "pack").write_text("x" * 5000); (sk / ".cache" / "c").write_text("x" * 5000)
+    (sk / "node_modules" / "m.js").write_text("x" * 5000); (sk / ".env").write_text("x" * 7)
+    assert mc.skill_files_size(str(sk)) == 150
+    assert mc.dir_size(str(sk)) == 15157
