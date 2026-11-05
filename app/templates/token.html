@@ -197,6 +197,24 @@ async function loadLimits(fresh){
   <tbody>{% for r in proj_rows %}<tr><td><a href="/p/history?q={{ r.q|urlencode }}">{{ r.project }}</a></td><td class="num">{{ r.tokens }}</td><td class="num">{{ r.cost }}</td><td class="num">{{ r.turns }}</td></tr>{% endfor %}</tbody>
 </table>
 
+<h2 class="sub">Startup cost per conversation</h2>
+<div class="caption" style="margin:-4px 0 8px">What Claude read on the first reply of each conversation: the system prompt, tool and MCP lists, CLAUDE.md, skill list, and your first message. Measured from your saved conversations. Lower is better: you pay it every time you start or resume.</div>
+{% if startup.sessions %}
+<div class="caption" style="margin:0 0 8px">Typical (median) <strong>{{ fmt_num(startup.median) }}</strong> tokens · largest {{ fmt_num(startup.max) }} · {{ startup.sessions }} conversations · about <strong>${{ '%.2f' % startup.cost }}</strong> at API list prices in this window</div>
+{% if startup.weeks|length > 1 %}<table class="data" style="margin-bottom:10px">
+  <thead><tr><th>Week of</th><th class="num">Typical startup</th><th class="num">Conversations</th></tr></thead>
+  <tbody>{% for w in startup.weeks %}<tr><td>{{ w.week }}</td><td class="num">{{ fmt_num(w.median) }}</td><td class="num">{{ w.sessions }}</td></tr>{% endfor %}</tbody>
+</table>{% endif %}
+{% if startup.parts %}<table class="data" style="margin-bottom:10px">
+  <thead><tr><th>What you control (from files on disk, estimate)</th><th class="num">About</th><th class="num">Share of typical</th></tr></thead>
+  <tbody>{% for p in startup.parts %}<tr><td>{{ p.name }}</td><td class="num">{{ fmt_num(p.tokens) }}</td><td class="num">{{ '%.0f' % (p.tokens / startup.median * 100 if startup.median else 0) }}%</td></tr>{% endfor %}</tbody>
+</table>{% endif %}
+<table class="data">
+  <thead><tr><th>Largest starts (often a resumed conversation)</th><th class="num">Tokens</th></tr></thead>
+  <tbody>{% for r in startup.top %}<tr><td>{% if r.path %}<a href="/p/history?conv={{ r.path|urlencode }}">{{ r.title[:70] }}</a>{% else %}{{ r.title[:70] }}{% endif %}</td><td class="num">{{ fmt_num(r.tokens) }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<div class="caption">None in this window.</div>{% endif %}
+
 <h2 class="sub">Cache rewritten after a pause</h2>
 <div class="caption" style="margin:-4px 0 8px">Turns that came 5+ minutes after the previous one in the same conversation and wrote to the prompt cache. The cache expires when idle, so the next turn pays to write it again. API list-price estimate.</div>
 {% if rebuild.turns %}

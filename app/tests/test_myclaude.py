@@ -817,3 +817,29 @@ def test_history_custom_date_range_is_inclusive(monkeypatch):
     monkeypatch.setattr(mc, "archived_sessions", lambda: [])
     html = TestClient(mc.app).get("/p/history?from=2026-10-19&to=2026-10-20").text
     assert "in.jsonl" in html and "before.jsonl" not in html and "after.jsonl" not in html
+
+
+def test_startup_cost_uses_only_the_first_reply_of_each_conversation(monkeypatch):
+    monkeypatch.setattr(mc, "_titles", lambda: {})
+    monkeypatch.setattr(mc, "startup_parts", lambda: [])
+    df = _usage_df([
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:05:00Z", "input_tokens": 999, "cache_read": 999},  # later turn
+        {"session": "a", "transcript": "a", "ts": "2026-10-27T10:00:00Z", "input_tokens": 10, "cache_creation": 20000, "cache_read": 0},
+        {"session": "b", "transcript": "b", "ts": "2026-10-28T10:00:00Z", "input_tokens": 5, "cache_creation": 1000, "cache_read": 29000},
+        {"session": "b", "transcript": "x", "ts": "2026-10-28T09:00:00Z", "kind": "sub-agent", "input_tokens": 50000}])  # sub-agent ignored
+    r = mc.startup_cost(df)
+    assert r["sessions"] == 2
+    assert r["max"] == 30005 and r["median"] == (20010 + 30005) // 2
+    assert [t["tokens"] for t in r["top"]] == [30005, 20010]
+
+
+def test_startup_cost_ignores_conversations_that_started_before_the_window(monkeypatch):
+    monkeypatch.setattr(mc, "_titles", lambda: {})
+    monkeypatch.setattr(mc, "startup_parts", lambda: [])
+    full = _usage_df([
+        {"session": "old", "transcript": "old", "ts": "2026-09-01T10:00:00Z", "cache_creation": 15000},
+        {"session": "old", "transcript": "old", "ts": "2026-10-27T10:00:00Z", "cache_read": 500000},  # mid-conversation
+        {"session": "new", "transcript": "new", "ts": "2026-10-28T10:00:00Z", "cache_creation": 12000}])
+    window = full[full["ts"] >= "2026-10-01"]
+    r = mc.startup_cost(window, full)
+    assert r["sessions"] == 1 and r["max"] == 12000
