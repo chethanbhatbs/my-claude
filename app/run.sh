@@ -2,9 +2,13 @@
 # My Claude — a private, local view of your Claude Code install.
 # Reads ~/.claude on THIS machine only. Nothing is uploaded or shared unless you choose to.
 #
-#   ./run.sh            # start on http://127.0.0.1:8766
-#   ./run.sh 9000       # start on a different port
+#   ./run.sh                 # start on http://127.0.0.1:8766 and open the browser
+#   ./run.sh 9000            # start on a different port
+#   ./run.sh --setup-only    # build the Python environment, then exit (used by install.sh)
+#   ./run.sh --serve 8766    # run the server only, no browser (used by the macOS login item)
 set -e
+MODE=""
+case "${1:-}" in --setup-only|--serve) MODE="$1"; shift ;; esac
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
@@ -29,6 +33,15 @@ if [ ! -x "$VENV/bin/uvicorn" ]; then
   wait "$SETUP" && rc=0 || rc=$?
   printf '\r\033[K'
   [ "${rc:-0}" -ne 0 ] && { printf 'Setup failed — check your internet connection and re-run.\n'; exit 1; }
+fi
+
+# macOS: the library that gives My Claude its own window (falls back to the browser without it)
+if [ "$(uname)" = "Darwin" ] && [ -f "$DIR/requirements-mac.txt" ] && ! "$VENV/bin/python" -c "import webview" >/dev/null 2>&1; then
+  "$VENV/bin/pip" install --quiet --disable-pip-version-check --no-cache-dir -r "$DIR/requirements-mac.txt" || true
+fi
+[ "$MODE" = "--setup-only" ] && exit 0
+if [ "$MODE" = "--serve" ]; then
+  exec "$VENV/bin/uvicorn" myclaude:app --host 127.0.0.1 --port "${1:-8766}" --app-dir "$DIR" --log-level warning --no-access-log
 fi
 
 PORT="${1:-8766}"
