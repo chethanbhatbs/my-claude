@@ -817,3 +817,17 @@ def test_history_custom_date_range_is_inclusive(monkeypatch):
     monkeypatch.setattr(mc, "archived_sessions", lambda: [])
     html = TestClient(mc.app).get("/p/history?from=2026-10-19&to=2026-10-20").text
     assert "in.jsonl" in html and "before.jsonl" not in html and "after.jsonl" not in html
+
+
+def test_scan_usage_counts_each_reply_once(tmp_path):
+    u = {"input_tokens": 10, "output_tokens": 5, "cache_creation_input_tokens": 100, "cache_read_input_tokens": 1000}
+    lines = [
+        {"timestamp": "2026-11-01T10:00:00Z", "requestId": "r1", "message": {"id": "m1", "model": "claude-opus-5-5", "usage": u}},
+        {"timestamp": "2026-11-01T10:00:01Z", "requestId": "r1", "message": {"id": "m1", "model": "claude-opus-5-5", "usage": u}},
+        {"timestamp": "2026-11-01T10:00:02Z", "requestId": "r1", "message": {"id": "m1", "model": "claude-opus-5-5", "usage": dict(u, output_tokens=40)}},
+        {"timestamp": "2026-11-01T10:01:00Z", "requestId": "r2", "message": {"id": "m2", "model": "claude-opus-5-5", "usage": u}},
+    ]
+    f = tmp_path / "t.jsonl"; f.write_text("\n".join(json.dumps(x) for x in lines))
+    rows = mc._scan_usage(str(f))
+    assert len(rows) == 2
+    assert rows[0]["output_tokens"] == 40 and rows[0]["ts"] == "2026-11-01T10:00:00Z"
