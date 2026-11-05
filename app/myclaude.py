@@ -14,6 +14,16 @@ HOME = Path.home()
 CLAUDE = HOME / ".claude"
 SKILL_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = SKILL_DIR / "config.json"
+# Derived caches live outside the app folder: install.sh replaces ~/.my-claude, and rebuilding
+# them from scratch means re-reading every transcript (minutes on a large ~/.claude).
+CACHE_DIR = Path(os.environ.get("MY_CLAUDE_CACHE_DIR") or (
+    Path.home() / "Library" / "Caches" / "my-claude" if sys.platform == "darwin"
+    else Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "my-claude"))
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+for _old in (".mc_usage_cache.json", ".mc_signals_cache.json", ".mc_cache.json", ".mc_search.db"):
+    try:      # one-time move from the old location next to the code
+        if (SKILL_DIR / _old).exists() and not (CACHE_DIR / _old).exists(): shutil.move(str(SKILL_DIR / _old), str(CACHE_DIR / _old))
+    except OSError: pass
 
 CAT_COLOR = {
     "Skills": "#D97757", "Sessions": "#C89968", "Connectors": "#A98DD0",
@@ -75,6 +85,12 @@ def clear_cache(): _CACHE.clear()
 # Data the dashboard owns lives here, not in the app folder: install.sh replaces ~/.my-claude.
 DATA_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config")) / "my-claude"
 LABELS_PATH = DATA_DIR / "labels.json"
+# Preferences survive reinstalls too (they used to sit next to the code, which install.sh replaces).
+_old_cfg = CONFIG_PATH; CONFIG_PATH = DATA_DIR / "config.json"
+try:
+    if _old_cfg.exists() and not CONFIG_PATH.exists():
+        DATA_DIR.mkdir(parents=True, exist_ok=True); shutil.move(str(_old_cfg), str(CONFIG_PATH))
+except OSError: pass
 
 def load_labels():
     try: d = json.loads(LABELS_PATH.read_text())
@@ -373,7 +389,7 @@ def parse_skill_meta(skill_dir):
 # ---- per-file usage parse, memoised on disk by (mtime, size) ----
 # Re-reading every transcript cost ~11s on a cold cache, which is what made tab switches lag.
 # Now only files that actually changed are re-read; everything else loads from this cache.
-USAGE_CACHE_FILE = SKILL_DIR / ".mc_usage_cache.json"
+USAGE_CACHE_FILE = CACHE_DIR / ".mc_usage_cache.json"
 _UROW = ("ts", "model", "input_tokens", "output_tokens", "cache_creation", "cache_read")
 _UCACHE_V = 1
 _ucache = None; _udirty = False
@@ -616,7 +632,7 @@ def load_config_dict():
         try: return {**DEFAULT_CONFIG, **json.loads(CONFIG_PATH.read_text())}
         except Exception: pass
     return dict(DEFAULT_CONFIG)
-def save_config(cfg): CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
+def save_config(cfg): CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True); CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
 
 # ---------- gh ----------
 def run_cmd(cmd, cwd=None):
@@ -1003,7 +1019,7 @@ def load_config_detail():
             "hook_events": hook_events, "claude_md": claude_md, "settings_keys": settings_keys}
 
 # ---- per-file hook runs + MCP tool names/calls, memoised on disk by (mtime, size) like usage ----
-SIG_CACHE_FILE = SKILL_DIR / ".mc_signals_cache.json"
+SIG_CACHE_FILE = CACHE_DIR / ".mc_signals_cache.json"
 _SIG_V = 2
 _sig = None; _sig_dirty = False; _sig_lock = threading.Lock()
 _CALL_RE = re.compile(r'"type":"tool_use","id":"[^"]*","name":"(mcp__([^"_]+(?:_[^"_]+)*)__[^"]+)"')
@@ -1440,7 +1456,7 @@ def ts_epoch(v):
     return 0
 
 # ---- persistent per-file scan cache (keyed by path + mtime + size), for fast cold loads ----
-CACHE_FILE = SKILL_DIR / ".mc_cache.json"
+CACHE_FILE = CACHE_DIR / ".mc_cache.json"
 _disk = None; _dirty = False
 CMD_RE = re.compile(r"<command-name>/?([a-zA-Z0-9:_.-]{2,48})</command-name>")
 # Claude Code built-in slash commands — excluded from skill-usage attribution so a built-in
@@ -2047,7 +2063,7 @@ def live_limits(force=False):
 # The old search re-grepped every transcript on every query, capped at 500 hits, and could only link
 # to a whole conversation. This keeps an incremental index (mtime+size keyed, same idea as the other
 # caches) so queries are instant, uncapped in practice, and carry the message index for deep links.
-SEARCH_DB = SKILL_DIR / ".mc_search.db"
+SEARCH_DB = CACHE_DIR / ".mc_search.db"
 _search_lock = threading.Lock()
 
 def _search_conn():

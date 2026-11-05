@@ -8,17 +8,27 @@ A local dashboard for everything Claude Code keeps in `~/.claude`: your conversa
 
 ## Install
 
-Paste this into Terminal:
+**You need:** a Mac and Python 3. To check, open Terminal and run `python3 --version`. If it prints a version, you're set. If not, install Python from [python.org](https://www.python.org/downloads/macos/).
 
-```bash
-curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash
-```
+1. **Open Terminal.** Press `Cmd + Space`, type `Terminal`, press Enter.
+2. **Paste this and press Enter:**
 
-It opens the dashboard at **http://127.0.0.1:8766** (or the next free port).
+   ```bash
+   curl -fsSL --retry 5 --retry-all-errors https://my-claude.pages.dev/install.sh | bash
+   ```
 
-- **Needs:** macOS and Python 3.
-- **First run** takes about 20 seconds while it sets up. If the browser says "This site can't be reached", wait a few seconds and refresh.
-- **Read the script first** if you like: [`install.sh`](install.sh).
+3. **Wait for the window.** Setup takes about 20 seconds. Then the **My Claude** window opens and shows "Starting…" while it reads your conversations for the first time. With a lot of history this first read can take several minutes; later starts take seconds.
+4. **Keep it in the Dock** (optional). Right-click the My Claude icon in the Dock → **Options** → **Keep in Dock**.
+
+That's it. You don't need the command again. My Claude is in your **Applications** folder and starts by itself when you log in.
+
+| Later | How |
+|---|---|
+| Open it | Applications → **My Claude**, or click it in the Dock |
+| Update to the newest version | Run the same command again. Your names, tags, backups and settings are kept |
+| Remove it | Run `~/.my-claude/macos/uninstall.sh` in Terminal. Add `--all` to also delete your data |
+
+You can [read the install script](install.sh) before running it. On Linux the command runs it in your browser at http://127.0.0.1:8766 instead of its own window (not tested on Linux yet).
 
 ## What you can do
 
@@ -52,7 +62,8 @@ Secrets in MCP configs are hidden before they're shown.
 
 | Folder | What's in it |
 |---|---|
-| `~/.my-claude` | The app. Reinstalling replaces it. |
+| `~/.my-claude` | The program. Reinstalling replaces it. |
+| `/Applications/My Claude.app` and `~/Library/LaunchAgents/dev.myclaude.server.plist` | The app, and the login item that keeps it running (Mac only). |
 | `~/.config/my-claude` | Your names and tags, transcript backups, memory history, imported machines. Reinstalling keeps it. |
 
 It only changes Claude Code's own files when you ask it to: how long conversations are kept and `CLAUDE.md` (in `~/.claude`), an MCP server's on/off switch (in `~/.claude.json`), and cleaning debug logs (moved to the Trash). It backs up a file before changing it.
@@ -64,10 +75,10 @@ It only changes Claude Code's own files when you ask it to: how long conversatio
 | The install command fails to download | Use the GitHub copy: `curl -fsSL https://chethanbhatbs.github.io/my-claude/install.sh \| MY_CLAUDE_BASE=https://chethanbhatbs.github.io/my-claude bash` |
 | The page doesn't load right after install | Wait a few seconds and refresh. The first run is still setting up. |
 | Port 8766 is busy | It picks the next free port and opens that one. |
+| The app says it did not start | Its log is `~/Library/Logs/my-claude.log`. Running the install command again usually fixes it. |
 
 **Install by hand:** download [`my-claude-dashboard.zip`](https://my-claude.pages.dev/my-claude-dashboard.zip), unzip it, run `./run.sh`.
 
-**Remove it:** `rm -rf ~/.my-claude ~/.config/my-claude`
 
 ## For developers
 
