@@ -50,7 +50,7 @@
       {# no "edited 7d" badge: it read as "edited 7 days ago" while the card said today, and it put
          accent colour on every card. The exact edited date below says it better. #}
       <div class="c-title"><span class="c-name">{{ s.name }}</span>{% if s.uses == 0 %}<span class="tag">unused</span>{% endif %}{% if s.pushed_url %}<span class="tag pushed">pushed</span>{% endif %}</div>
-      <div class="c-size">{{ s.size_human }}</div>
+      <div class="c-size"{% if s.folder_size > s.size * 2 and s.folder_size - s.size > 1048576 %} title="Folder on disk: {{ s.folder_human }}, including .git, caches and other data Claude does not load"{% endif %}>{{ s.size_human }}</div>
     </div>
     {% if s.description %}<div class="c-desc">{{ s.description }}</div>{% endif %}
     <div class="c-meta"><span>{{ s.cat }}</span><span>·</span><span{% if s.uses_hist %} title="{{ s.uses - s.uses_hist }} in transcripts on disk + {{ s.uses_hist }} recovered from sessions Claude Code has since deleted"{% endif %}>{{ s.uses }} use{{ '' if s.uses==1 else 's' }}</span></div>

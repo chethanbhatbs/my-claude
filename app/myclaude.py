@@ -923,6 +923,22 @@ def categorize_skill(name, desc):
         if hit(hay, kws): return label
     return "Other"
 
+_SKILL_SKIP = {"node_modules", "__pycache__", "venv"}
+
+def skill_files_size(p_str):
+    """Size of a skill's own files: leaves out hidden folders and files (.git, caches, browser
+    profiles), node_modules, __pycache__ and venv. Those sit on disk but Claude never loads them."""
+    total = 0
+    try:
+        for root, dirs, files in os.walk(p_str, followlinks=False):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in _SKILL_SKIP]
+            for f in files:
+                if f.startswith("."): continue
+                try: total += os.lstat(os.path.join(root, f)).st_size
+                except OSError: pass
+    except OSError: pass
+    return total
+
 @ttl_cache(900)
 def load_skills():
     sk = CLAUDE / "skills"; plugin_names = get_plugin_skill_names(); rows = []
@@ -930,8 +946,10 @@ def load_skills():
     for p in sorted(sk.iterdir()):
         if not p.is_dir(): continue
         meta = parse_skill_meta(p)
-        rows.append({"name": p.name, "description": meta["description"], "size": dir_size(str(p)),
-                     "size_human": fmt_size(dir_size(str(p))), "path": str(p), "mtime": latest_mtime(str(p)),
+        size = skill_files_size(str(p)); folder = dir_size(str(p))
+        rows.append({"name": p.name, "description": meta["description"], "size": size,
+                     "size_human": fmt_size(size), "folder_size": folder, "folder_human": fmt_size(folder),
+                     "path": str(p), "mtime": latest_mtime(str(p)),
                      "cat": categorize_skill(p.name, meta["description"]),
                      "source": "plugin" if p.name in plugin_names else "local"})
     return rows
@@ -2261,7 +2279,7 @@ def page(request: Request, slug: str):
 
 def _sizes():
     skills = load_skills(); projects = load_projects(); cfg = load_config_files(); cache = load_cache(); tasks = load_tasks()
-    return {"Skills": sum(s["size"] for s in skills), "Sessions": sum(p["size"] for p in projects),
+    return {"Skills": sum(s["folder_size"] for s in skills), "Sessions": sum(p["size"] for p in projects),
             "Config": sum(c["size"] for c in cfg), "Cache": sum(c["size"] for c in cache),
             "Tasks": sum(t["size"] for t in tasks), "Plugins": dir_size(str(CLAUDE / "plugins"))}
 
@@ -2292,7 +2310,7 @@ def render_overview(request):
         }
 
     kpis = [
-        {"label": "Skills", "value": str(len(skills)), "sub": fmt_size(sizes["Skills"]), "href": "/p/skills"},
+        {"label": "Skills", "value": str(len(skills)), "sub": fmt_size(sum(s["size"] for s in skills)), "href": "/p/skills"},
         {"label": "Conversations", "value": str(len(convs)), "sub": f"{sum(c['n'] for c in convs)} messages", "href": "/p/history"},
         {"label": "Tokens · 30d", "value": tokens30, "sub": cost30, "href": "/p/usage?win=30+days#measured"},
         {"label": "On disk", "value": fmt_size(total), "sub": f"{n_mcp} MCP · {len(plugins)} plugins", "href": "/p/mcp-plugins"},
