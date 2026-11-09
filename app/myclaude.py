@@ -3708,6 +3708,12 @@ def savings_report(since=None, window_days=30):
     scan = savings_scan()
     # only conversations you started; tool-started (sdk-*) sessions are shown separately below
     sdk = {Path(p).stem for p, v in scan.items() if str(v.get("ep", "")).startswith("sdk")}
+    # a file still being written may not have its entrypoint line yet; leave it out of startup until it does
+    fresh = time.time() - 600
+    def _recent(path):
+        try: return os.path.getmtime(path) >= fresh
+        except OSError: return False
+    no_ep = {Path(p).stem for p, v in scan.items() if not v.get("ep") and _recent(p)}
     mine = {p: v for p, v in scan.items() if Path(p).stem not in sdk}
     rtk = [r for v in scan.values() for r in v["rtk"]]
     serena = [r for v in scan.values() for r in v["serena"]]
@@ -3745,7 +3751,7 @@ def savings_report(since=None, window_days=30):
     # 2. startup tokens (first reply of each conversation), before vs after
     df = aggregate_usage(); st_b = []; st_a = []
     if not df.empty:
-        d = df[(df["kind"] == "conversation") & ~df["transcript"].isin(sdk)].copy()
+        d = df[(df["kind"] == "conversation") & ~df["transcript"].isin(sdk | no_ep)].copy()
         d["t"] = pd.to_datetime(d["ts"], errors="coerce", utc=True, format="mixed")
         d = d.dropna(subset=["t"]).sort_values(["transcript", "t"])
         if not d.empty:

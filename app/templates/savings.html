@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% block heading %}Savings{% endblock %}
 {% block content %}
+<style>#savMetrics{grid-template-columns:repeat(3,1fr)}@media (max-width:900px){ #savMetrics{grid-template-columns:1fr} }</style>
 <form class="row" method="get" action="/p/savings" style="flex:0 0 auto;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-start;margin:4px 0 4px" aria-label="Compare from date">
   <label class="caption" for="since" style="margin:0;flex:0 0 auto">Compare from</label>
   <input type="date" id="since" name="since" value="{{ r.since }}" style="width:auto;flex:0 0 auto" onchange="this.form.requestSubmit()">
 </form>
 
 {% macro pct(a, b) -%}{% if a %}{% set p = ((b - a) / a * 100)|round|int %}{{ '+' if p > 0 else '' }}{{ p }}%{% endif %}{%- endmacro %}
-<div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+<div class="metrics" id="savMetrics">
   <div class="metric"><div class="m-label">Startup tokens</div>
     <div class="m-value">{{ fmt_num(r.start_after) if r.n_start_after else '–' }}</div>
     <div class="m-sub">{% if r.n_start_before %}was {{ fmt_num(r.start_before) }}{% if r.n_start_after %} · {{ pct(r.start_before, r.start_after) }}{% endif %}{% endif %} · {{ r.n_start_after }} conversation{{ '' if r.n_start_after == 1 else 's' }} after</div></div>
