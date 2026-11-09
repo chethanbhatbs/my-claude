@@ -391,7 +391,7 @@ def parse_skill_meta(skill_dir):
 # Now only files that actually changed are re-read; everything else loads from this cache.
 USAGE_CACHE_FILE = CACHE_DIR / ".mc_usage_cache.json"
 _UROW = ("ts", "model", "input_tokens", "output_tokens", "cache_creation", "cache_read")
-_UCACHE_V = 1
+_UCACHE_V = 2  # 2: one row per reply (was one per line)
 _ucache = None; _udirty = False
 
 def _ucache_load():
@@ -409,7 +409,10 @@ def _ucache_flush():
         except Exception: pass
 
 def _scan_usage(jsonl_path):
-    records = []
+    # Claude Code writes one reply as several lines (one per content block), each repeating the same
+    # usage. Counting every line made all totals ~1.85x too high, so each reply (message id + request id)
+    # is kept once. Where the repeats differ slightly, the largest is kept: it is the final count.
+    records = []; seen = {}
     try:
         with open(jsonl_path, "r", errors="ignore") as f:
             for line in f:
@@ -422,11 +425,21 @@ def _scan_usage(jsonl_path):
                 if not usage: continue
                 model = msg.get("model") or obj.get("model") or ""
                 ts = obj.get("timestamp") or obj.get("ts") or ""
-                records.append({"ts": ts, "model": model,
-                                "input_tokens": int(usage.get("input_tokens") or 0),
-                                "output_tokens": int(usage.get("output_tokens") or 0),
-                                "cache_creation": int(usage.get("cache_creation_input_tokens") or 0),
-                                "cache_read": int(usage.get("cache_read_input_tokens") or 0)})
+                rec = {"ts": ts, "model": model,
+                       "input_tokens": int(usage.get("input_tokens") or 0),
+                       "output_tokens": int(usage.get("output_tokens") or 0),
+                       "cache_creation": int(usage.get("cache_creation_input_tokens") or 0),
+                       "cache_read": int(usage.get("cache_read_input_tokens") or 0)}
+                mid = msg.get("id")
+                if mid:
+                    key = (mid, obj.get("requestId") or "")
+                    if key in seen:
+                        prev = records[seen[key]]
+                        if sum(rec[k] for k in _UROW[2:]) > sum(prev[k] for k in _UROW[2:]):
+                            rec["ts"] = prev["ts"]; records[seen[key]] = rec
+                        continue
+                    seen[key] = len(records)
+                records.append(rec)
     except Exception: pass
     return records
 
