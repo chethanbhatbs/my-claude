@@ -857,3 +857,64 @@ def test_scan_usage_counts_each_reply_once(tmp_path):
     rows = mc._scan_usage(str(f))
     assert len(rows) == 2
     assert rows[0]["output_tokens"] == 40 and rows[0]["ts"] == "2026-11-01T10:00:00Z"
+
+
+def _savings_transcript(tmp_path, cwd):
+    hook = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecisionReason": "RTK auto-rewrite",
+                                   "updatedInput": {"command": "cd x && rtk git status"}, "permissionDecision": "allow"}}
+    lines = [
+        {"type": "user", "entrypoint": "cli", "timestamp": "2026-11-10T10:00:00Z", "origin": {"kind": "human"}, "message": {"role": "user", "content": "check the repo"}},
+        {"type": "assistant", "timestamp": "2026-11-10T10:00:05Z", "cwd": cwd, "message": {"content": [
+            {"type": "tool_use", "id": "t1", "name": "Bash", "input": {"command": "cd x && git status"}},
+            {"type": "tool_use", "id": "t2", "name": "mcp__serena__find_symbol", "input": {"relative_path": "big.py", "name_path": "f"}}]}},
+        {"type": "attachment", "timestamp": "2026-11-10T10:00:06Z", "attachment": {"type": "hook_success", "toolUseID": "t1", "stdout": json.dumps(hook)}},
+        {"type": "user", "timestamp": "2026-11-10T10:00:07Z", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "t1", "content": "x" * 400},
+            {"type": "tool_result", "tool_use_id": "t2", "content": [{"type": "text", "text": "y" * 80}]}]}},
+    ]
+    f = tmp_path / "s1.jsonl"; f.write_text("\n".join(json.dumps(x) for x in lines))
+    return f
+
+
+def test_scan_savings_finds_rtk_rewrites_serena_calls_and_typed_messages(tmp_path):
+    (tmp_path / "big.py").write_text("z" * 4000)
+    v = mc._scan_savings(str(_savings_transcript(tmp_path, str(tmp_path))))
+    assert v["ep"] == "cli"
+    assert v["days"]["2026-11-10"]["turns"] == 1
+    assert v["days"]["2026-11-10"]["out"] == {"Bash": 400, "mcp:serena": 80}
+    assert v["rtk"] == [["2026-11-10", "git", 400]]
+    assert v["serena"] == [["2026-11-10", "find_symbol", 80, str(tmp_path / "big.py")]]
+
+
+def test_savings_report_splits_before_after_and_skips_tool_started_sessions(tmp_path, monkeypatch):
+    (tmp_path / "big.py").write_text("z" * 4000)
+    mine = mc._scan_savings(str(_savings_transcript(tmp_path, str(tmp_path))))
+    mine["days"]["2026-11-01"] = {"turns": 2, "out": {"Bash": 8000}}
+    bot = {"ep": "sdk-ts", "days": {"2026-11-10": {"turns": 50, "out": {"Bash": 10**6}}}, "rtk": [], "serena": []}
+    monkeypatch.setattr(mc, "savings_scan", lambda: {"/p/mine.jsonl": mine, "/p/bot.jsonl": bot})
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: mc.pd.DataFrame())
+    r = mc.savings_report("2026-11-09")
+    assert (r["turns_before"], r["turns_after"]) == (2, 1)          # the sdk session's 50 turns are not counted
+    assert (r["out_before"], r["out_after"]) == (1000, 120)         # 8000/4/2 and (400+80)/4/1
+    assert r["rtk_n"] == 1 and r["rtk_rows"][0]["sub"] == "git"
+    assert r["serena_n"] == 1 and r["serena_saved"] == 1000 - 20  # whole file 4000/4 minus returned 80/4
+
+
+def test_savings_page_renders(monkeypatch):
+    monkeypatch.setattr(mc, "savings_scan", lambda: {})
+    monkeypatch.setattr(mc, "aggregate_usage", lambda: mc.pd.DataFrame())
+    from fastapi.testclient import TestClient
+    html = TestClient(mc.app).get("/p/savings?since=2026-11-09").text
+    assert "Savings" in html and "not measured" in html and "2026-11-09" in html
+
+
+def test_savings_change_is_red_when_up_and_green_when_down(monkeypatch):
+    from fastapi.testclient import TestClient
+    r = {"since": "2026-11-09", "lo": "2026-10-10", "window_days": 30, "turns_before": 10, "turns_after": 10,
+         "out_before": 1000, "out_after": 800, "tool_rows": [], "start_before": 1000, "start_after": 1200,
+         "n_start_before": 5, "n_start_after": 5, "rtk_n": 0, "rtk_tokens": 0, "rtk_rows": [], "series": [],
+         "rtk_log": False, "serena_rows": [], "serena_n": 0, "serena_saved": 0, "serena_known": 0, "bg": [], "bg_sessions": 0}
+    monkeypatch.setattr(mc, "savings_report", lambda since=None, window_days=30: r)
+    html = TestClient(mc.app).get("/p/savings").text
+    assert 'color:var(--err)">+20%' in html     # startup went up: more tokens, red
+    assert 'color:var(--ok)">-20%' in html      # tool output went down: fewer tokens, green

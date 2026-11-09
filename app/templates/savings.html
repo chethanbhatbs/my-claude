@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block heading %}Savings{% endblock %}
+{% block content %}
+<style>#savMetrics{grid-template-columns:repeat(3,1fr)}@media (max-width:900px){ #savMetrics{grid-template-columns:1fr} }</style>
+<form class="row" method="get" action="/p/savings" style="flex:0 0 auto;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-start;margin:4px 0 4px" aria-label="Compare from date">
+  <label class="caption" for="since" style="margin:0;flex:0 0 auto">Compare from</label>
+  <input type="date" id="since" name="since" value="{{ r.since }}" style="width:auto;flex:0 0 auto" onchange="this.form.requestSubmit()">
+</form>
+
+{% macro pct(a, b) -%}{% if a %}{% set p = ((b - a) / a * 100)|round|int %}<span style="font-weight:500;color:var({{ '--err' if p > 0 else ('--ok' if p < 0 else '--dim') }})">{{ '+' if p > 0 else '' }}{{ p }}%</span>{% endif %}{%- endmacro %}
+<div class="metrics" id="savMetrics">
+  <a class="metric" href="/p/usage#startup" title="Open startup cost on the Usage page"><div class="m-label">Startup tokens</div>
+    <div class="m-value">{{ fmt_num(r.start_after) if r.n_start_after else '–' }}</div>
+    <div class="m-sub">{% if r.n_start_before %}was {{ fmt_num(r.start_before) }}{% if r.n_start_after %} · {{ pct(r.start_before, r.start_after) }}{% endif %}{% endif %} · {{ r.n_start_after }} conversation{{ '' if r.n_start_after == 1 else 's' }} after</div></a>
+  <a class="metric" href="#" data-tab="0" title="Show tool output by tool"><div class="m-label">Tool output per message</div>
+    <div class="m-value">{{ fmt_num(r.out_after) if r.turns_after else '–' }}</div>
+    <div class="m-sub">{% if r.turns_before %}was {{ fmt_num(r.out_before) }}{% if r.turns_after %} · {{ pct(r.out_before, r.out_after) }}{% endif %}{% endif %} · estimate</div></a>
+  <a class="metric" href="#" data-tab="1" title="Show RTK commands"><div class="m-label">Commands RTK shortened</div>
+    <div class="m-value">{{ r.rtk_n }}</div>
+    <div class="m-sub">tokens saved: not measured</div></a>
+</div>
+
+{% if r.series|length > 1 %}
+<div class="card" style="padding:12px 14px 4px">
+  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between"><span class="caption" style="margin:0">Tool output per message you typed, by day (tokens, estimate)</span><span class="caption" style="margin:0">dashed line = {{ r.since }}</span></div>
+  <div id="savChart" style="height:240px"></div>
+</div>
+{% endif %}
+
+<div class="seg" style="margin:8px 0 10px" id="savSeg">
+  <a href="#" class="active" data-p="0">By tool</a><a href="#" data-p="1">RTK</a><a href="#" data-p="2">Serena</a><a href="#" data-p="3">Background sessions</a>
+</div>
+
+<div class="sav-pane">
+{% if r.tool_rows %}<div style="overflow-x:auto;max-width:100%"><table class="data">
+  <thead><tr><th>Tool</th><th class="num">Before (per message)</th><th class="num">After (per message)</th></tr></thead>
+  <tbody>{% for t in r.tool_rows %}<tr><td class="mono">{{ t.tool }}</td><td class="num">{{ fmt_num(t.before) }}</td><td class="num">{{ fmt_num(t.after) }}</td></tr>{% endfor %}</tbody>
+</table></div>{% else %}<div class="caption">No tool output in this range.</div>{% endif %}
+</div>
+
+<div class="sav-pane" hidden>
+{% if r.rtk_rows %}<div style="overflow-x:auto;max-width:100%"><table class="data">
+  <thead><tr><th>Command</th><th class="num">Times</th><th class="num">Output after shortening (tokens)</th></tr></thead>
+  <tbody>{% for x in r.rtk_rows %}<tr><td class="mono">{{ x.sub }}</td><td class="num">{{ x.n }}</td><td class="num">{{ fmt_num(x.tokens) }}</td></tr>{% endfor %}</tbody>
+</table></div>{% else %}<div class="caption">No commands shortened by RTK since {{ r.since }}.</div>{% endif %}
+</div>
+
+<div class="sav-pane" hidden>
+{% if r.serena_rows %}<div class="caption" style="margin:0 0 8px">Whole-file tokens avoided: about <strong>{{ fmt_num(r.serena_saved) }}</strong> (estimate, {{ r.serena_known }} read calls)</div>
+<div style="overflow-x:auto;max-width:100%"><table class="data">
+  <thead><tr><th>Serena tool</th><th class="num">Calls</th><th class="num">Output (tokens)</th></tr></thead>
+  <tbody>{% for x in r.serena_rows %}<tr><td class="mono">{{ x.tool }}</td><td class="num">{{ x.n }}</td><td class="num">{{ fmt_num(x.tokens) }}</td></tr>{% endfor %}</tbody>
+</table></div>{% else %}<div class="caption">No Serena calls since {{ r.since }}.</div>{% endif %}
+</div>
+
+<div class="sav-pane" hidden>
+{% if r.bg %}<div style="overflow-x:auto;max-width:100%"><table class="data">
+  <thead><tr><th>Folder (last {{ r.window_days }} days)</th><th class="num">Sessions</th><th class="num">Replies</th></tr></thead>
+  <tbody>{% for b in r.bg %}<tr><td class="mono">{{ b.project }}</td><td class="num">{{ b.sessions }}</td><td class="num">{{ b.turns }}</td></tr>{% endfor %}
+  <tr><td><strong>Total</strong></td><td class="num"><strong>{{ r.bg_sessions }}</strong></td><td></td></tr></tbody>
+</table></div>{% else %}<div class="caption">None.</div>{% endif %}
+</div>
+
+<details class="exp" style="margin-top:14px"><summary><span>Where these numbers come from</span></summary><div class="exp-body"><div class="caption" style="margin:0">
+  Before = {{ r.lo }} to the day before {{ r.since }}; after = {{ r.since }} onward. Startup tokens are measured on the first reply of each conversation you started. Tool output is the text of every tool result divided by 4 (estimate). Sessions that tools start on their own are left out of before/after and listed under Background sessions. RTK's tokens saved need RTK's own log{% if not r.rtk_log %}, which is off on this machine{% endif %}. Serena's "avoided" = the file's size today minus what Serena returned. Before and after also differ because the work differs.
+</div></div></details>
+
+<script>
+(function(){
+  const seg=document.getElementById('savSeg'), panes=[...document.querySelectorAll('.sav-pane')];
+  const show=i=>{seg.querySelectorAll('a').forEach(x=>x.classList.toggle('active',+x.dataset.p===i));
+    panes.forEach((p,j)=>p.hidden=j!==i);};
+  seg.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(+a.dataset.p);}));
+  document.querySelectorAll('#savMetrics a[data-tab]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();
+    show(+a.dataset.tab); seg.scrollIntoView({behavior:'smooth',block:'start'});}));
+  {% if r.series|length > 1 %}
+  const s={{ r.series|tojson }}, since={{ r.since|tojson }};
+  const dark=document.body.classList.contains('dark');
+  const fg=dark?'#A69B8C':'#6E655A', grid=dark?'#2E2822':'#E6E0D5', ink=dark?'#e4e4e4':'#211D18';
+  const fam={family:'Inter, sans-serif',size:12,color:fg};
+  Plotly.newPlot('savChart',[{type:'scatter',mode:'lines+markers',x:s.map(d=>d.day),y:s.map(d=>d.per_msg),
+    customdata:s.map(d=>d.turns),line:{color:'#C15A38',width:2},marker:{size:5,color:'#C15A38'},
+    hovertemplate:'%{x|%-d %b}: %{y:,} tokens per message<br>%{customdata} messages<extra></extra>'}],
+    {height:240,margin:{l:50,r:16,t:8,b:30},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:fam,showlegend:false,
+     xaxis:{gridcolor:grid,zerolinecolor:grid,tickformat:'%-d %b'},yaxis:{gridcolor:grid,zerolinecolor:grid,rangemode:'tozero'},
+     shapes:[{type:'line',x0:since,x1:since,yref:'paper',y0:0,y1:1,line:{color:ink,width:1,dash:'dot'}}]},
+    {displayModeBar:false,responsive:true});
+  {% endif %}
+})();
+</script>
+{% endblock %}

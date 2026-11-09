@@ -31,7 +31,7 @@ CAT_COLOR = {
 }
 FAMILY_COLOR = {"opus": "#A98DD0", "sonnet": "#D97757", "haiku": "#6DAEA0", "fable": "#6E8FD1"}
 
-PAGES = ["Overview", "Skills", "MCP & Plugins", "Usage", "History", "System", "Help"]
+PAGES = ["Overview", "Skills", "MCP & Plugins", "Usage", "Savings", "History", "System", "Help"]
 PAGE_SLUG = {p: re.sub(r"[^a-z0-9]+", "-", p.lower()).strip("-") for p in PAGES}
 SLUG_PAGE = {v: k for k, v in PAGE_SLUG.items()}
 MCP_SLUG = PAGE_SLUG["MCP & Plugins"]
@@ -45,7 +45,7 @@ REDIRECTS = {"token-usage": "usage", "mcp-connectors": MCP_SLUG, "plugins": MCP_
 # eyebrow = where each page's data lives (structure as information)
 EYEBROW = {
     "Overview": "~/.claude", "Skills": "~/.claude/skills",
-    "MCP & Plugins": "settings.json · ~/.claude.json · ~/.claude/plugins", "Usage": "~/.claude/projects · usage",
+    "MCP & Plugins": "settings.json · ~/.claude.json · ~/.claude/plugins", "Usage": "~/.claude/projects · usage", "Savings": "~/.claude/projects · tool calls",
     "History": "~/.claude/projects · transcripts", "System": "~/.claude · config + memory", "Help": "reference",
 }
 
@@ -2218,7 +2218,7 @@ def warm_caches():
     try:
         _sizes(); load_skills(); conversation_index(); conversation_index(True)
         archived_sessions(); archived_slash_commands(); skill_usage(); token_insights()
-        aggregate_usage(); usage_stats(); load_cache(); load_memory()
+        aggregate_usage(); usage_stats(); load_cache(); load_memory(); savings_scan()
         available_terminals(); gh_auth_status(); build_search_index()
         hook_runs(); mcp_tool_stats(); disk_report()
     except Exception: pass
@@ -2267,6 +2267,7 @@ def page(request: Request, slug: str):
     if name == "Skills": return render_skills(request)
     if name == "MCP & Plugins": return render_extensions(request)
     if name == "Usage": return render_token(request)
+    if name == "Savings": return render_savings(request)
     if name == "History": return render_history(request)
     if name == "System": return render_system(request)
     if name == "Help": return render_help(request)
@@ -3596,6 +3597,218 @@ def subagent_timeline(session):
                     "tokens": int(x["billable"].sum()), "cost": float(x["cost"].sum()), "model": ", ".join(sorted(x["label"].dropna().unique()))})
     out.sort(key=lambda r: r["start"])
     return out
+
+# ---------- Savings: what token-saving tools did, from the transcripts (memoised per file like usage) ----------
+SAV_CACHE_FILE = CACHE_DIR / ".mc_savings_cache.json"
+_SAV_V = 1
+_sav = None; _sav_dirty = False; _sav_lock = threading.Lock()
+# Serena tools that return part of a file instead of the whole file
+SERENA_READ_TOOLS = {"find_symbol", "get_symbols_overview", "find_referencing_symbols", "find_implementations", "find_declaration"}
+
+def _result_chars(content):
+    if isinstance(content, str): return len(content)
+    if isinstance(content, list):
+        return sum(len(b.get("text") or "") for b in content if isinstance(b, dict) and b.get("type") == "text")
+    return 0
+
+def _tool_bucket(name):
+    if name.startswith("mcp__"): return "mcp:" + name.split("__")[1]
+    return name
+
+def _scan_savings(path):
+    """Per transcript: entrypoint, per-day human turns and tool-output characters by tool, each Bash call
+    RTK rewrote (with its output size), and each Serena call (with its output size and target file)."""
+    ep = None; days = {}; rtk = {}; uses = {}; results = {}
+    with open(path, "r", errors="ignore") as f:
+        for line in f:
+            want = ('"tool_use"' in line or '"tool_result"' in line or "RTK auto-rewrite" in line
+                    or (ep is None and '"entrypoint"' in line) or '"type":"user"' in line or '"type": "user"' in line)
+            if not want: continue
+            try: d = json.loads(line)
+            except Exception: continue
+            if ep is None and d.get("entrypoint"): ep = d["entrypoint"]
+            day = (d.get("timestamp") or "")[:10]
+            a = d.get("attachment")
+            if isinstance(a, dict) and a.get("type") == "hook_success" and "RTK auto-rewrite" in (a.get("stdout") or ""):
+                try: cmd = json.loads(a["stdout"])["hookSpecificOutput"]["updatedInput"]["command"]
+                except Exception: cmd = ""
+                m = re.search(r"(?:^|[;&|(]\s*)rtk\s+([a-z][\w-]*)", cmd)
+                rtk[a.get("toolUseID") or ""] = m.group(1) if m else "other"
+                continue
+            msg = d.get("message") if isinstance(d.get("message"), dict) else {}
+            content = msg.get("content")
+            if d.get("type") == "assistant" and isinstance(content, list):
+                for b in content:
+                    if isinstance(b, dict) and b.get("type") == "tool_use":
+                        inp = b.get("input") if isinstance(b.get("input"), dict) else {}
+                        rel = inp.get("relative_path") or ""
+                        full = str(Path(d.get("cwd") or "") / rel) if rel else ""
+                        uses[b.get("id")] = (b.get("name") or "", full)
+            elif d.get("type") == "user":
+                if isinstance(content, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in content):
+                    for b in content:
+                        if isinstance(b, dict) and b.get("type") == "tool_result":
+                            results[b.get("tool_use_id")] = (day, _result_chars(b.get("content")))
+                elif day and not d.get("isMeta") and not d.get("isSidechain"):
+                    text = content if isinstance(content, str) else " ".join(
+                        b.get("text") or "" for b in (content or []) if isinstance(b, dict) and b.get("type") == "text")
+                    if text and message_role(d, text) == "user":
+                        days.setdefault(day, {"turns": 0, "out": {}})["turns"] += 1
+    out_rtk = []; out_serena = []
+    for tid, (day, chars) in results.items():
+        name, full = uses.get(tid, ("", ""))
+        if not day or not name: continue
+        dd = days.setdefault(day, {"turns": 0, "out": {}})
+        k = _tool_bucket(name); dd["out"][k] = dd["out"].get(k, 0) + chars
+        if tid in rtk: out_rtk.append([day, rtk[tid], chars])
+        if name.startswith("mcp__serena__"): out_serena.append([day, name.split("__", 2)[2], chars, full])
+    return {"ep": ep or "", "days": days, "rtk": out_rtk, "serena": out_serena}
+
+def file_savings(path):
+    global _sav, _sav_dirty
+    with _sav_lock:
+        if _sav is None:
+            try: _sav = json.loads(SAV_CACHE_FILE.read_text())
+            except Exception: _sav = {}
+            if _sav.get("_v") != _SAV_V: _sav = {"_v": _SAV_V}
+    st = os.stat(path); c = _sav.get(path)
+    if c and c["mt"] == st.st_mtime and c["sz"] == st.st_size: return c["v"]
+    try: v = _scan_savings(path)
+    except OSError: v = {"ep": "", "days": {}, "rtk": [], "serena": []}
+    with _sav_lock: _sav[path] = {"mt": st.st_mtime, "sz": st.st_size, "v": v}; _sav_dirty = True
+    return v
+
+def _sav_flush():
+    global _sav_dirty
+    with _sav_lock:
+        if _sav_dirty and _sav is not None:
+            try: SAV_CACHE_FILE.write_text(json.dumps(_sav)); _sav_dirty = False
+            except Exception: pass
+
+@ttl_cache(900)
+def savings_scan():
+    """All transcripts' savings signals, keyed by transcript id (file stem)."""
+    pdir = CLAUDE / "projects"; out = {}
+    if not pdir.exists(): return out
+    for jf in pdir.rglob("*.jsonl"):
+        try: out[str(jf)] = file_savings(str(jf))
+        except OSError: pass
+    _sav_flush()
+    return out
+
+def _median(xs):
+    xs = sorted(xs)
+    if not xs: return 0
+    m = len(xs) // 2
+    return xs[m] if len(xs) % 2 else (xs[m - 1] + xs[m]) / 2
+
+def savings_report(since=None, window_days=30):
+    """Before/after comparison around `since` (YYYY-MM-DD) plus per-tool counts. Every number says whether it
+    is measured from transcripts or estimated (characters / 4 for tokens; current file size for Serena)."""
+    scan = savings_scan()
+    # only conversations you started; tool-started (sdk-*) sessions are shown separately below
+    sdk = {Path(p).stem for p, v in scan.items() if str(v.get("ep", "")).startswith("sdk")}
+    # a file still being written may not have its entrypoint line yet, and the scan above is cached for up to
+    # 15 minutes, so a recent file with no entrypoint is left out of startup until a later scan sees one
+    fresh = time.time() - 86400
+    def _recent(path):
+        try: return os.path.getmtime(path) >= fresh
+        except OSError: return False
+    no_ep = {Path(p).stem for p, v in scan.items() if not v.get("ep") and _recent(p)}
+    mine = {p: v for p, v in scan.items() if Path(p).stem not in sdk}
+    rtk = [r for v in scan.values() for r in v["rtk"]]
+    serena = [r for v in scan.values() for r in v["serena"]]
+    first_seen = sorted(r[0] for r in rtk + serena if r[0])
+    if not since:
+        since = first_seen[0] if first_seen else (datetime.now().date() - timedelta(days=7)).isoformat()
+    lo = (datetime.fromisoformat(since).date() - timedelta(days=window_days)).isoformat()
+    in_before = lambda d: lo <= d < since
+    in_after = lambda d: d >= since
+
+    # 1. tool output per typed message, before vs after
+    def side(pred):
+        turns = 0; out = {}
+        for v in mine.values():
+            for day, dd in v["days"].items():
+                if not pred(day): continue
+                turns += dd["turns"]
+                for k, c in dd["out"].items(): out[k] = out.get(k, 0) + c
+        return turns, out
+    tb, ob = side(in_before); ta, oa = side(in_after)
+    # daily series for the chart: tool output per typed message, from 21 days before `since` to today
+    daily = {}
+    for v in mine.values():
+        for day, dd in v["days"].items():
+            x = daily.setdefault(day, [0, 0]); x[0] += dd["turns"]; x[1] += sum(dd["out"].values())
+    start = (datetime.fromisoformat(since).date() - timedelta(days=21)).isoformat()
+    series = [{"day": d, "turns": daily[d][0], "per_msg": daily[d][1] // 4 // daily[d][0]}
+              for d in sorted(daily) if d >= start and daily[d][0]]
+    tools = sorted(set(ob) | set(oa), key=lambda k: -(ob.get(k, 0) + oa.get(k, 0)))[:10]
+    per_turn = lambda o, t, k: (o.get(k, 0) // 4 // t) if t else 0
+    tool_rows = [{"tool": k, "before": per_turn(ob, tb, k), "after": per_turn(oa, ta, k)} for k in tools]
+    out_before = (sum(ob.values()) // 4 // tb) if tb else 0
+    out_after = (sum(oa.values()) // 4 // ta) if ta else 0
+
+    # 2. startup tokens (first reply of each conversation), before vs after
+    df = aggregate_usage(); st_b = []; st_a = []
+    if not df.empty:
+        d = df[(df["kind"] == "conversation") & ~df["transcript"].isin(sdk | no_ep)].copy()
+        d["t"] = pd.to_datetime(d["ts"], errors="coerce", utc=True, format="mixed")
+        d = d.dropna(subset=["t"]).sort_values(["transcript", "t"])
+        if not d.empty:
+            first = d.groupby("transcript", as_index=False).first()
+            first["start"] = first["input_tokens"] + first["cache_creation"] + first["cache_read"]
+            for day, s in zip(first["ts"].str[:10], first["start"]):
+                if s <= 0: continue
+                if in_before(day): st_b.append(int(s))
+                elif in_after(day): st_a.append(int(s))
+
+    # 3. RTK
+    rtk_after = [r for r in rtk if in_after(r[0]) and r[1] != "bypass"]   # `rtk bypass` = run without shortening
+    subs = {}
+    for _, sub, chars in rtk_after: s = subs.setdefault(sub, [0, 0]); s[0] += 1; s[1] += chars
+    rtk_rows = [{"sub": k, "n": v[0], "tokens": v[1] // 4} for k, v in sorted(subs.items(), key=lambda x: -x[1][0])[:8]]
+    rtk_db = Path.home() / "Library" / "Application Support" / "rtk" / "history.db"
+
+    # 4. Serena: part of a file returned vs the whole file (current size on disk)
+    s_rows = {}; s_saved = 0; s_known = 0
+    for day, tool, chars, full in serena:
+        if not in_after(day): continue
+        r = s_rows.setdefault(tool, {"tool": tool, "n": 0, "tokens": 0}); r["n"] += 1; r["tokens"] += chars // 4
+        if tool in SERENA_READ_TOOLS and full:
+            try: size = os.path.getsize(full) if os.path.isfile(full) else 0
+            except OSError: size = 0
+            if size: s_known += 1; s_saved += max(0, size // 4 - chars // 4)
+    serena_rows = sorted(s_rows.values(), key=lambda r: -r["n"])
+
+    # 5. background sessions started by tools, not by you (entrypoint sdk-*), last `window_days`
+    bg = []
+    if not df.empty:
+        folder = {Path(p).stem: Path(p).relative_to(CLAUDE / "projects").parts[0] for p in scan}
+        home_tag = str(Path.home()).replace("/", "-")
+        cut = (datetime.now().date() - timedelta(days=window_days)).isoformat()
+        g = df[df["transcript"].isin(sdk) & (df["ts"].str[:10] >= cut)]
+        g = g.assign(folder=g["session"].map(lambda t: folder.get(t, "?").replace(home_tag, "~")))
+        for proj, x in g.groupby("folder"):
+            bg.append({"project": proj, "sessions": int(x["transcript"].nunique()),
+                       "turns": int(len(x)), "cost": float(x["cost"].sum())})
+        bg.sort(key=lambda r: -r["cost"])
+
+    return {"since": since, "lo": lo, "window_days": window_days,
+            "turns_before": tb, "turns_after": ta, "out_before": out_before, "out_after": out_after, "tool_rows": tool_rows,
+            "start_before": int(_median(st_b)), "start_after": int(_median(st_a)), "n_start_before": len(st_b), "n_start_after": len(st_a),
+            "rtk_n": len(rtk_after), "rtk_tokens": sum(r[2] for r in rtk_after) // 4, "rtk_rows": rtk_rows,
+            "series": series, "rtk_log": rtk_db.is_file(), "serena_rows": serena_rows, "serena_n": sum(r["n"] for r in serena_rows),
+            "serena_saved": s_saved, "serena_known": s_known, "bg": bg,
+            "bg_sessions": sum(b["sessions"] for b in bg)}
+
+def render_savings(request):
+    since = request.query_params.get("since", "").strip()
+    try:
+        if since: datetime.fromisoformat(since)
+    except ValueError: since = ""
+    if since > datetime.now().date().isoformat(): since = datetime.now().date().isoformat()
+    return render(request, "savings.html", "Savings", r=savings_report(since or None))
 
 
 @app.post("/settings/save")
