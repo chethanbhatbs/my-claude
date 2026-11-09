@@ -9,15 +9,15 @@
 
 {% macro pct(a, b) -%}{% if a %}{% set p = ((b - a) / a * 100)|round|int %}<span style="font-weight:500;color:var({{ '--err' if p > 0 else ('--ok' if p < 0 else '--dim') }})">{{ '+' if p > 0 else '' }}{{ p }}%</span>{% endif %}{%- endmacro %}
 <div class="metrics" id="savMetrics">
-  <div class="metric"><div class="m-label">Startup tokens</div>
+  <a class="metric" href="/p/usage#startup" title="Open startup cost on the Usage page"><div class="m-label">Startup tokens</div>
     <div class="m-value">{{ fmt_num(r.start_after) if r.n_start_after else '–' }}</div>
-    <div class="m-sub">{% if r.n_start_before %}was {{ fmt_num(r.start_before) }}{% if r.n_start_after %} · {{ pct(r.start_before, r.start_after) }}{% endif %}{% endif %} · {{ r.n_start_after }} conversation{{ '' if r.n_start_after == 1 else 's' }} after</div></div>
-  <div class="metric"><div class="m-label">Tool output per message</div>
+    <div class="m-sub">{% if r.n_start_before %}was {{ fmt_num(r.start_before) }}{% if r.n_start_after %} · {{ pct(r.start_before, r.start_after) }}{% endif %}{% endif %} · {{ r.n_start_after }} conversation{{ '' if r.n_start_after == 1 else 's' }} after</div></a>
+  <a class="metric" href="#" data-tab="0" title="Show tool output by tool"><div class="m-label">Tool output per message</div>
     <div class="m-value">{{ fmt_num(r.out_after) if r.turns_after else '–' }}</div>
-    <div class="m-sub">{% if r.turns_before %}was {{ fmt_num(r.out_before) }}{% if r.turns_after %} · {{ pct(r.out_before, r.out_after) }}{% endif %}{% endif %} · estimate</div></div>
-  <div class="metric"><div class="m-label">Commands RTK shortened</div>
+    <div class="m-sub">{% if r.turns_before %}was {{ fmt_num(r.out_before) }}{% if r.turns_after %} · {{ pct(r.out_before, r.out_after) }}{% endif %}{% endif %} · estimate</div></a>
+  <a class="metric" href="#" data-tab="1" title="Show RTK commands"><div class="m-label">Commands RTK shortened</div>
     <div class="m-value">{{ r.rtk_n }}</div>
-    <div class="m-sub">tokens saved: not measured</div></div>
+    <div class="m-sub">tokens saved: not measured</div></a>
 </div>
 
 {% if r.series|length > 1 %}
@@ -68,9 +68,11 @@
 <script>
 (function(){
   const seg=document.getElementById('savSeg'), panes=[...document.querySelectorAll('.sav-pane')];
-  seg.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();
-    seg.querySelectorAll('a').forEach(x=>x.classList.toggle('active',x===a));
-    panes.forEach((p,i)=>p.hidden=i!==+a.dataset.p);}));
+  const show=i=>{seg.querySelectorAll('a').forEach(x=>x.classList.toggle('active',+x.dataset.p===i));
+    panes.forEach((p,j)=>p.hidden=j!==i);};
+  seg.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(+a.dataset.p);}));
+  document.querySelectorAll('#savMetrics a[data-tab]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();
+    show(+a.dataset.tab); seg.scrollIntoView({behavior:'smooth',block:'start'});}));
   {% if r.series|length > 1 %}
   const s={{ r.series|tojson }}, since={{ r.since|tojson }};
   const dark=document.body.classList.contains('dark');
