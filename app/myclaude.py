@@ -3708,8 +3708,9 @@ def savings_report(since=None, window_days=30):
     scan = savings_scan()
     # only conversations you started; tool-started (sdk-*) sessions are shown separately below
     sdk = {Path(p).stem for p, v in scan.items() if str(v.get("ep", "")).startswith("sdk")}
-    # a file still being written may not have its entrypoint line yet; leave it out of startup until it does
-    fresh = time.time() - 600
+    # a file still being written may not have its entrypoint line yet, and the scan above is cached for up to
+    # 15 minutes, so a recent file with no entrypoint is left out of startup until a later scan sees one
+    fresh = time.time() - 86400
     def _recent(path):
         try: return os.path.getmtime(path) >= fresh
         except OSError: return False
