@@ -2794,7 +2794,7 @@ def render_token(request):
                   metrics1=metrics1, metrics2=metrics2, cost_metrics=cost_metrics, day_chart=day_chart, proj_rows=proj_rows,
                   pie=json.dumps(pie), price_rows=price_rows,
                   heat=json.dumps(heat), heat_win=json.dumps(heat_win), models=["All"] + model_list,
-                  insights=token_insights(), rebuild=cache_rebuilds(df), sub_heavy=sub_heavy, SUB_FLAG=SUB_FLAG,
+                  insights=token_insights(), rebuild=cache_rebuilds(df), startup=startup_cost(df, aggregate_usage()), sub_heavy=sub_heavy, SUB_FLAG=SUB_FLAG,
                   alerts_on=bool(data_settings().get("limit_alerts")), machines=machines_summary())
 
 def render_sunburst(request):
@@ -3508,6 +3508,54 @@ def cache_rebuilds(df, gap_min=5):
                    "longest_gap": fmt_minutes(g["gap"].max() // 60)})
     by.sort(key=lambda r: -r["cost"])
     return {"turns": int(len(hit)), "tokens": int(hit["cache_creation"].sum()), "cost": float(hit["cw_cost"].sum()), "by_session": by}
+
+def _est_tokens(text):
+    """Rough token count for plain text: about 4 characters per token. Labelled as an estimate in the UI."""
+    return len(text or "") // 4
+
+def startup_parts():
+    """Estimated tokens of what Claude Code loads into every session before you type, from files on disk.
+    Only what can be read here; the rest of the measured startup is the built-in system prompt, tool and
+    MCP definitions, and your first message."""
+    parts = []
+    g = CLAUDE / "CLAUDE.md"
+    if g.exists():
+        try: parts.append({"name": "Global CLAUDE.md", "tokens": _est_tokens(g.read_text(errors="ignore")), "path": str(g)})
+        except Exception: pass
+    sk = load_skills()
+    if sk:
+        parts.append({"name": f"Skill list ({len(sk)} skills, name + description)",
+                      "tokens": sum(_est_tokens(s["name"] + ": " + (s["description"] or "")) + 4 for s in sk), "path": ""})
+    return parts
+
+def startup_cost(df, full=None):
+    """Tokens Claude read on the first reply of each conversation: everything loaded before work starts,
+    plus your first message. Measured from the transcripts (input + cache write + cache read).
+    The first reply is found in `full` (all turns), then kept only if it falls inside `df` (the page's window),
+    so an old conversation still running in the window is not mistaken for a new start."""
+    empty = {"sessions": 0, "median": 0, "max": 0, "cost": 0.0, "weeks": [], "top": [], "parts": []}
+    if df.empty: return empty
+    full = df if full is None else full
+    d = full[full["kind"] == "conversation"].copy()
+    d["t"] = pd.to_datetime(d["ts"], errors="coerce", utc=True, format="mixed")
+    d = d.dropna(subset=["t"]).sort_values(["transcript", "t"])
+    if d.empty: return empty
+    first = d.groupby("transcript", as_index=False).first()
+    inwin = set(zip(df["transcript"], df["ts"]))
+    first = first[[(a, b) in inwin for a, b in zip(first["transcript"], first["ts"])]]
+    first["start"] = first["input_tokens"] + first["cache_creation"] + first["cache_read"]
+    first = first[first["start"] > 0]
+    if first.empty: return empty
+    first["scost"] = first.apply(lambda r: cost_for(r["model"], r["input_tokens"], 0, r["cache_creation"], r["cache_read"]), axis=1)
+    wk = first.assign(week=first["t"].dt.tz_convert(None).dt.to_period("W").dt.start_time.dt.date)
+    weeks = [{"week": w.strftime("%-d %b"), "median": int(g["start"].median()), "sessions": int(len(g))}
+             for w, g in wk.groupby("week")][-8:]
+    titles = _titles(); top = []
+    for _, r in first.sort_values("start", ascending=False).head(5).iterrows():
+        t = titles.get(r["session"], (r["session"], ""))
+        top.append({"title": t[0], "path": t[1], "tokens": int(r["start"])})
+    return {"sessions": int(len(first)), "median": int(first["start"].median()), "max": int(first["start"].max()),
+            "cost": float(first["scost"].sum()), "weeks": weeks, "top": top, "parts": startup_parts()}
 
 def _sub_rows(session, gap_min=30):
     """subagent_timeline grouped into bursts (runs within gap_min of each other), each burst on its own
