@@ -3728,6 +3728,14 @@ def savings_report(since=None, window_days=30):
                 for k, c in dd["out"].items(): out[k] = out.get(k, 0) + c
         return turns, out
     tb, ob = side(in_before); ta, oa = side(in_after)
+    # daily series for the chart: tool output per typed message, from 21 days before `since` to today
+    daily = {}
+    for v in mine.values():
+        for day, dd in v["days"].items():
+            x = daily.setdefault(day, [0, 0]); x[0] += dd["turns"]; x[1] += sum(dd["out"].values())
+    start = (datetime.fromisoformat(since).date() - timedelta(days=21)).isoformat()
+    series = [{"day": d, "turns": daily[d][0], "per_msg": daily[d][1] // 4 // daily[d][0]}
+              for d in sorted(daily) if d >= start and daily[d][0]]
     tools = sorted(set(ob) | set(oa), key=lambda k: -(ob.get(k, 0) + oa.get(k, 0)))[:10]
     per_turn = lambda o, t, k: (o.get(k, 0) // 4 // t) if t else 0
     tool_rows = [{"tool": k, "before": per_turn(ob, tb, k), "after": per_turn(oa, ta, k)} for k in tools]
@@ -3783,8 +3791,9 @@ def savings_report(since=None, window_days=30):
             "turns_before": tb, "turns_after": ta, "out_before": out_before, "out_after": out_after, "tool_rows": tool_rows,
             "start_before": int(_median(st_b)), "start_after": int(_median(st_a)), "n_start_before": len(st_b), "n_start_after": len(st_a),
             "rtk_n": len(rtk_after), "rtk_tokens": sum(r[2] for r in rtk_after) // 4, "rtk_rows": rtk_rows,
-            "rtk_log": rtk_db.is_file(), "serena_rows": serena_rows, "serena_n": sum(r["n"] for r in serena_rows),
-            "serena_saved": s_saved, "serena_known": s_known, "bg": bg[:8]}
+            "series": series, "rtk_log": rtk_db.is_file(), "serena_rows": serena_rows, "serena_n": sum(r["n"] for r in serena_rows),
+            "serena_saved": s_saved, "serena_known": s_known, "bg": bg,
+            "bg_sessions": sum(b["sessions"] for b in bg)}
 
 def render_savings(request):
     since = request.query_params.get("since", "").strip()
