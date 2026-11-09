@@ -7,7 +7,7 @@
   <input type="date" id="since" name="since" value="{{ r.since }}" style="width:auto;flex:0 0 auto" onchange="this.form.requestSubmit()">
 </form>
 
-{% macro pct(a, b) -%}{% if a %}{% set p = ((b - a) / a * 100)|round|int %}{{ '+' if p > 0 else '' }}{{ p }}%{% endif %}{%- endmacro %}
+{% macro pct(a, b) -%}{% if a %}{% set p = ((b - a) / a * 100)|round|int %}<span style="font-weight:500;color:var({{ '--err' if p > 0 else ('--ok' if p < 0 else '--dim') }})">{{ '+' if p > 0 else '' }}{{ p }}%</span>{% endif %}{%- endmacro %}
 <div class="metrics" id="savMetrics">
   <div class="metric"><div class="m-label">Startup tokens</div>
     <div class="m-value">{{ fmt_num(r.start_after) if r.n_start_after else '–' }}</div>

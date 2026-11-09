@@ -906,3 +906,15 @@ def test_savings_page_renders(monkeypatch):
     from fastapi.testclient import TestClient
     html = TestClient(mc.app).get("/p/savings?since=2026-11-09").text
     assert "Savings" in html and "not measured" in html and "2026-11-09" in html
+
+
+def test_savings_change_is_red_when_up_and_green_when_down(monkeypatch):
+    from fastapi.testclient import TestClient
+    r = {"since": "2026-11-09", "lo": "2026-10-10", "window_days": 30, "turns_before": 10, "turns_after": 10,
+         "out_before": 1000, "out_after": 800, "tool_rows": [], "start_before": 1000, "start_after": 1200,
+         "n_start_before": 5, "n_start_after": 5, "rtk_n": 0, "rtk_tokens": 0, "rtk_rows": [], "series": [],
+         "rtk_log": False, "serena_rows": [], "serena_n": 0, "serena_saved": 0, "serena_known": 0, "bg": [], "bg_sessions": 0}
+    monkeypatch.setattr(mc, "savings_report", lambda since=None, window_days=30: r)
+    html = TestClient(mc.app).get("/p/savings").text
+    assert 'color:var(--err)">+20%' in html     # startup went up: more tokens, red
+    assert 'color:var(--ok)">-20%' in html      # tool output went down: fewer tokens, green
